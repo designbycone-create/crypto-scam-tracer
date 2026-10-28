@@ -1,0 +1,26 @@
+# --- YOUR private case data: never commit these ---
+config.json
+victim.json
+etherscan.key
+
+# Generated state, maps, logs, drafts
+*.log
+*.csv
+network_map.json
+network_map.html
+mc_map.json
+mc_map.html
+mc_events.log
+netwatch_events.log
+cases/
+network_reports/
+mc_reports/
+cease_desist/
+entity_cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store

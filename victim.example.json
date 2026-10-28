@@ -1,0 +1,12 @@
+{
+  "name": "",
+  "email": "",
+  "country": "US",
+  "scam_type": "a fake cryptocurrency giveaway",
+  "scam_wallet": "rEXAMPLEscamWalletAddressGoesHere00000000",
+  "tx_hash": "YOUR_VICTIM_TRANSACTION_HASH",
+  "ic3_id": "YOUR_FBI_IC3_COMPLAINT_NUMBER",
+  "reports": [
+    "Chainabuse https://chainabuse.com/report/YOUR_REPORT_ID"
+  ]
+}

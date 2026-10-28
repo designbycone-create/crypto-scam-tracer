@@ -1,0 +1,11 @@
+{
+  "watched_wallets": {
+    "rEXAMPLEscamWalletAddressGoesHere00000000": "what this wallet is (e.g. 'fake giveaway site XYZ')"
+  },
+  "scam_wallet": "rEXAMPLEscamWalletAddressGoesHere00000000",
+  "ntfy_topic": "",
+  "min_xrp": 25,
+  "servers": ["wss://xrplcluster.com", "wss://s1.ripple.com", "wss://s2.ripple.com"],
+  "victim_file": "victim.json",
+  "etherscan_key": ""
+}

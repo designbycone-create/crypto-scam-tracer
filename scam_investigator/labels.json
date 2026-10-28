@@ -1,0 +1,4 @@
+{
+  "_comment": "Optional manual XRPL address labels: {address: description}. The tool also looks addresses up on public explorers automatically. Add any you confirm yourself (e.g. an exchange withdrawal wallet you identified from your own withdrawal).",
+  "rUrYCcn3UkgC2ZXDWDvWT1D8VmM2X5Yiws": "Robinhood Crypto (XRP withdrawal wallet; publicly observed)"
+}

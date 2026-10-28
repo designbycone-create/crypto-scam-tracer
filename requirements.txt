@@ -1,0 +1,4 @@
+# Core dependency: XRPL WebSocket client (used by the live watchers).
+websockets>=12.0
+# TLS roots for the infrastructure-OSINT HTTPS lookups.
+certifi>=2024.2.2

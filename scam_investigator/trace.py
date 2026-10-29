@@ -8,7 +8,7 @@ import json
 import os
 import urllib.request
 
-from .ledger import Ledger, xrp, ripple_time
+from .ledger import Ledger, xrp, ripple_time, RIPPLE_EPOCH
 
 HERE = os.path.dirname(__file__)
 LABELS_FILE = os.path.join(HERE, "labels.json")
@@ -77,8 +77,11 @@ async def profile_wallet(L, addr):
             continue
         meta = tx["_meta"]
         delivered = meta.get("delivered_amount", tx.get("Amount"))
+        _d = tx.get("date")
         row = {
-            "hash": tx["hash"], "time": ripple_time(tx.get("date")), "type": ttype,
+            "hash": tx["hash"], "time": ripple_time(_d),
+            "epoch": (_d + RIPPLE_EPOCH) if isinstance(_d, (int, float)) else None,
+            "type": ttype,
             "from": tx.get("Account"), "to": tx.get("Destination"),
             "destination_tag": tx.get("DestinationTag"), "source_tag": tx.get("SourceTag"),
             "xrp": xrp(delivered), "amount_raw": delivered if not isinstance(delivered, str) else None,
@@ -96,23 +99,34 @@ async def profile_wallet(L, addr):
 
 
 async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True):
-    """Breadth-first trace from `start`. Stops at exchange deposits, labeled
-    services, and payments below `min_xrp` (dust and fee noise)."""
+    """Breadth-first, TIME-FORWARD trace from `start`. Stolen funds arrive at a
+    wallet at some time T; we only follow that wallet's outgoing payments at
+    time >= T. A reused laundering hub may have months of unrelated history
+    (and other people's funds) flowing through it -- following all of it would
+    wrongly attribute strangers' transactions to this victim. The root scam
+    wallet is exempt (it exists only to collect and forward the stolen funds).
+
+    Stops at exchange deposits, labeled services, and payments below `min_xrp`.
+    """
     labels = load_labels()
     async with Ledger() as L:
         root_profile = await profile_wallet(L, start)
         nodes = {start: await describe_account(L, start, labels, use_xrpscan)}
         nodes[start]["role"] = "scam wallet"
         edges, endpoints = [], []
-        frontier, seen = [(start, 0)], {start}
+        # frontier holds (address, depth, arrival_epoch); root has no arrival cut
+        frontier, seen = [(start, 0, None)], {start}
         profiles = {start: root_profile}
 
         while frontier:
-            addr, depth = frontier.pop(0)
+            addr, depth, after = frontier.pop(0)
             prof = profiles.get(addr) or await profile_wallet(L, addr)
             profiles[addr] = prof
             for p in prof["outgoing"]:
                 if p["type"] != "Payment" or (p["xrp"] is not None and p["xrp"] < min_xrp):
+                    continue
+                # time-forward: skip outflows that predate the stolen funds' arrival
+                if after is not None and p.get("epoch") is not None and p["epoch"] < after:
                     continue
                 dest = p["to"]
                 edges.append({**p, "depth": depth + 1})
@@ -128,7 +142,7 @@ async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True):
                 elif dest not in seen and depth + 1 < max_depth:
                     n["role"] = "intermediate wallet (hop)"
                     seen.add(dest)
-                    frontier.append((dest, depth + 1))
+                    frontier.append((dest, depth + 1, p.get("epoch")))
                 else:
                     n.setdefault("role", "untraced (depth limit)")
 

@@ -65,7 +65,22 @@ cp victim.example.json victim.json
 #   -> edit victim.json: your IC3 complaint number, report links, contact (all optional)
 ```
 
-### Run the live watcher
+### The Desk — easiest way to run everything (recommended)
+
+One command starts **and supervises** all the watchers in the background and
+opens a live dashboard in your browser — watcher health, where your funds are
+right now (parked vs. cashed out), every real freeze opportunity with a
+one-click draft button, and recent activity. If a watcher ever dies, the Desk
+restarts it.
+
+```bash
+python desk.py          # Windows: double-click run_desk.cmd   ·   macOS/Linux: ./run_desk.sh
+```
+
+Leave it running; the dashboard auto-refreshes. Close the window to stop
+everything. Prefer to run the pieces individually? Keep reading.
+
+### Run just the live watcher
 ```bash
 python xrpl_watcher.py
 ```
@@ -124,6 +139,13 @@ the tool handles it honestly:
 
 ## Accuracy & safety
 
+- **Time-forward tracing — no false trails.** Stolen funds often pass through
+  reused laundering/consolidation wallets that have months of unrelated history
+  and other people's money flowing through them. The tracer only follows a
+  wallet's outgoing payments that occur *at or after* your stolen funds arrived
+  there — so it never attributes a shared wallet's prior activity to your case.
+  (A plain trace that ignores time can report dozens of "cash-outs" that
+  predate the theft and aren't yours; this tool does not.)
 - **No fabricated labels.** The tool never invents an exchange "deposit address."
   Only published, canonical contracts (stablecoins, sanctioned addresses) are
   hardcoded; everything else comes from public, community-maintained label data,

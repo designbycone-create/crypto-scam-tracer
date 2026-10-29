@@ -64,7 +64,13 @@ def _log(line):
         pass
 
 
-def phone(title, msg, actions=None):
+def phone(title, msg, actions=None, critical=True, key=None):
+    try:
+        import alerts
+        alerts.send(f"[MULTICHAIN] {title}", msg, critical=critical, actions=actions, key=key)
+        return
+    except ImportError:
+        pass
     if not NTFY_TOPIC:
         return
     import urllib.request

@@ -104,6 +104,17 @@ def supervise(label, argv, logfile, stop_evt):
         time.sleep(backoff)
 
 
+def alert_flusher(stop_evt, interval=120):
+    """Keep retrying queued phone alerts (critical first) until delivered."""
+    while not stop_evt.is_set():
+        try:
+            import alerts
+            alerts.flush()
+        except Exception:
+            pass
+        stop_evt.wait(interval)
+
+
 # ----------------------------------------------------------- helpers --------
 
 def _read_json(path):
@@ -224,7 +235,27 @@ def render():
     endpoints = net.get("endpoints", [])
     funds_state = ("CASHED OUT — act now" if endpoints else
                    ("parked (not yet cashed out)" if hops else "mapping…"))
+    try:
+        import alerts
+        pend = alerts.pending()
+        ast = alerts.state()
+    except Exception:
+        pend, ast = [], {}
+    crit = [p for p in pend if p.get("critical")]
+    alerts_txt = ("phone alerts OK" if not pend else
+                  f"{len(pend)} alert(s) waiting to deliver" + (f" ({len(crit)} CRITICAL)" if crit else ""))
+    banner = ""
+    if pend:
+        rows = "".join(f"<li><b>{e(p['title'])}</b> <small class=mut>queued {e(p.get('queued_at',''))}"
+                       f" · tries {p.get('attempts',0)}</small><br><small>{e(p['message'][:240])}</small></li>"
+                       for p in sorted(pend, key=lambda i: (not i.get('critical'), i.get('queued_at','')))[:8])
+        banner = (f"<div class=banner><b>&#9888; {len(pend)} phone alert(s) could not be delivered yet</b>"
+                  f" &mdash; retrying automatically every 2 minutes"
+                  f"{(' (last error: ' + e(str(ast.get('last_error',''))[:80]) + ')') if ast.get('last_error') else ''}."
+                  f" Act on these from this page:<ul>{rows}</ul></div>")
     status_color = "#16a34a" if all_ok else ("#d97706" if alive_n else "#dc2626")
+    if crit:
+        status_color = "#dc2626"
     status_line = (
         f"<div class=status style='border-color:{status_color}'>"
         f"<span class=dot style='background:{status_color}'></span>"
@@ -233,7 +264,8 @@ def render():
         f" &nbsp;·&nbsp; last XRPL ledger seen <b>{_fmt_ago(hb_age)}</b>"
         + (f" (#{e(hb.get('ledger'))})" if hb.get("ledger") else "")
         + f" &nbsp;·&nbsp; network mapped <b>{_fmt_ago(mapper_age)}</b>"
-        f" &nbsp;·&nbsp; your funds: <b>{e(funds_state)}</b></div>")
+        f" &nbsp;·&nbsp; your funds: <b>{e(funds_state)}</b>"
+        f" &nbsp;·&nbsp; <b>{e(alerts_txt)}</b></div>")
 
     # --- watcher cards ---
     cards = ""
@@ -310,6 +342,7 @@ def render():
 :root{{--bg:#0f1115;--fg:#e8eaf0;--mut:#9aa1b2;--line:#262b36;--acc:#5aa2ff;--warn:#ff6a5a}}
 body{{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;max-width:960px;margin:0 auto;padding:18px}}
 h1{{font-size:22px;margin:0 0 4px}} h2{{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:24px 0 8px}}
+.banner{{border:2px solid #dc2626;background:#2a1215;border-radius:12px;padding:10px 14px;margin:10px 0;font-size:14px}}
 .status{{border:2px solid;border-radius:12px;padding:10px 14px;margin:12px 0;font-size:14px}}
 .row{{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}}
 .row4{{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:10px}}
@@ -324,6 +357,7 @@ table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom
 small{{font-size:12px}}</style></head><body>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 {status_line}
+{banner}
 
 <h2>Watchers</h2><div class=row>{cards}</div>
 
@@ -394,6 +428,8 @@ def main():
     stop_evt = threading.Event()
     for label, argv, logfile in SERVICES:
         threading.Thread(target=supervise, args=(label, argv, logfile, stop_evt), daemon=True).start()
+
+    threading.Thread(target=alert_flusher, args=(stop_evt,), daemon=True).start()
 
     port = _free_port(a.port)
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)

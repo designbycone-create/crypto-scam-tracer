@@ -36,9 +36,19 @@ except Exception:   # allow running the file directly from its own folder
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "scamconfig.py"))
     scamconfig = _ilu.module_from_spec(_spec); _spec.loader.exec_module(scamconfig)
 
+try:
+    import alerts
+except Exception:
+    alerts = None
+
 # ---------------------------------------------------------------- config ----
 # Addresses to watch come from config.json -> "watched_wallets".
 WATCHED = dict(scamconfig.get("watched_wallets") or {})
+# Only the wallets YOU configured push to your phone. Hops added by
+# follow-the-money are logged here and watched properly (time-forward) by the
+# Network watcher, so pushing them too would just burn the alert quota.
+ORIGINAL = set(WATCHED)
+MAX_AUTO_HOPS = 25
 
 # Public XRPL WebSocket servers, tried in order on (re)connect.
 SERVERS = scamconfig.get("servers") or [
@@ -106,7 +116,10 @@ def desktop_alert(title: str, msg: str) -> None:
         pass
 
 
-def phone_alert(title: str, msg: str) -> None:
+def phone_alert(title: str, msg: str, critical: bool = False, key: str = None) -> None:
+    if alerts is not None:
+        alerts.send(title, msg, critical=critical, key=key)
+        return
     if not NTFY_TOPIC:
         return
     try:
@@ -120,10 +133,11 @@ def phone_alert(title: str, msg: str) -> None:
         print(f"[{now()}] phone push failed: {e}")
 
 
-def alert(title: str, msg: str) -> None:
+def alert(title: str, msg: str, push: bool = True, critical: bool = False, key: str = None) -> None:
     print("\n" + "!" * 70 + f"\n{title}\n{msg}\n" + "!" * 70 + "\n")
-    desktop_alert(title, msg)
-    phone_alert(title, msg)
+    if push:
+        desktop_alert(title, msg)
+        phone_alert(title, msg, critical=critical, key=key)
 
 
 # ------------------------------------------------------- classification -----
@@ -174,8 +188,9 @@ def handle_tx(tx: dict, meta: dict, validated: bool, source: str) -> None:
             "SCAM WALLET MOVED FUNDS",
             f"{label}\n{fmt_amount(delivered)} sent\nTo: {dest}\n{exch_hint}\n"
             f"Tx: {tx_hash}\nhttps://livenet.xrpl.org/transactions/{tx_hash}",
+            push=addr in ORIGINAL, critical=tag is not None, key=tx_hash,
         )
-        if dest and dest not in WATCHED and tag is None:
+        if dest and dest not in WATCHED and tag is None and len(WATCHED) - len(ORIGINAL) < MAX_AUTO_HOPS:
             # Follow the money: auto-add the next hop (takes effect on next subscribe).
             WATCHED[dest] = f"next hop from {addr[:8]}…"
             print(f"[{now()}] Added {dest} to watch list (follow-the-money).")
@@ -184,7 +199,8 @@ def handle_tx(tx: dict, meta: dict, validated: bool, source: str) -> None:
     elif direction == "INCOMING":
         print(f"[{now()}] New victim payment in: {fmt_amount(delivered)} from {tx.get('Account')} ({when})")
     else:
-        alert("SCAM WALLET ACTIVITY", f"{label}\n{ttype} ({result}) touched the wallet.\nTx: {tx_hash}")
+        alert("SCAM WALLET ACTIVITY", f"{label}\n{ttype} ({result}) touched the wallet.\nTx: {tx_hash}",
+              push=addr in ORIGINAL, key=tx_hash)
 
 
 # ----------------------------------------------------------- main loop ------

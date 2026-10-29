@@ -31,3 +31,5 @@ scam_network.html
 ic3_evidence.txt
 *.heartbeat
 desk_status.json
+alerts_outbox.json
+alerts_state.json

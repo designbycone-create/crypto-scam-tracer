@@ -63,8 +63,14 @@ def log_event(line):
         pass
 
 
-def phone(title, msg, actions=None):
-    """Send a phone alert. `actions` is a list of (label, url) buttons (max 3)."""
+def phone(title, msg, actions=None, critical=False, key=None):
+    """Send a phone alert through the reliable outbox (retries on failure)."""
+    try:
+        import alerts
+        alerts.send(f"[NETWORK] {title}", msg, critical=critical, actions=actions, key=key)
+        return
+    except ImportError:
+        pass
     if not NTFY_TOPIC:
         return
     try:
@@ -186,20 +192,21 @@ async def _process(net, tx, meta, seen):
             phone("⚠ BRIDGE/SWAP - funds may be leaving XRPL",
                   f"{amt:,.0f} XRP reached {name} (tag {tag}). Funds may be converting to another "
                   f"asset/chain - act fast. Tap to open the freeze request. (Saved in network_reports\\)",
-                  actions=actions)
+                  actions=actions, critical=True, key=h)
         else:
             log_event(f"CASH-OUT: {amt:.2f} XRP from {sender[:10]}... -> {dn.get('label') or dest} tag {tag}  tx {h}"
                       + (f"  | freeze-request draft: {report_path}" if report_path else ""))
             phone("CASH-OUT -> freeze request ready",
                   f"{amt:,.0f} XRP reached {dn.get('label') or dest} (tag {tag}). Tap to open the freeze "
-                  f"request, ready to send. (Also saved in network_reports\\)", actions=actions)
+                  f"request, ready to send. (Also saved in network_reports\\)", actions=actions,
+                  critical=True, key=h)
     else:
         net["nodes"][dest]["role"] = "hop wallet"
         if dest not in net["watchlist"]:
             net["watchlist"].append(dest)
         log_event(f"NETWORK EXPANDED: {amt:.2f} XRP from {sender[:10]}... -> NEW hop {dest}  tx {h}")
         phone("Scam network expanded",
-              f"{amt:,.0f} XRP moved to a new wallet now being watched: {dest}. tx {h}")
+              f"{amt:,.0f} XRP moved to a new wallet now being watched: {dest}. tx {h}", key=h)
     _refresh_summary(net)
     return True
 

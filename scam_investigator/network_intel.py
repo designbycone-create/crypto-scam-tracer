@@ -152,7 +152,7 @@ table{{width:100%;border-collapse:collapse;font-size:13px;display:block;overflow
 def export_ic3(net, case):
     s = _stats(net)
     lines = []
-    lines.append("CRYPTOCURRENCY FRAUD — ON-CHAIN EVIDENCE RECORD (XRP Ledger)")
+    lines.append("CRYPTOCURRENCY FRAUD - ON-CHAIN EVIDENCE RECORD (XRP Ledger)")
     lines.append("Generated: " + _now())
     lines.append("Root scam receiving wallet: " + net.get("start", ""))
     refs = []

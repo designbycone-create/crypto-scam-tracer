@@ -41,6 +41,7 @@ except Exception:
 MAP_JSON = "network_map.json"
 MAP_HTML = "network_map.html"
 EVENT_LOG = "netwatch_events.log"
+HEARTBEAT = "netwatch.heartbeat"
 
 SCAM_WALLET = (scamconfig.scam_wallet() if scamconfig else "") or os.environ.get("SCAM_WALLET", "").strip()
 NTFY_TOPIC = ((scamconfig.get("ntfy_topic") if scamconfig else "") or os.environ.get("NTFY_TOPIC", "")).strip()
@@ -223,11 +224,25 @@ async def watch():
         try:
             async with websockets.connect(server, ping_interval=20, ping_timeout=20, max_size=2**24) as ws:
                 subs = set(watch_set())
-                await ws.send(json.dumps({"id": "sub", "command": "subscribe", "accounts": list(subs)}))
+                await ws.send(json.dumps({"id": "sub", "command": "subscribe", "accounts": list(subs),
+                                          "streams": ["ledger"]}))
                 log_event(f"Live on {server}. Watching {len(subs)} wallet(s) across the network.")
                 attempt = 0
-                async for raw in ws:
+                while True:
+                    try:
+                        raw = await asyncio.wait_for(ws.recv(), timeout=90)
+                    except asyncio.TimeoutError:
+                        raise ConnectionError("no ledger for 90s - subscription stale, reconnecting")
                     msg = json.loads(raw)
+                    if msg.get("type") == "ledgerClosed":
+                        # heartbeat: proves the subscription is actually receiving
+                        try:
+                            with open(HEARTBEAT, "w", encoding="utf-8") as hb:
+                                hb.write(json.dumps({"time": now(), "ledger": msg.get("ledger_index"),
+                                                     "watching": len(subs)}))
+                        except Exception:
+                            pass
+                        continue
                     if msg.get("type") != "transaction" or not msg.get("validated", False):
                         continue
                     tx = dict(msg.get("tx_json") or msg.get("transaction") or {})

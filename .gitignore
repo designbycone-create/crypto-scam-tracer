@@ -24,3 +24,10 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# evidence + desk state
+scam_network.json
+scam_network.html
+ic3_evidence.txt
+*.heartbeat
+desk_status.json

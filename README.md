@@ -80,6 +80,27 @@ python desk.py          # Windows: double-click run_desk.cmd   ·   macOS/Linux:
 Leave it running; the dashboard auto-refreshes. Close the window to stop
 everything. Prefer to run the pieces individually? Keep reading.
 
+The Desk shows:
+- **A live status line** — how many watchers are running, how long ago the
+  last XRP Ledger ledger was received (proof the connection is actually live),
+  and when the network was last mapped. A stale connection is detected and
+  reconnected automatically.
+- **Your funds** — parked in a wallet, or cashed out to an exchange (with the
+  freeze draft one click away).
+- **The network behind the scam** — continuously built and logged: every
+  wallet the scam wallet feeds, the consolidation wallets that relay the money,
+  and every exchange the operation cashes out through. These wallets move
+  *other victims'* stolen funds too; the record documents all of it.
+- **An evidence record ready for law enforcement** — open the full network
+  map, or download a plain-text, time-ordered evidence file (wallets, flows,
+  exchange deposits, destination tags, tx hashes) to attach to an IC3
+  complaint or send to an exchange's law-enforcement desk.
+
+You can also build the evidence record on its own:
+```bash
+python -m scam_investigator.network_intel --once   # writes scam_network.html + ic3_evidence.txt
+```
+
 ### Run just the live watcher
 ```bash
 python xrpl_watcher.py

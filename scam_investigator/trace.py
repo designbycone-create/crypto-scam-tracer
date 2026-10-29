@@ -98,15 +98,25 @@ async def profile_wallet(L, addr):
     return {"incoming": incoming, "outgoing": outgoing, "activation": activation, "tx_count": len(txs)}
 
 
-async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True):
-    """Breadth-first, TIME-FORWARD trace from `start`. Stolen funds arrive at a
-    wallet at some time T; we only follow that wallet's outgoing payments at
-    time >= T. A reused laundering hub may have months of unrelated history
-    (and other people's funds) flowing through it -- following all of it would
-    wrongly attribute strangers' transactions to this victim. The root scam
-    wallet is exempt (it exists only to collect and forward the stolen funds).
+async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True,
+                time_forward=True, theft_epoch=None, max_nodes=500):
+    """Breadth-first trace from `start`.
 
-    Stops at exchange deposits, labeled services, and payments below `min_xrp`.
+    Two modes, because this tool serves two jobs:
+
+    * time_forward=True  -> the VICTIM / FREEZE view. Stolen funds arrive at a
+      wallet at time T; only that wallet's outgoing at time >= T is followed.
+      This keeps a freeze request precise: you never claim a shared wallet's
+      earlier, unrelated deposit is your specific stolen money. The root scam
+      wallet is exempt.
+
+    * time_forward=False -> the NETWORK / EVIDENCE view. Follow the full
+      downstream graph (bounded by max_depth / max_nodes): every wallet the
+      scam wallet feeds, and every exchange those wallets deposit to. This is
+      the laundering network behind the scam -- intelligence for a law-
+      enforcement (IC3) record. Each flow and endpoint is tagged `post_theft`
+      (True/False/None) relative to `theft_epoch` so the two views stay
+      distinguishable within one graph.
     """
     labels = load_labels()
     async with Ledger() as L:
@@ -118,18 +128,20 @@ async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True):
         frontier, seen = [(start, 0, None)], {start}
         profiles = {start: root_profile}
 
-        while frontier:
+        while frontier and len(nodes) < max_nodes:
             addr, depth, after = frontier.pop(0)
             prof = profiles.get(addr) or await profile_wallet(L, addr)
             profiles[addr] = prof
             for p in prof["outgoing"]:
                 if p["type"] != "Payment" or (p["xrp"] is not None and p["xrp"] < min_xrp):
                     continue
-                # time-forward: skip outflows that predate the stolen funds' arrival
-                if after is not None and p.get("epoch") is not None and p["epoch"] < after:
+                pe = p.get("epoch")
+                # freeze view only: skip outflows that predate the funds' arrival
+                if time_forward and after is not None and pe is not None and pe < after:
                     continue
+                post_theft = None if (theft_epoch is None or pe is None) else (pe >= theft_epoch)
                 dest = p["to"]
-                edges.append({**p, "depth": depth + 1})
+                edges.append({**p, "depth": depth + 1, "post_theft": post_theft})
                 if dest not in nodes:
                     nodes[dest] = await describe_account(L, dest, labels, use_xrpscan)
                 n = nodes[dest]
@@ -138,11 +150,12 @@ async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True):
                 if custodial:
                     n["role"] = "likely exchange / custodial deposit"
                     endpoints.append({"address": dest, "label": n["label"], "destination_tag": p["destination_tag"],
-                                      "xrp": p["xrp"], "hash": p["hash"], "time": p["time"], "depth": depth + 1})
+                                      "xrp": p["xrp"], "hash": p["hash"], "time": p["time"],
+                                      "epoch": pe, "depth": depth + 1, "post_theft": post_theft})
                 elif dest not in seen and depth + 1 < max_depth:
                     n["role"] = "intermediate wallet (hop)"
                     seen.add(dest)
-                    frontier.append((dest, depth + 1, p.get("epoch")))
+                    frontier.append((dest, depth + 1, pe))
                 else:
                     n.setdefault("role", "untraced (depth limit)")
 
@@ -169,7 +182,9 @@ async def trace(start, max_depth=4, min_xrp=50, use_xrpscan=True):
             "victim_sources": len(senders),
             "total_received_xrp": round(sum(p["xrp"] or 0 for p in root_profile["incoming"]), 6),
             "outgoing_payments": len(root_profile["outgoing"]),
-            "exchange_endpoints": len(endpoints),
+            "wallets_in_network": len(nodes),
+            "exchange_endpoints": len(endpoints),             # full network (evidence)
+            "freeze_targets_post_theft": len([e for e in endpoints if e.get("post_theft")]),
         },
         "activation": act,
         "victim_sources": senders,

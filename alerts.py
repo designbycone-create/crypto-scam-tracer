@@ -41,7 +41,7 @@ def _now():
 
 def _load(path, default):
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(path, encoding="utf-8-sig") as f:   # tolerate a BOM (Windows editors)
             return json.load(f)
     except Exception:
         return default

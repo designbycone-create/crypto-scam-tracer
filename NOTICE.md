@@ -17,4 +17,4 @@ open-source. A separate institutional edition (multi-case workspaces, agency
 packets, signed evidence bundles) is developed privately by FPH LLC. See
 `ROADMAP.md`.
 
-Contact: designbycone@gmail.com
+Contact: open an issue at https://github.com/designbycone-create/crypto-scam-tracer/issues

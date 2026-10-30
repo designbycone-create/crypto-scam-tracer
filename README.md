@@ -14,6 +14,11 @@ star it and pass it on.
 > trail for law enforcement. Speed matters — the sooner you run it after a
 > theft, the better your chances.
 
+> 🤝 **Trust pledge — free for victims, always.** This tool never asks for money,
+> a seed phrase or a "recovery fee"; never contacts victims; never sends anything
+> on your behalf; never promises recovery. Anyone who does is running a recovery
+> scam. See [TRUST.md](TRUST.md).
+
 ---
 
 ## What it does
@@ -46,6 +51,46 @@ and Avalanche**, flagging every wallet, exchange, bridge, and mixer. It captures
 
 It runs as an automated daemon: re-traces known addresses on a loop, auto-drafts
 reports, and phone-alerts you whenever the trail grows.
+
+### 4. Submission Center (`freezekit`) — freeze requests that actually get through
+Emailing exchanges from your own inbox mostly fails: support addresses bounce,
+many exchanges only take portal submissions, US users get geo-blocked, and
+**exchanges freeze on law-enforcement requests, not victim emails.** So instead
+of guessed email drafts, the Desk builds a **freeze kit** for every platform the
+money reached and routes it through the channels that work:
+
+1. **SEAL 911** (free, Telegram `@seal_911_bot`) — security researchers who are
+   members of TRM's **Beacon Network**, which alerts member exchanges
+   automatically when flagged funds arrive. A prefilled message is ready.
+2. **The platform's victim channel**, where one exists and is verified (e.g.
+   MEXC's report form — which starts a 48-hour clock the Desk counts down).
+3. **An Officer Packet** — a printable, signed-request-ready package your local
+   police / sheriff / FBI field office submits through each exchange's
+   **law-enforcement portal** (no geo-blocks, no support queue).
+4. **IC3 and Chainabuse updates**, prefilled with every new wallet and exchange.
+5. **Issuer freezes** — if the network swaps into an issued token (RLUSD on
+   XRPL, USDT/USDC elsewhere), the issuer can freeze or claw it back. The Desk
+   scans every network wallet's trust lines and reads issuer flags.
+
+Every channel lives in a **verified directory** (`freezekit/channels.json`)
+with its source; an email draft is only ever built for a verified address.
+Every kit file is SHA-256 hashed into a hash-chained **custody log**, and each
+kit has a `MANIFEST.txt` an officer can verify. Status tracking (to do →
+submitted → acknowledged → frozen) shows what's left.
+
+### 5. Incident mode, scam radar, claim checker (`responder`)
+- **Incident mode** — a hack just happened? Paste any text with attacker
+  addresses (any chain, checksum-validated). XRPL addresses are watched live;
+  others seed the multi-chain tracer. Public address feeds can be subscribed.
+- **Early-warning signals** — fresh throwaway wallets, victim collectors,
+  laundering splitters, drained wallets, exchange-funded wallets (KYC leads),
+  EIP-7702-delegated and mixer-funded EVM wallets.
+- **Exchange status** — reads public status pages where they exist.
+- **Scam radar** — watches public Certificate Transparency logs for new
+  "refund / compensation / claim" lookalike domains, which appear within hours
+  of every big hack.
+- **Claim checker** — paste a message or link; get the red flags and whether
+  any address or domain in it belongs to the network you're tracking.
 
 ---
 
@@ -123,7 +168,18 @@ python -m multichain watch
 
 ---
 
-## Phone alerts (optional, free)
+## Alerts (optional, free) — use two channels
+
+Critical alerts (your funds hitting an exchange) go to **every** channel you
+configure, so one channel being down or over quota never loses one. Test them
+with `python alerts.py test`.
+
+- **Telegram** — create a bot with @BotFather, put `bot_token` and your
+  `chat_id` under `"telegram"` in `config.json`.
+- **Email** — a Gmail *app password* under `"alert_email"` (critical alerts only).
+- **ntfy** — below.
+
+### ntfy
 
 Install the free **[ntfy](https://ntfy.sh)** app, subscribe to a hard-to-guess
 topic name, and put that topic in `config.json` under `"ntfy_topic"`. You'll get
@@ -184,8 +240,11 @@ the tool handles it honestly:
 ## Report first, always
 
 Before anything else, file a report with law enforcement. In the U.S. that's the
-FBI's **[IC3](https://www.ic3.gov)**. Also report the wallet/site to
-**[Chainabuse](https://chainabuse.com)**. This tool helps you act fast and build
+FBI's **[IC3](https://www.ic3.gov)** — and get a report number from your local
+police, because exchanges freeze on law-enforcement requests. If funds are
+still moving, contact **SEAL 911** (Telegram `@seal_911_bot`). Also report the
+wallet/site to **[Chainabuse](https://chainabuse.com)**. **Never use a VPN** to
+get around an exchange's geo-block; law-enforcement systems reject it. This tool helps you act fast and build
 the evidence — it does not replace law enforcement.
 
 ---

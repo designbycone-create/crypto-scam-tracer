@@ -8,5 +8,9 @@
   "ic3_id": "YOUR_FBI_IC3_COMPLAINT_NUMBER",
   "reports": [
     "Chainabuse https://chainabuse.com/report/YOUR_REPORT_ID"
-  ]
+  ],
+  "phone": "",
+  "victim_wallet": "",
+  "amount": "",
+  "theft_time": ""
 }

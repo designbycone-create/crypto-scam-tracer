@@ -49,6 +49,25 @@ WATCHED = dict(scamconfig.get("watched_wallets") or {})
 # Network watcher, so pushing them too would just burn the alert quota.
 ORIGINAL = set(WATCHED)
 MAX_AUTO_HOPS = 25
+# Incident mode (responder/incident.py): attacker wallets pasted by the user.
+INCIDENT = set()
+
+
+def _load_incident():
+    """Merge incident-mode XRPL addresses into the watch list. Returns new ones."""
+    try:
+        from responder import incident
+        lst = incident.xrpl_watch_list()
+    except Exception:
+        return set()
+    new = {a for a in lst if a not in WATCHED}
+    for a in new:
+        WATCHED[a] = lst[a]
+    INCIDENT.update(lst)
+    return new
+
+
+_load_incident()
 
 # Public XRPL WebSocket servers, tried in order on (re)connect.
 SERVERS = scamconfig.get("servers") or [
@@ -188,7 +207,10 @@ def handle_tx(tx: dict, meta: dict, validated: bool, source: str) -> None:
             "SCAM WALLET MOVED FUNDS",
             f"{label}\n{fmt_amount(delivered)} sent\nTo: {dest}\n{exch_hint}\n"
             f"Tx: {tx_hash}\nhttps://livenet.xrpl.org/transactions/{tx_hash}",
-            push=addr in ORIGINAL, critical=tag is not None, key=tx_hash,
+            # your own wallets push every move; incident (attacker) wallets push when
+            # funds hit an exchange (tag) -- that is the freeze moment
+            push=addr in ORIGINAL or (addr in INCIDENT and tag is not None),
+            critical=tag is not None, key=tx_hash,
         )
         if dest and dest not in WATCHED and tag is None and len(WATCHED) - len(ORIGINAL) < MAX_AUTO_HOPS:
             # Follow the money: auto-add the next hop (takes effect on next subscribe).
@@ -244,10 +266,20 @@ async def watch() -> None:
                 print(f"[{now()}] Connected to {server}")
                 await snapshot(ws, seen)
                 subscribed = set(WATCHED)
-                await rpc(ws, {"id": "sub", "command": "subscribe", "accounts": list(subscribed)})
+                await rpc(ws, {"id": "sub", "command": "subscribe", "accounts": list(subscribed),
+                               "streams": ["ledger"]})   # ledger ticks keep the loop (and incident pickup) alive
                 print(f"[{now()}] Watching {len(subscribed)} address(es) live. Ctrl+C to stop.\n")
                 attempt = 0
+                last_inc = time.time()
                 async for raw in ws:
+                    if time.time() - last_inc > 60:   # pick up newly pasted incident addresses
+                        last_inc = time.time()
+                        if _load_incident():
+                            new = set(WATCHED) - subscribed
+                            if new:
+                                await ws.send(json.dumps({"id": "subinc", "command": "subscribe", "accounts": list(new)}))
+                                subscribed |= new
+                                print(f"[{now()}] Incident mode: now watching {len(new)} more address(es).")
                     msg = json.loads(raw)
                     if msg.get("type") != "transaction":
                         continue

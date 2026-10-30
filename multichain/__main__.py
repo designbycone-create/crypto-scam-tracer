@@ -188,6 +188,15 @@ def cmd_watch(a):
             entities.refresh(log=_log)  # only hits network when stale
             t = Tracer.load(MAP, max_nodes=a.max_nodes, max_depth=a.max_depth, cross_evm=not a.no_cross_evm, log=_log)
             before = (len(t.nodes), len(t.endpoints), len(t.freeze_ops))
+            try:   # incident-mode addresses (any non-XRPL chain) become seeds
+                from responder import incident as _inc
+                for r in _inc.load()["addresses"]:
+                    if r["chain"] != "xrpl" and r.get("active", True) and \
+                            not any(s[0] == r["chain"] and str(s[1]).lower() == r["address"].lower() for s in t.seeds):
+                        t.seeds.append((r["chain"], r["address"], None))
+                        _log(f"incident seed added: {r['chain']} {r['address']}")
+            except Exception as ex:
+                _log(f"(incident seeds skipped: {ex})")
             imported = _import_xrpl(t, getattr(a, "xrpl_map", "network_map.json"))  # auto-pick-up XRPL swap leads
             if imported:
                 _log(f"imported {imported} new XRPL swap handoff(s); resolve with 'resume' once destination is known")

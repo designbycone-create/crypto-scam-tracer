@@ -5,7 +5,25 @@
   "scam_wallet": "rEXAMPLEscamWalletAddressGoesHere00000000",
   "ntfy_topic": "",
   "min_xrp": 25,
-  "servers": ["wss://xrplcluster.com", "wss://s1.ripple.com", "wss://s2.ripple.com"],
+  "servers": [
+    "wss://xrplcluster.com",
+    "wss://s1.ripple.com",
+    "wss://s2.ripple.com"
+  ],
   "victim_file": "victim.json",
-  "etherscan_key": ""
+  "etherscan_key": "",
+  "telegram": {
+    "bot_token": "",
+    "chat_id": ""
+  },
+  "alert_email": {
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 465,
+    "username": "",
+    "app_password": "",
+    "to": ""
+  },
+  "incident_feeds": [],
+  "radar_brands": [],
+  "radar_keywords": []
 }

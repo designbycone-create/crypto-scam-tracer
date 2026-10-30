@@ -40,6 +40,8 @@ SERVICES = [
     ("Network watcher", [sys.executable, "-u", "-m", "scam_investigator.netwatch"], "netwatch_desk.log"),
     ("Network mapper", [sys.executable, "-u", "-m", "scam_investigator.network_intel"], "network_intel_desk.log"),
     ("Multi-chain tracer", [sys.executable, "-u", "-m", "multichain", "watch"], "mc_desk.log"),
+    # freeze kits, issued-token freeze scan, incident feeds, exchange status, scam radar, risk signals
+    ("Responder", [sys.executable, "-u", "-m", "responder.daemon"], "responder_desk.log"),
 ]
 
 _state_lock = threading.Lock()
@@ -319,17 +321,28 @@ def render():
     else:
         network = "<p class=mut>Building the network record — the first full map takes a few minutes, then it keeps growing.</p>"
 
-    # --- freeze actions ---
-    links = _freeze_links()
-    if links:
-        acts = "<table><tr><th>Target</th><th>Detail</th><th>Action</th></tr>"
-        for who, detail, lbl, url in links:
-            acts += (f"<tr><td>{e(who)}</td><td>{e(detail)}</td>"
-                     f"<td><a class=btn href='{e(url)}' target=_blank>{e(lbl)}</a></td></tr>")
-        acts += "</table>"
-    else:
-        acts = ("<p class=mut>No freeze request for your own funds yet — they haven't reached an exchange. "
-                "Meanwhile, the evidence record above is ready to send to IC3 and to every exchange the network uses.</p>")
+    # --- freeze actions: the Submission Center ---
+    try:
+        from freezekit import tracker
+        st = tracker.load()
+        tgs = st.get("targets", {})
+        mine = {k: v for k, v in tgs.items() if v.get("yours")}
+        done = sum(1 for k, v in st.get("status", {}).items() if v.get("state") in ("submitted", "acknowledged", "frozen", "not needed"))
+        if mine:
+            items = "".join(f"<li><b>{e(v.get('name') or k)}</b> — {v.get('xrp', 0):,.2f} XRP · cash-out "
+                            f"{e(tracker.elapsed(v.get('yours_since') or v.get('detected', '')))} "
+                            f"<a href='/submit#{e(k)}'>open kit</a></li>" for k, v in mine.items())
+            acts = (f"<p class=warn><b>Your funds reached {len(mine)} platform(s). Freeze kits are built.</b></p><ul>{items}</ul>"
+                    f"<p><a class=btn href='/submit'>Open Submission Center</a> "
+                    f"<a class='btn alt' href='/kit/_case/officer_packet.html' target=_blank>Print Officer Packet</a> "
+                    f"<small class=mut>{done} step(s) marked done · {len(tgs) - len(mine)} other network cash-out point(s) documented</small></p>")
+        elif tgs:
+            acts = (f"<p class=mut>Your own funds haven't reached an exchange. {len(tgs)} network cash-out point(s) are documented "
+                    f"with officer-ready kits.</p><p><a class=btn href='/submit'>Open Submission Center</a></p>")
+        else:
+            acts = "<p class=mut>Freeze kits appear here as soon as the network map finds a cash-out point.</p>"
+    except Exception as ex:
+        acts = f"<p class=mut>Submission Center unavailable ({e(ex)}).</p>"
 
     events = _tail("netwatch_events.log", 8) + _tail("network_intel_desk.log", 4) + _tail("mc_events.log", 4)
     ev = "".join(f"<div class=ev>{e(x.rstrip())}</div>" for x in events if x.strip()) or "<div class=mut>No events yet.</div>"
@@ -355,7 +368,9 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/check'>Claim checker</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
+<div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
 {banner}
 
@@ -365,12 +380,12 @@ small{{font-size:12px}}</style></head><body>
 
 <h2>The network behind this scam</h2>{network}
 
-<h2>Freeze / preservation actions</h2>{acts}
+<h2>Freeze requests &mdash; Submission Center</h2>{acts}
 
 <h2>Recent activity</h2>{ev}
 
 <p class=mut style=margin-top:20px><small>Scam wallet: <span class=m>{e(root)}</span>{(' · your tx: <span class=m>'+e(stolen[:24])+'&hellip;</span>') if stolen else ''}<br>
-All drafts are for your review before sending. Data is public and verifiable on the XRP Ledger.</small></p>
+Nothing is ever sent without you. Data is public and verifiable on the XRP Ledger.</small></p>
 </body></html>"""
 
 
@@ -378,11 +393,12 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
-    def _send(self, body, ctype, extra=None):
-        data = body.encode("utf-8")
-        self.send_response(200)
+    def _send(self, body, ctype, extra=None, code=200):
+        data = body if isinstance(body, bytes) else body.encode("utf-8")
+        self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Frame-Options", "DENY")
         for k, v in (extra or {}).items():
             self.send_header(k, v)
         self.end_headers()
@@ -390,6 +406,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path, _, query = self.path.partition("?")
+        try:
+            from freezekit import web
+        except Exception:
+            web = None
         if path in ("/", "/index.html"):
             return self._send(render(), "text/html; charset=utf-8")
         if path == "/network":
@@ -401,8 +421,52 @@ class Handler(BaseHTTPRequestHandler):
             if "download" in query:
                 extra["Content-Disposition"] = f'attachment; filename="scam-network-evidence-{datetime.now():%Y%m%d}.txt"'
             return self._send(body, "text/plain; charset=utf-8", extra)
-        self.send_response(404)
-        self.end_headers()
+        if web is not None:
+            if path == "/submit":
+                return self._send(web.submission_center(), "text/html; charset=utf-8")
+            if path == "/incident":
+                return self._send(web.incident_page(), "text/html; charset=utf-8")
+            if path == "/radar":
+                return self._send(web.radar_page(), "text/html; charset=utf-8")
+            if path == "/check":
+                return self._send(web.check_page(), "text/html; charset=utf-8")
+            if path.startswith("/kit/"):
+                r = web.kit_file(path[5:])
+                if r:
+                    return self._send(r[0], r[1])
+        self._send("Not found", "text/plain", code=404)
+
+    def _local_origin(self):
+        """Only accept form posts from the Desk's own pages (blocks cross-site POSTs)."""
+        src = self.headers.get("Origin") or self.headers.get("Referer") or ""
+        if not src:
+            return True
+        from urllib.parse import urlparse
+        return (urlparse(src).hostname or "") in ("127.0.0.1", "localhost")
+
+    def do_POST(self):
+        from urllib.parse import parse_qs
+        if not self._local_origin():
+            return self._send("Forbidden", "text/plain", code=403)
+        n = min(int(self.headers.get("Content-Length") or 0), 2_000_000)
+        form = {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode("utf-8", "replace")).items()}
+        from freezekit import web
+        path = self.path.partition("?")[0]
+        try:
+            if path == "/submit/status":
+                web.handle_status_post(form)
+                ref = self.headers.get("Referer") or "/submit"
+                self.send_response(303)
+                self.send_header("Location", "/submit" + ("#" + form["key"].split(":")[0] if ":" in form.get("key", "") else ""))
+                self.end_headers()
+                return
+            if path == "/incident":
+                return self._send(web.incident_post(form), "text/html; charset=utf-8")
+            if path == "/check":
+                return self._send(web.check_post(form), "text/html; charset=utf-8")
+        except Exception as ex:
+            return self._send(f"Error: {ex}", "text/plain", code=500)
+        self._send("Not found", "text/plain", code=404)
 
 
 def _free_port(preferred):

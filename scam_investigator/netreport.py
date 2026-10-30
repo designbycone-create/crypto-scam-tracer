@@ -45,12 +45,9 @@ GENERIC_ROUTE = ("Identify this exchange's compliance / law-enforcement request 
 # Direct compliance EMAIL where one exists (enables a one-tap Gmail draft).
 # Where an exchange only takes reports via a web portal, we open the PORTAL
 # instead. VERIFY these before relying on them.
-EXCHANGE_EMAIL = {
-    "coinbase":  "lawenforcement@coinbase.com",
-    "kraken":    "lawenforcement@kraken.com",
-    "changenow": "compliance@changenow.io",
-    "uphold":    "compliance@uphold.com",
-}
+EXCHANGE_EMAIL = {}   # Only VERIFIED addresses belong here -- see freezekit/channels.json,
+                      # which the Submission Center uses. Guessed emails bounce and waste
+                      # the hours that matter, so none are hardcoded.
 EXCHANGE_PORTAL = {
     "binance": "https://www.binance.com/en/support/law-enforcement",
     "kucoin":  "https://www.kucoin.com/legal",

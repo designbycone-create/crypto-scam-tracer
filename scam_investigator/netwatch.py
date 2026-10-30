@@ -178,12 +178,11 @@ async def _process(net, tx, meta, seen):
             report_path = netreport.write_report(ep, net["root"], case=netreport.load_case())
         except Exception as ex:
             log_event(f"(report draft failed: {ex})")
-        try:
-            btn = netreport.gmail_action(ep, net["root"], case=netreport.load_case())
-            tx_btn = ("View transaction", f"https://livenet.xrpl.org/transactions/{h}")
-            actions = [btn] + ([tx_btn] if btn[0] != "View transaction" else [])
-        except Exception:
-            actions = None
+        # Phone actions that work FROM THE PHONE: SEAL 911 (fastest freeze route),
+        # the transaction, and the Desk's Submission Center (on your PC).
+        actions = [("SEAL 911 (Telegram)", "https://t.me/seal_911_bot"),
+                   ("View transaction", f"https://livenet.xrpl.org/transactions/{h}"),
+                   ("Submission Center (PC)", "http://127.0.0.1:8787/submit")]
         if is_swap:
             name = dn.get("swap_name") or dn.get("label") or dest
             log_event(f"BRIDGE/SWAP: {amt:.2f} XRP from {sender[:10]}... -> {name} tag {tag}  "
@@ -191,14 +190,14 @@ async def _process(net, tx, meta, seen):
                       + (f"  | freeze-request draft: {report_path}" if report_path else ""))
             phone("⚠ BRIDGE/SWAP - funds may be leaving XRPL",
                   f"{amt:,.0f} XRP reached {name} (tag {tag}). Funds may be converting to another "
-                  f"asset/chain - act fast. Tap to open the freeze request. (Saved in network_reports\\)",
+                  f"asset/chain - act fast. 1) SEAL 911 now 2) Submission Center on your PC has the freeze kit.",
                   actions=actions, critical=True, key=h)
         else:
             log_event(f"CASH-OUT: {amt:.2f} XRP from {sender[:10]}... -> {dn.get('label') or dest} tag {tag}  tx {h}"
                       + (f"  | freeze-request draft: {report_path}" if report_path else ""))
             phone("CASH-OUT -> freeze request ready",
-                  f"{amt:,.0f} XRP reached {dn.get('label') or dest} (tag {tag}). Tap to open the freeze "
-                  f"request, ready to send. (Also saved in network_reports\\)", actions=actions,
+                  f"{amt:,.0f} XRP reached {dn.get('label') or dest} (tag {tag}). 1) SEAL 911 now "
+                  f"2) Submission Center on your PC has the freeze kit + officer packet.", actions=actions,
                   critical=True, key=h)
     else:
         net["nodes"][dest]["role"] = "hop wallet"

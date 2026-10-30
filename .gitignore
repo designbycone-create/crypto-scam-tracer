@@ -33,3 +33,15 @@ ic3_evidence.txt
 desk_status.json
 alerts_outbox.json
 alerts_state.json
+
+# Submission Center / responder state (private case data)
+freeze_kits/
+submissions.json
+custody_log.jsonl
+token_holdings.json
+incident.json
+risk.json
+radar.json
+exchange_status.json
+channels_overrides.json
+*.tmp

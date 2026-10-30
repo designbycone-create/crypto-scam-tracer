@@ -1,0 +1,130 @@
+{
+  "_about": "Verified freeze / report channels. RULES: an entry is 'verified' only if its URL or email was read on the organization's own official page (or a primary source) on the date shown. The Submission Center only builds a one-tap email draft for a VERIFIED email. Everything else gets 'find the official channel' guidance -- never a guessed address. Edit freely, but keep 'source' honest.",
+  "_updated": "2026-10-29",
+
+  "network": {
+    "seal911": {
+      "name": "SEAL 911 (Security Alliance)",
+      "why": "Free, volunteer emergency response run by security researchers. SEAL is a member of TRM's Beacon Network, which alerts member exchanges automatically when flagged funds arrive. Fastest route to a freeze while funds are still moving.",
+      "channels": [
+        {"type": "telegram", "who": "victim", "url": "https://t.me/seal_911_bot", "verified": true, "source": "https://securityalliance.org (SEAL 911)"},
+        {"type": "email", "who": "victim", "email": "sos@securityalliance.org", "verified": true, "source": "https://securityalliance.org (SEAL 911)"}
+      ],
+      "order": 1
+    },
+    "chainabuse": {
+      "name": "Chainabuse (TRM Labs)",
+      "why": "Public scam-report database. Reports are shared with law-enforcement partners and alert crypto-organization partners whose communities are targeted. Add every wallet in the network, not only yours.",
+      "channels": [
+        {"type": "webform", "who": "victim", "url": "https://www.chainabuse.com/report", "verified": true, "source": "https://docs.trmlabs.com/guides/chainabuse"}
+      ],
+      "order": 2
+    },
+    "ic3": {
+      "name": "FBI Internet Crime Complaint Center (IC3)",
+      "why": "Federal complaint of record. Officers and exchanges ask for this number. File once, then add new wallets/exchanges as updates.",
+      "channels": [
+        {"type": "webform", "who": "victim", "url": "https://www.ic3.gov", "verified": true, "source": "https://www.ic3.gov"}
+      ],
+      "order": 3
+    },
+    "local_police": {
+      "name": "Your local police / sheriff (or FBI field office)",
+      "why": "Exchanges freeze on LAW-ENFORCEMENT requests. A local officer can submit the Officer Packet through each exchange's law-enforcement portal -- no geo-blocks, no consumer support queue. Ask for a report number and the officer's email.",
+      "channels": [
+        {"type": "in_person", "who": "victim", "url": "https://www.fbi.gov/contact-us/field-offices", "verified": true, "source": "https://www.fbi.gov/contact-us/field-offices"}
+      ],
+      "order": 4
+    }
+  },
+
+  "issuers": {
+    "rlusd": {
+      "name": "Ripple USD (RLUSD) - issued by Ripple",
+      "xrpl_issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "ethereum": "0x8292bb45bf1ee4d140127049757c2e0ff06317ed",
+      "source": "https://docs.ripple.com/products/stablecoin/overview/token-addresses",
+      "can": "The XRPL issuer has clawback / freeze controls over RLUSD trust lines.",
+      "route": "law_enforcement",
+      "note": "No public victim channel verified. Route through the officer (Officer Packet section 'Issuer freeze'), and mention it to SEAL 911."
+    },
+    "tether": {
+      "name": "Tether (USDT)",
+      "source": "Public reporting of Tether freezes at law-enforcement request (e.g. DOJ collaborations)",
+      "can": "Can freeze USDT at any address on Ethereum, Tron and other chains.",
+      "route": "law_enforcement",
+      "note": "Tether acts on law-enforcement requests. Route through the officer and SEAL 911."
+    },
+    "circle": {
+      "name": "Circle (USDC)",
+      "source": "Public reporting of Circle freezes at law-enforcement request",
+      "can": "Can blacklist USDC at any address.",
+      "route": "law_enforcement",
+      "note": "Circle acts on law-enforcement requests / court orders. Route through the officer."
+    },
+    "xrpl_issued_token": {
+      "name": "Any XRPL issued token",
+      "can": "Unless the issuer set NoFreeze, the issuer can freeze an individual trust line; if the issuer enabled AllowTrustLineClawback it can claw the tokens back. XRP itself can never be frozen or clawed back.",
+      "route": "law_enforcement",
+      "source": "https://xrpl.org/docs/concepts/tokens/fungible-tokens/clawing-back-tokens"
+    }
+  },
+
+  "exchanges": {
+    "mexc": {
+      "name": "MEXC",
+      "match": ["mexc"],
+      "us_restricted": true,
+      "deadline_hours": 48,
+      "deadline_note": "A victim report can trigger a TEMPORARY freeze; a law-enforcement request must reach MEXC within 48 hours or the freeze can lapse. Keep the report ticket open.",
+      "channels": [
+        {"type": "webform", "who": "victim", "label": "Report Abnormal Funds (victim)", "url": "https://www.mexc.com/support/requests/report", "verified": true, "source": "https://www.mexc.com/support/articles/17827791512560"},
+        {"type": "le_portal", "who": "law_enforcement", "label": "Law-enforcement request (LEORS)", "url": "https://www.mexc.com/support/requests/legal", "verified": true, "source": "https://www.mexc.com/support/articles/17827791512560"}
+      ],
+      "needs": ["Timeline of the incident", "Screenshot/video of YOUR withdrawal (proves you owned the wallet)", "Your wallet address and the MEXC deposit address + tag", "Every TxID in the chain, with explorer links"]
+    },
+    "binance": {
+      "name": "Binance",
+      "match": ["binance"],
+      "us_restricted": true,
+      "channels": [
+        {"type": "le_portal", "who": "law_enforcement", "label": "Law Enforcement Request System (agencies only; VPN submissions rejected)", "url": "https://www.binance.com/en/support/law-enforcement", "verified": true, "source": "https://www.binance.com/en/support/law-enforcement"}
+      ],
+      "note": "Victims cannot use the LE system. Give the Officer Packet to your officer. Binance is a TRM Beacon member -- SEAL 911 is the fastest victim-side route."
+    },
+    "kucoin": {
+      "name": "KuCoin",
+      "match": ["kucoin"],
+      "us_restricted": true,
+      "channels": [
+        {"type": "email", "who": "law_enforcement", "label": "Law-enforcement requests", "email": "rbenquiries@kucoin.com", "verified": true, "source": "KuCoin law-enforcement guidelines (verified 2026-10-29)"}
+      ],
+      "note": "This address is for law-enforcement requests. A victim may send the packet as a notice, but the officer's request is what gets acted on."
+    },
+    "bybit": {
+      "name": "Bybit",
+      "match": ["bybit"],
+      "us_restricted": true,
+      "channels": [
+        {"type": "webform", "who": "both", "label": "Bybit help-center webform", "url": "https://www.bybit.com/en/help-center/s/webform?state=4", "verified": true, "source": "Bybit help center (verified 2026-10-29)"}
+      ],
+      "note": "Bybit does not serve the US; the site may block US IPs. Do NOT use a VPN -- ask your officer to submit, and file SEAL 911."
+    },
+    "coinbase": {"name": "Coinbase", "match": ["coinbase"], "us_restricted": false, "status_url": "https://status.coinbase.com", "channels": [], "note": "Unverified here: find Coinbase's official law-enforcement guidelines page and give it to your officer. Coinbase is a TRM Beacon member (SEAL 911 route)."},
+    "kraken": {"name": "Kraken", "match": ["kraken"], "us_restricted": false, "status_url": "https://status.kraken.com", "channels": [], "note": "Unverified here: find Kraken's official law-enforcement request page. Kraken is a TRM Beacon member (SEAL 911 route)."},
+    "robinhood": {"name": "Robinhood", "match": ["robinhood"], "us_restricted": false, "channels": [], "note": "Robinhood support via the app Help section. Robinhood is a TRM Beacon member."},
+    "changenow": {"name": "ChangeNOW", "match": ["changenow"], "us_restricted": false, "swap": true, "channels": [], "note": "Instant swap: can halt a pending exchange if reached FAST. Use ChangeNOW's official support chat with the tx hash; officer request formalizes it. No email verified here."},
+    "gate": {"name": "Gate", "match": ["gate.io", "gate.com", "gateio"], "us_restricted": true, "channels": [], "note": "Unverified here: officer route via Gate's official law-enforcement page."},
+    "okx": {"name": "OKX", "match": ["okx", "okex"], "us_restricted": false, "channels": [], "note": "Unverified here: officer route via OKX's official law-enforcement page."},
+    "bitget": {"name": "Bitget", "match": ["bitget"], "us_restricted": true, "channels": [], "note": "Unverified here: officer route."},
+    "uphold": {"name": "Uphold", "match": ["uphold"], "us_restricted": false, "channels": [{"type": "webform", "who": "victim", "label": "Uphold support request", "url": "https://support.uphold.com/hc/en-us/requests/new", "verified": false, "source": "xrpl.org Report a Scam list"}]},
+    "bitrue": {"name": "Bitrue", "match": ["bitrue"], "us_restricted": true, "channels": [{"type": "webform", "who": "victim", "label": "Bitrue contact", "url": "https://www.bitrue.com/exchange-web/footer/contactus.html", "verified": false, "source": "xrpl.org Report a Scam list"}]},
+    "fixedfloat": {"name": "FixedFloat", "match": ["fixedfloat", "ff.io"], "swap": true, "us_restricted": false, "channels": [], "note": "Instant swap: contact official support chat immediately with the tx hash."},
+    "sideshift": {"name": "SideShift", "match": ["sideshift"], "swap": true, "us_restricted": true, "channels": [], "note": "Instant swap: contact official support immediately with the tx hash."}
+  },
+
+  "unknown": {
+    "name": "Unidentified custodial service",
+    "note": "A destination tag usually means an exchange account, but this one is not labeled. Report the address to Chainabuse and SEAL 911 (they can identify it), and list it in the Officer Packet -- the officer can subpoena once it is identified."
+  }
+}

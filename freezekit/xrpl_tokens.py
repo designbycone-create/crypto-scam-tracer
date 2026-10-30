@@ -145,7 +145,8 @@ def network_wallets():
             pass
         exch |= {e.get("address") for e in d.get("endpoints", [])}
         exch |= {a for a, n in d.get("nodes", {}).items()
-                 if n.get("is_exchange") or "exchange" in str(n.get("role", "")) or "swap" in str(n.get("role", ""))}
+                 if n.get("is_exchange") or n.get("label")   # any named service/exchange
+                 or any(w in str(n.get("role", "")) for w in ("exchange", "swap", "custodial", "victim"))}
     seen, out = set(exch), []
     for a in addrs:
         if isinstance(a, str) and a.startswith("r") and a not in seen:

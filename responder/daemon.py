@@ -68,7 +68,8 @@ def job_tokens(desk, seen):
         pass
     r = xrpl_tokens.scan(xrpl_tokens.network_wallets(), log=_log)
     for h in r["holdings"]:
-        if not h.get("issuer_name") or h["frozen_by_issuer"] or not (h["freezable"] or h["clawback"]):
+        if not h.get("issuer_name") or h["frozen_by_issuer"] or not (h["freezable"] or h["clawback"]) \
+                or h["balance"] < 50:   # dust isn't worth a freeze request
             continue
         k = f"tok:{h['wallet']}:{h['issuer']}:{h['currency']}"
         if k in seen:

@@ -47,3 +47,4 @@ channels_overrides.json
 *.tmp
 cashouts.jsonl
 token_alerts_sent.json
+attribution.json

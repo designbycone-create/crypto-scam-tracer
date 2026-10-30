@@ -44,7 +44,7 @@ PLEDGE = ("<div class=pledge><b>Free for victims. Always.</b> This tool never as
 
 
 def shell(title, body, refresh=None):
-    nav = ("<div class=nav><a href='/'>Desk</a><a href='/submit'>Submission Center</a><a href='/incident'>Incident mode</a>"
+    nav = ("<div class=nav><a href='/'>Desk</a><a href='/graph'>Network graph</a><a href='/submit'>Submission Center</a><a href='/incident'>Incident mode</a>"
            "<a href='/radar'>Scam radar</a><a href='/check'>Claim checker</a></div>")
     meta = f"<meta http-equiv=refresh content={refresh}>" if refresh else ""
     return (f"<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
@@ -153,7 +153,10 @@ def submission_center(desk_note=""):
         for t in sorted(others, key=lambda t: -sum(d["xrp"] for d in t["deposits"])):
             tid = t["id"]
             le = [c for c in t["entry"].get("channels", []) if c.get("who") in ("law_enforcement", "both")]
-            rows += (f"<tr id='{e(tid)}'><td><b>{e(t['entry'].get('name', tid))}</b></td><td>{len(t['deposits'])}</td>"
+            atts = t.get("attributions") or {}
+            att_txt = "".join(f"<br><small class=mut>{e(v.get('confidence'))}: {e((v.get('evidence') or [''])[0])}</small>"
+                              for v in list(atts.values())[:1])
+            rows += (f"<tr id='{e(tid)}'><td><b>{e(t['entry'].get('name', tid))}</b>{att_txt}</td><td>{len(t['deposits'])}</td>"
                      f"<td>{sum(d['xrp'] for d in t['deposits']):,.0f}</td>"
                      f"<td>{'<br>'.join(e(c.get('label', c['type'])) for c in le) or '<span class=mut>officer route (unverified)</span>'}</td>"
                      f"<td><a href='/kit/{e(tid)}/officer_request.txt' target=_blank>officer request</a> · "

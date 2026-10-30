@@ -97,6 +97,11 @@ def job_feeds_status_radar():
                key=f"radar:{new[0]}", critical=False)
 
 
+def job_attribution():
+    from scam_investigator import attribution
+    attribution.run(log=_log)
+
+
 def job_risk():
     from . import risk
     risk.scan(log=_log)
@@ -109,11 +114,12 @@ def main():
     desk = DESK.format(port=a.port)
     _log("Responder running: freeze kits, token freeze scan, incident feeds, radar, risk.")
     sched = [(60, job_kits, (desk,)), (900, job_tokens, (desk, set())),
-             (1800, job_feeds_status_radar, ()), (21600, job_risk, ())]
+             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ())]
     last = {fn.__name__: 0 for _, fn, _ in sched}
     last["job_tokens"] = time.time() - 840       # first token scan ~1 min after start
     last["job_feeds_status_radar"] = time.time() - 1680
     last["job_risk"] = time.time() - 21300
+    last["job_attribution"] = time.time() - 3480     # first pass ~2 min after start
     while True:
         for every, fn, args in sched:
             if time.time() - last[fn.__name__] >= every:

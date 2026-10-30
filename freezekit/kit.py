@@ -78,11 +78,28 @@ def collect():
     root = freeze.get("root") or evid.get("root") or load_case().get("scam_wallet", "")
     targets = {}
 
+    try:
+        from scam_investigator import attribution as _attr
+        attrib = _attr.load()
+    except Exception:
+        attrib = {}
+
     def add(ep, yours, edges):
+        att = None
+        if not ep.get("label"):
+            att = attrib.get(ep.get("address"))
+            if att and att.get("confidence") in ("verified", "likely") and att.get("name"):
+                ep = {**ep, "label": att["name"]}
         key, ent = channels.exchange_for(ep.get("label"))
+        if att and att.get("name"):
+            ent = {**ent, "attribution": att}
+            if key is None and att.get("confidence") in ("verified", "likely"):
+                ent["name"] = f"{att['name']} (attributed)"
         tid = key or f"unidentified-{ep['address'][:10]}"
         t = targets.setdefault(tid, {"id": tid, "key": key, "entry": ent, "deposits": [], "yours": False,
                                      "addresses": set()})
+        if att and att.get("name"):
+            t.setdefault("attributions", {})[ep.get("address")] = att
         t["yours"] = t["yours"] or yours
         k = (ep.get("hash"), ep.get("address"))
         if any((d.get("hash"), d.get("address")) == k for d in t["deposits"]):
@@ -240,12 +257,23 @@ account at the exchange.
   c. DISCLOSE (on receipt of appropriate legal process) the account holder identity and the
      destination of any onward withdrawals.
 
-4. EVIDENCE
+{_attribution_block(t)}4. EVIDENCE
 Every transaction above is public and verifiable at the explorer links given. An evidence
 package with SHA-256 manifest and full network trace accompanies this request.
 
 _____________________________  (signature)
 """
+
+
+def _attribution_block(t):
+    atts = t.get("attributions") or {}
+    if not atts:
+        return ""
+    out = ["ATTRIBUTION (how this platform was identified - public evidence):"]
+    for a, att in atts.items():
+        out.append(f"  {a}: {att.get('name') or 'unknown'} [{att.get('confidence')}]")
+        out += [f"    - {e}" for e in att.get("evidence", [])]
+    return "\n".join(out) + "\n\n"
 
 
 def fund_inflow_csv(t):
@@ -269,6 +297,8 @@ def readme(t, case):
         out += ["NOTE: this platform restricts US users; its consumer pages may block a US IP.",
                 "Do NOT use a VPN (law-enforcement systems reject VPN submissions). Use the",
                 "law-enforcement route below through your officer, plus SEAL 911.", ""]
+    if t.get("attributions"):
+        out += [_attribution_block(t)]
     out += ["DO THESE IN ORDER:",
             "  1. SEAL 911 - paste _case/seal911_message.txt into https://t.me/seal_911_bot",
             "     (they flag addresses to the TRM Beacon Network, which alerts member exchanges).",

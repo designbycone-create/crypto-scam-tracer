@@ -92,6 +92,20 @@ submitted → acknowledged → frozen) shows what's left.
 - **Claim checker** — paste a message or link; get the red flags and whether
   any address or domain in it belongs to the network you're tracking.
 
+### 6. Free attribution + interactive graph
+- **Attribution** (`scam_investigator/attribution.py`) — for every cash-out
+  point the explorers can't name, it gathers free public evidence and grades
+  it: **verified** (the account's Domain + that site's `xrp-ledger.toml` list
+  each other), **likely** (most of its XRP sweeps into one labeled exchange, or a
+  labeled exchange activated a destination-tag account, or Bithomp names it),
+  **hint** (claimed domain, custodial flags). The evidence is printed in the
+  officer request, so nobody has to take a label on faith. Optional free
+  Bithomp key: `"bithomp_token"` in `config.json`.
+- **Network graph** (`/graph` on the Desk) — every wallet and flow, sized by
+  volume, colored by role, with your stolen funds' path in red. Click a wallet
+  for its deposits, attribution evidence and explorer links. Uses Ripple's free
+  full-history servers; no paid infrastructure.
+
 ---
 
 ## Quick start

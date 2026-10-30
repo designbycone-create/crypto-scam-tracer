@@ -315,7 +315,8 @@ def render():
             f"<div class=card><small class=mut>XRP pushed to exchanges</small><br><span class=big>{ns['xrp_to_exchanges']:,.0f}</span></div></div>"
             f"<p class=mut>These wallets receive from the scam wallet and relay funds onward — the laundering layer of the operation, moving other victims' money too. Every one is logged for the record.</p>"
             f"<table><tr><th>Exchange / service the network uses</th><th>Deposits</th><th>XRP</th></tr>{exrows}</table>"
-            f"<p style='margin-top:12px'><a class=btn href='/network' target=_blank>Open full network map</a> "
+            f"<p style='margin-top:12px'><a class=btn href='/graph' target=_blank>Interactive network graph</a> "
+            f"<a class='btn alt' href='/network' target=_blank>Full network table</a> "
             f"<a class=btn href='/ic3' target=_blank>IC3 evidence record</a> "
             f"<a class='btn alt' href='/ic3?download=1'>Download for IC3 / exchanges</a></p>")
     else:
@@ -368,7 +369,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/check'>Claim checker</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/check'>Claim checker</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -421,6 +422,9 @@ class Handler(BaseHTTPRequestHandler):
             if "download" in query:
                 extra["Content-Disposition"] = f'attachment; filename="scam-network-evidence-{datetime.now():%Y%m%d}.txt"'
             return self._send(body, "text/plain; charset=utf-8", extra)
+        if path == "/graph":
+            from scam_investigator import graphview
+            return self._send(graphview.render(), "text/html; charset=utf-8")
         if web is not None:
             if path == "/submit":
                 return self._send(web.submission_center(), "text/html; charset=utf-8")

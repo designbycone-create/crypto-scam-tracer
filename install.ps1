@@ -45,7 +45,8 @@ Write-Host "Dependencies OK"
 $ws = New-Object -ComObject WScript.Shell
 $cmd = Join-Path $Dir 'run_desk.cmd'
 $startup = Join-Path ([Environment]::GetFolderPath('Startup')) 'ScamHunter Desk.lnk'
-$l = $ws.CreateShortcut($startup); $l.TargetPath = $cmd; $l.Arguments = '--no-open'; $l.WorkingDirectory = $Dir; $l.WindowStyle = 7; $l.Save()
+$vbs = Join-Path $Dir 'run_desk_hidden.vbs'
+$l = $ws.CreateShortcut($startup); $l.TargetPath = "$env:WINDIR\System32\wscript.exe"; $l.Arguments = "`"$vbs`""; $l.WorkingDirectory = $Dir; $l.Save()
 foreach ($p in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFolderPath('Desktop'))) {
   $u = Join-Path $p 'ScamHunter Desk.url'
   "[InternetShortcut]`r`nURL=http://127.0.0.1:8787/" | Set-Content $u -Encoding ASCII
@@ -53,7 +54,7 @@ foreach ($p in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFol
 Write-Host "Shortcuts created (Desktop + Start Menu; starts automatically when you sign in)"
 
 # 5. Launch -> browser opens the setup page
-Start-Process $cmd -ArgumentList '--no-open' -WorkingDirectory $Dir -WindowStyle Minimized
+Start-Process "$env:WINDIR\System32\wscript.exe" -ArgumentList "`"$vbs`"" -WorkingDirectory $Dir
 Start-Sleep 4
 Start-Process 'http://127.0.0.1:8787/'
 Write-Host "`nDone. Your browser is opening the setup page." -ForegroundColor Green

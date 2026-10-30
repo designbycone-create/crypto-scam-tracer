@@ -75,7 +75,8 @@ def collect():
     """
     freeze = _j("network_map.json") or {}      # time-forward: YOUR funds
     evid = _j("scam_network.json") or {}       # full network evidence
-    root = freeze.get("root") or evid.get("root") or load_case().get("scam_wallet", "")
+    root = freeze.get("root") or evid.get("root") or load_case().get("scam_wallet", "") or \
+        next((c["address"] for c in (_j("config.json") or {}).get("cases") or []), "")
     targets = {}
 
     try:
@@ -118,7 +119,12 @@ def collect():
                     if (d.get("hash"), d.get("address")) == k:
                         d["yours"] = True
             return
-        d = {"address": ep.get("address"), "tag": ep.get("destination_tag"), "xrp": ep.get("xrp") or 0,
+        chain_ = ep.get("chain") or "xrpl"
+        d = {"address": ep.get("address"), "tag": ep.get("destination_tag"),
+             "xrp": (ep.get("xrp") or 0) if chain_ == "xrpl" else 0,
+             "chain": chain_, "asset": ep.get("asset") or "XRP",
+             "amount": ep.get("amount") if ep.get("amount") is not None else (ep.get("xrp") or 0),
+             "tx_url": ep.get("tx_url") or f"{EXPLORER}{ep.get('hash')}",
              "hash": ep.get("hash"), "time": ep.get("time"), "label": ep.get("label"),
              "post_theft": ep.get("post_theft", True), "yours": yours,
              "path": [{"from": e["from"], "to": e["to"], "hash": e.get("hash"), "xrp": e.get("xrp"),
@@ -159,6 +165,7 @@ def collect():
     for ep in evid.get("endpoints", []):
         if ep.get("address"):
             add(ep, ep.get("hash") in mine, evid.get("edges", []))
+    _add_multichain(add)
     for t in targets.values():
         t["addresses"] = sorted(a for a in t["addresses"] if a)
         t["deposits"].sort(key=lambda d: (not d["yours"], str(d.get("time"))))
@@ -182,16 +189,94 @@ def _refs(case):
     return r
 
 
+def _chain_name(c):
+    try:
+        from .chainlookup import CHAIN_NAMES
+        return CHAIN_NAMES.get(c, c)
+    except Exception:
+        return c
+
+
+def amt_str(deps):
+    """'1,200 XRP + 3,000 USDT' -- totals per asset."""
+    tot = {}
+    for d in deps:
+        tot[d.get("asset") or "XRP"] = tot.get(d.get("asset") or "XRP", 0) + float(d.get("amount") or 0)
+    return " + ".join(f"{v:,.4f}".rstrip("0").rstrip(".") + f" {k}" for k, v in sorted(tot.items(), key=lambda kv: -kv[1])) or "0"
+
+
 def _deposit_lines(t, only_yours=False):
     out = []
     for d in t["deposits"]:
         if only_yours and not d["yours"]:
             continue
-        out.append(f"  - Deposit address {d['address']}  destination tag {d['tag']}\n"
-                   f"    {d['xrp']:,.6f} XRP  at {d.get('time')}\n"
-                   f"    Tx {d['hash']}\n    {EXPLORER}{d['hash']}"
+        if d.get("chain", "xrpl") == "xrpl":
+            acct = f"  - Deposit address {d['address']}  destination tag {d['tag']}  (XRP Ledger)"
+        else:
+            acct = (f"  - Deposit address {d['address']}  ({_chain_name(d['chain'])}; "
+                    f"this deposit address belongs to one customer account)")
+        out.append(f"{acct}\n    {float(d.get('amount') or 0):,.6f} {d.get('asset', 'XRP')}  at {d.get('time')}\n"
+                   f"    Tx {d['hash']}\n    {d.get('tx_url') or EXPLORER + str(d['hash'])}"
                    + ("   << traced from the victim's stolen funds" if d["yours"] else ""))
     return "\n".join(out)
+
+
+def _case_seeds():
+    try:
+        with open("config.json", encoding="utf-8-sig") as f:
+            return [(c["chain"], c["address"]) for c in json.load(f).get("cases") or [] if c.get("chain") != "xrpl"]
+    except Exception:
+        return []
+
+
+def _add_multichain(add):
+    """Exchange cash-outs found by the multi-chain tracer (BTC, EVM, Tron, Solana).
+
+    The deposit ADDRESS is the customer account on these chains: it is the
+    sender of the transfer into the exchange's labeled hot wallet, or the
+    exchange-labeled address itself when funds were sent straight to it."""
+    mc = _j("mc_map.json") or {}
+    nodes, edges = mc.get("nodes", {}), mc.get("edges", [])
+    if not edges:
+        return
+    seeds = _case_seeds()
+    reach = set()
+    if seeds:
+        adj = {}
+        for e in edges:
+            adj.setdefault((e.get("chain"), e.get("from")), []).append((e.get("chain"), e.get("to")))
+        stack = [(c, a) for c, a in seeds]
+        # EVM addresses are the same on every EVM chain
+        try:
+            from multichain.core import CHAINS
+            evm = [k for k, v in CHAINS.items() if v.evm_chainid is not None]
+            stack += [(k, a) for c, a in seeds if c in evm for k in evm]
+        except Exception:
+            pass
+        while stack:
+            x = stack.pop()
+            if x in reach:
+                continue
+            reach.add(x)
+            stack += adj.get(x, [])
+    try:
+        from multichain.core import CHAINS
+    except Exception:
+        CHAINS = {}
+    for ep in mc.get("endpoints", []):
+        if ep.get("type") not in ("exchange", "bridge"):
+            continue
+        ch, hot = ep.get("chain"), ep.get("address")
+        info = CHAINS.get(ch)
+        for e in edges:
+            if e.get("chain") != ch or e.get("to") != hot:
+                continue
+            yours = (ch, hot) in reach if seeds else False
+            add({"address": e.get("from") if nodes.get(f"{ch}:{e.get('from')}", {}).get("type") == "wallet" else hot,
+                 "label": ep.get("label"), "destination_tag": None, "hash": e.get("txid"), "time": e.get("time"),
+                 "chain": ch, "asset": e.get("asset"), "amount": e.get("amount"),
+                 "tx_url": info.explorer_tx(e.get("txid")) if info else None, "post_theft": True},
+                yours, [])
 
 
 def victim_notice(t, case, root):
@@ -200,11 +285,14 @@ def victim_notice(t, case, root):
     refs = _refs(case)
     yours = [d for d in t["deposits"] if d["yours"]]
     lines = [
-        f"SUBJECT: Stolen funds deposited to {name} - freeze and preservation request (XRP, tag "
-        f"{', '.join(str(d['tag']) for d in (yours or t['deposits'])[:5])})", "",
+        f"SUBJECT: Stolen funds deposited to {name} - freeze and preservation request ("
+        + (f"XRP, tag {', '.join(str(d['tag']) for d in (yours or t['deposits'])[:5])}"
+           if (yours or t['deposits'])[0].get("chain", "xrpl") == "xrpl" else
+           f"{_chain_name((yours or t['deposits'])[0]['chain'])}, deposit address {(yours or t['deposits'])[0]['address'][:14]}...")
+        + ")", "",
         f"To the {name} compliance / security team,", "",
         f"I am the victim of a cryptocurrency fraud ({case.get('scam_type', 'a fake giveaway')}). "
-        f"My funds were sent to the scam wallet {root} and traced on the public XRP Ledger to "
+        f"My funds were sent to the scam wallet {root} and traced on the public blockchain to "
         f"account(s) on your platform. I ask that you freeze the receiving account(s) and preserve "
         f"their records for law enforcement.", "",
         "Victim transaction:",
@@ -249,14 +337,14 @@ Legal authority: [cite the applicable preservation request / subpoena / court or
 
 1. SUMMARY
 On {case.get('theft_time', '[date]')} the complainant, {case.get('name', '[victim name]')}, sent
-{case.get('amount', '[amount]')} XRP from their own wallet {case.get('victim_wallet', '[victim wallet]')}
+{_amount_txt(case)} from their own wallet {case.get('victim_wallet', '[victim wallet]')}
 to the fraud wallet {root} (tx {case.get('tx_hash', '[hash]')}).
 Complainant's FBI IC3 complaint: {case.get('ic3_id', '[IC3 number]')}.
 Public blockchain analysis shows funds from this fraud wallet were deposited to the {name}
 account(s) below. On the XRP Ledger a DESTINATION TAG identifies the individual customer
-account at the exchange.
+account at the exchange; on Bitcoin, Ethereum/EVM, Tron and Solana each DEPOSIT ADDRESS does.
 
-2. ACCOUNTS (deposit address + destination tag)
+2. ACCOUNTS (deposit address, plus destination tag on the XRP Ledger)
 {_deposit_lines(t)}
 
 3. REQUESTS
@@ -286,14 +374,20 @@ def _attribution_block(t):
     return "\n".join(out) + "\n\n"
 
 
+def _amount_txt(case):
+    a = str(case.get("amount") or "[amount]")
+    return a if any(ch.isalpha() for ch in a) else f"{a} XRP"
+
+
 def fund_inflow_csv(t):
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["deposit_address", "destination_tag", "xrp", "tx_hash", "time_utc", "traced_from_victim",
-                "explorer"])
+    w.writerow(["chain", "deposit_address", "destination_tag", "amount", "asset", "tx_hash", "time_utc",
+                "traced_from_victim", "explorer"])
     for d in t["deposits"]:
-        w.writerow([d["address"], d["tag"], f"{d['xrp']:.6f}", d["hash"], d.get("time"),
-                    "yes" if d["yours"] else "network", f"{EXPLORER}{d['hash']}"])
+        w.writerow([_chain_name(d.get("chain", "xrpl")), d["address"], d["tag"] if d["tag"] is not None else "",
+                    f"{float(d.get('amount') or 0):.8f}".rstrip("0").rstrip("."), d.get("asset", "XRP"), d["hash"],
+                    d.get("time"), "yes" if d["yours"] else "network", d.get("tx_url") or f"{EXPLORER}{d['hash']}"])
     return buf.getvalue()
 
 
@@ -333,41 +427,46 @@ def readme(t, case):
 
 def seal911_message(root, targets, case, issuer_targets):
     yours = [t for t in targets.values() if t["yours"]]
-    lines = ["Fraud victim - funds moving now. XRP Ledger.",
+    chains = sorted({_chain_name(d.get("chain", "xrpl")) for t in targets.values() for d in t["deposits"]}) or ["XRP Ledger"]
+    lines = [f"Fraud victim - funds moving now. Chain(s): {', '.join(chains)}.",
              f"Scam wallet: {root}",
              f"My tx: {case.get('tx_hash', '?')}"]
     if case.get("ic3_id"):
         lines.append(f"IC3: {case['ic3_id']}")
     for t in sorted(targets.values(), key=lambda t: (not t["yours"], -sum(d["xrp"] for d in t["deposits"]))):
         name = t["entry"].get("name", "unidentified")
-        tags = sorted({str(d["tag"]) for d in t["deposits"]})
-        lines.append(f"- {name}: {', '.join(t['addresses'][:3])} tags {', '.join(tags[:8])}"
+        tags = sorted({str(d["tag"]) for d in t["deposits"] if d.get("tag") is not None})
+        lines.append(f"- {name}: {', '.join(t['addresses'][:3])}" + (f" tags {', '.join(tags[:8])}" if tags else "")
                      + (" (MY funds)" if t["yours"] else ""))
         if len(lines) > 25:
             break
     for h in issuer_targets[:5]:
         lines.append(f"- {h['currency']} {h['balance']:,.2f} held at {h['wallet']} (issuer {h['issuer']}"
                      + (", clawback enabled" if h["clawback"] else "") + ")")
+    for op in [o for o in (_j("mc_map.json") or {}).get("freeze_ops", []) if o.get("kind") == "stablecoin_issuer"][:5]:
+        lines.append(f"- {op.get('asset')} on {_chain_name(op.get('chain'))} at {op.get('address')} "
+                     f"({op.get('amount') or '?'} {op.get('asset')}, issuer {op.get('issuer')} can freeze)")
     lines.append("Requesting Beacon flag / exchange outreach. Full trace + evidence available.")
     return "\n".join(lines) + "\n"
 
 
 def chainabuse_update(root, evid_nodes, targets):
     lines = ["CHAINABUSE - addresses to add to the existing report (category: giveaway scam)",
-             "Paste each into the report's 'addresses' field (chain: XRP Ledger).", "",
+             "Paste each into the report's 'addresses' field with its chain.", "",
              f"{root}  - primary scam receiving wallet"]
     for a, n in list(evid_nodes.items())[:200]:
         if a != root and str(n.get("role", "")).startswith("intermediate"):
             lines.append(f"{a}  - laundering/consolidation wallet")
     for t in targets.values():
         for a in t["addresses"]:
-            lines.append(f"{a}  - {t['entry'].get('name', 'unidentified custodial')} deposit address (cash-out)")
+            ch = next((_chain_name(d.get("chain", "xrpl")) for d in t["deposits"] if d["address"] == a), "XRP Ledger")
+            lines.append(f"{a}  - [{ch}] {t['entry'].get('name', 'unidentified custodial')} deposit address (cash-out)")
     return "\n".join(lines) + "\n"
 
 
 def ic3_update(root, targets, case):
     lines = [f"IC3 UPDATE for complaint {case.get('ic3_id', '[number]')}", "",
-             "New information: stolen funds were traced on the public XRP Ledger to the following "
+             "New information: stolen funds were traced on the public blockchain to the following "
              "exchange deposit accounts (address + destination tag identifies the customer account):", ""]
     for t in targets.values():
         if t["yours"]:
@@ -408,8 +507,8 @@ def officer_packet_html(root, targets, issuer_targets, case, manifest_rows):
                             f"{e(c.get('label', c['type']))}</a>" for c in le) or \
             "<i>official LE page (not verified here)</i>"
         deps = "<br>".join(f"<span class=m>{e(str(d['address']))}</span> tag <b>{e(str(d['tag']))}</b> "
-                           f"- {d['xrp']:,.2f} XRP - {e(str(d.get('time')))} "
-                           f"<a href='{EXPLORER}{e(str(d['hash']))}'>tx</a>" + (" <b>[victim funds]</b>" if d["yours"] else "")
+                           f"- {float(d.get('amount') or 0):,.4f} {e(d.get('asset', 'XRP'))} ({e(_chain_name(d.get('chain', 'xrpl')))}) - {e(str(d.get('time')))} "
+                           f"<a href='{e(d.get('tx_url') or EXPLORER + str(d['hash']))}'>tx</a>" + (" <b>[victim funds]</b>" if d["yours"] else "")
                            for d in t["deposits"][:25])
         more = f"<br><i>+{len(t['deposits']) - 25} more in the kit CSV</i>" if len(t["deposits"]) > 25 else ""
         rows += (f"<tr><td><b>{e(ent.get('name', 'Unidentified'))}</b>"
@@ -429,7 +528,7 @@ table{{border-collapse:collapse;width:100%;font-size:12.5px}} td,th{{border:1px 
 <div class=box><b>What this is:</b> a ready-to-file package for a law-enforcement officer. Exchanges freeze
 accounts on <b>law-enforcement requests</b>. Each exchange below lists its official law-enforcement channel.
 A signed request template for each exchange is in the kit folder (<i>officer_request.txt</i>).
-Every transaction is public and verifiable on the XRP Ledger via the links.</div>
+Every transaction is public and verifiable on its blockchain via the links.</div>
 <h2>1. Complainant</h2>
 <p>Name: {e(case.get('name', '_____'))} &nbsp; Email: {e(case.get('email', '_____'))} &nbsp; Phone: {e(case.get('phone', '_____'))}<br>
 FBI IC3 complaint: <b>{e(case.get('ic3_id', '_____'))}</b><br>
@@ -486,7 +585,8 @@ def build(log=print):
             custody.write_manifest(folder, paths)
         manifest_rows += [(f"{tid}/{os.path.basename(p)}", custody.sha256_file(p)) for p in paths]
         info = {"name": t["entry"].get("name"), "yours": t["yours"],
-                "xrp": round(sum(d["xrp"] for d in t["deposits"]), 6), "deposits": len(t["deposits"])}
+                "xrp": round(sum(d["xrp"] for d in t["deposits"]), 6), "deposits": len(t["deposits"]),
+                "amount_str": amt_str([d for d in t["deposits"] if d["yours"]] or t["deposits"])}
         tracker.register_target(st, tid, None, info)
         rec = st["targets"][tid]
         rec.update(info)

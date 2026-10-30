@@ -39,10 +39,21 @@ SERVICES = [
     ("Wallet watcher", [sys.executable, "-u", _WALLET], "watcher_desk.log"),
     ("Network watcher", [sys.executable, "-u", "-m", "scam_investigator.netwatch"], "netwatch_desk.log"),
     ("Network mapper", [sys.executable, "-u", "-m", "scam_investigator.network_intel"], "network_intel_desk.log"),
-    ("Multi-chain tracer", [sys.executable, "-u", "-m", "multichain", "watch"], "mc_desk.log"),
+    ("Multi-chain tracer", [sys.executable, "-u", "-m", "multichain", "watch", "--interval", "300"], "mc_desk.log"),
     # freeze kits, issued-token freeze scan, incident feeds, exchange status, scam radar, risk signals
     ("Responder", [sys.executable, "-u", "-m", "responder.daemon"], "responder_desk.log"),
 ]
+
+XRPL_ONLY = {"Wallet watcher", "Network watcher", "Network mapper"}
+
+
+def _xrpl_case():
+    try:
+        from freezekit import setup as _s
+        return _s.xrpl_case()
+    except Exception:
+        return True
+
 
 _state_lock = threading.Lock()
 _state = {}
@@ -77,6 +88,13 @@ def supervise(label, argv, logfile, stop_evt):
     """Keep one child process alive. Restart with backoff if it exits."""
     restarts = -1
     while not stop_evt.is_set():
+        if label in XRPL_ONLY and not _xrpl_case():
+            # this case has no XRP Ledger wallet -> the XRPL watchers aren't needed
+            with _state_lock:
+                _state[label] = {"pid": None, "alive": False, "skipped": True, "restarts": max(restarts, 0)}
+            _write_status()
+            stop_evt.wait(15)
+            continue
         restarts += 1
         backoff = min(3 + restarts, 30) if restarts else 3
         lf = None
@@ -238,17 +256,26 @@ def render():
     net = _read_json("network_map.json") or {}
 
     # --- live status line ---
-    alive_n = sum(1 for label, _, _ in SERVICES if svc.get(label, {}).get("alive"))
+    alive_n = sum(1 for label, _, _ in SERVICES if svc.get(label, {}).get("alive") or svc.get(label, {}).get("skipped"))
+    xrpl_on = _xrpl_case()
     hb = _read_json("netwatch.heartbeat") or {}
     hb_age = _ago(hb.get("time", "")) if hb else None
     mapper_age = _ago(_read_text("network_intel.heartbeat") or "")
-    ledger_ok = hb_age is not None and hb_age < 60
+    ledger_ok = (hb_age is not None and hb_age < 60) or not xrpl_on
     all_ok = alive_n == len(SERVICES) and ledger_ok
     root = net.get("root", "")
     hops = [a for a in net.get("watchlist", []) if a != root]
-    endpoints = net.get("endpoints", [])
-    funds_state = ("CASHED OUT — act now" if endpoints else
-                   ("parked (not yet cashed out)" if hops else "mapping…"))
+    try:   # where YOUR funds landed, on any chain (XRPL record + multi-chain tracer)
+        from freezekit import kit as _kit
+        _r, _targets, _it, _ops = _kit.collect()
+        my_targets = [t for t in _targets.values() if t["yours"]]
+    except Exception:
+        _kit, my_targets = None, []
+    mc = _read_json("mc_map.json") or {}
+    mc_cases = [c for c in (_read_json("config.json") or {}).get("cases") or [] if c.get("chain") != "xrpl"]
+    endpoints = my_targets
+    funds_state = ("CASHED OUT — act now" if my_targets else
+                   ("parked (not yet cashed out)" if hops or mc_cases else "mapping…"))
     try:
         import alerts
         pend = alerts.pending()
@@ -275,10 +302,11 @@ def render():
         f"<span class=dot style='background:{status_color}'></span>"
         f"<b>{'ALL SYSTEMS LIVE' if all_ok else ('PARTIAL — check below' if alive_n else 'DOWN')}</b>"
         f" &nbsp;·&nbsp; {alive_n}/{len(SERVICES)} watchers running"
-        f" &nbsp;·&nbsp; last XRPL ledger seen <b>{_fmt_ago(hb_age)}</b>"
-        + (f" (#{e(hb.get('ledger'))})" if hb.get("ledger") else "")
-        + f" &nbsp;·&nbsp; network mapped <b>{_fmt_ago(mapper_age)}</b>"
-        f" &nbsp;·&nbsp; your funds: <b>{e(funds_state)}</b>"
+        + ((f" &nbsp;·&nbsp; last XRPL ledger seen <b>{_fmt_ago(hb_age)}</b>"
+            + (f" (#{e(hb.get('ledger'))})" if hb.get("ledger") else "")
+            + f" &nbsp;·&nbsp; network mapped <b>{_fmt_ago(mapper_age)}</b>") if xrpl_on else
+           f" &nbsp;·&nbsp; multi-chain trace updated <b>{e(mc.get('generated', 'pending'))}</b>")
+        + f" &nbsp;·&nbsp; your funds: <b>{e(funds_state)}</b>"
         f" &nbsp;·&nbsp; <b>{e(alerts_txt)}</b></div>")
 
     # --- watcher cards ---
@@ -286,9 +314,10 @@ def render():
     for label, _, _ in SERVICES:
         s = svc.get(label, {})
         alive = s.get("alive")
-        dot = "#16a34a" if alive else "#dc2626"
-        txt = "running" if alive else "down (restarting)"
-        extra = f"up since {s.get('started','')[11:16]}" if alive else f"restarts: {s.get('restarts', 0)}"
+        dot = "#16a34a" if alive else ("#6b7280" if s.get("skipped") else "#dc2626")
+        txt = "running" if alive else ("not needed for this case" if s.get("skipped") else "down (restarting)")
+        extra = (f"up since {s.get('started','')[11:16]}" if alive else
+                 ("no XRP Ledger wallet in this case" if s.get("skipped") else f"restarts: {s.get('restarts', 0)}"))
         if label == "Network watcher" and alive:
             extra += f" · ledger {_fmt_ago(hb_age)}"
         if label == "Network mapper" and alive:
@@ -297,16 +326,22 @@ def render():
                   f"<b>{e(label)}</b><br><small class=mut>{txt} · {e(extra)}</small></div>")
 
     # --- your funds ---
-    if endpoints:
+    if my_targets:
         loc = "<p class=warn><b>&#9888; Your funds have reached an exchange — use the freeze requests below now.</b></p><ul>"
-        seen = set()
-        for ep in endpoints:
-            if ep["address"] in seen:
-                continue
-            seen.add(ep["address"])
-            loc += (f"<li><b>{e(ep.get('label') or 'unlabeled exchange')}</b> — {ep.get('xrp',0):,.0f} XRP "
-                    f"(tag {e(ep.get('destination_tag'))})</li>")
+        for t in my_targets:
+            mine_d = [d for d in t["deposits"] if d["yours"]]
+            tags = sorted({str(d["tag"]) for d in mine_d if d.get("tag") is not None})
+            loc += (f"<li><b>{e(t['entry'].get('name') or 'unlabeled exchange')}</b> — {e(_kit.amt_str(mine_d))}"
+                    + (f" (tag {e(', '.join(tags))})" if tags else
+                       f" (deposit account {e(mine_d[0]['address'][:12])}… on {e(_kit._chain_name(mine_d[0].get('chain')))})")
+                    + f" <a href='/submit#{e(t['id'])}'>freeze kit</a></li>")
         loc += "</ul>"
+    elif mc_cases:
+        s_ = mc.get("summary") or {}
+        loc = (f"<p class=ok>Following your funds across <b>{e(', '.join(s_.get('chains') or [c['chain'] for c in mc_cases]))}</b> "
+               f"&mdash; {s_.get('total_nodes', 0)} wallet(s) mapped so far, re-checked every 5 minutes. When they reach an exchange "
+               f"you'll get an alert and a freeze kit here.</p><ul>"
+               + "".join(f"<li class=m>{e(c['chain'])}: {e(c['address'])}</li>" for c in mc_cases) + "</ul>")
     elif hops:
         loc = ("<p class=ok>Your funds are <b>parked</b> in these wallets, which are being watched live. "
                "The moment they move to an exchange you'll get a phone alert and a freeze draft here.</p><ul>"
@@ -332,7 +367,9 @@ def render():
             f"<a class=btn href='/ic3' target=_blank>IC3 evidence record</a> "
             f"<a class='btn alt' href='/ic3?download=1'>Download for IC3 / exchanges</a></p>")
     else:
-        network = "<p class=mut>Building the network record — the first full map takes a few minutes, then it keeps growing.</p>"
+        network = ("<p class=mut>" + ("Building the network record — the first full map takes a few minutes, then it keeps growing."
+                   if xrpl_on else "Every wallet and exchange the multi-chain tracer finds is recorded as it goes.")
+                   + "</p><p><a class=btn href='/graph' target=_blank>Interactive network graph</a></p>")
 
     # --- freeze actions: the Submission Center ---
     try:
@@ -342,7 +379,7 @@ def render():
         mine = {k: v for k, v in tgs.items() if v.get("yours")}
         done = sum(1 for k, v in st.get("status", {}).items() if v.get("state") in ("submitted", "acknowledged", "frozen", "not needed"))
         if mine:
-            items = "".join(f"<li><b>{e(v.get('name') or k)}</b> — {v.get('xrp', 0):,.2f} XRP · cash-out "
+            items = "".join(f"<li><b>{e(v.get('name') or k)}</b> — {e(v.get('amount_str') or str(v.get('xrp', 0)) + ' XRP')} · cash-out "
                             f"{e(tracker.elapsed(v.get('yours_since') or v.get('detected', '')))} "
                             f"<a href='/submit#{e(k)}'>open kit</a></li>" for k, v in mine.items())
             acts = (f"<p class=warn><b>Your funds reached {len(mine)} platform(s). Freeze kits are built.</b></p><ul>{items}</ul>"
@@ -397,8 +434,8 @@ small{{font-size:12px}}</style></head><body>
 
 <h2>Recent activity</h2>{ev}
 
-<p class=mut style=margin-top:20px><small>Scam wallet: <span class=m>{e(root)}</span>{(' · your tx: <span class=m>'+e(stolen[:24])+'&hellip;</span>') if stolen else ''}<br>
-Nothing is ever sent without you. <a href='/setup'>Case setup</a>. Data is public and verifiable on the XRP Ledger.</small></p>
+<p class=mut style=margin-top:20px><small>Scam wallet: <span class=m>{e(root or ', '.join(c['address'] for c in mc_cases))}</span>{(' · your tx: <span class=m>'+e(stolen[:24])+'&hellip;</span>') if stolen else ''}<br>
+Nothing is ever sent without you. <a href='/setup'>Case setup</a>. Data is public and verifiable on each blockchain.</small></p>
 </body></html>"""
 
 
@@ -485,7 +522,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/setup/lookup":
                 from freezekit import setup as _setup
-                return self._send(json.dumps(_setup.lookup_tx(form.get("q", ""))), "application/json")
+                from freezekit import chainlookup
+                return self._send(json.dumps(chainlookup.lookup(form.get("q", ""))), "application/json")
             if path == "/setup":
                 from freezekit import setup as _setup
                 ok, info = _setup.save(form)

@@ -97,7 +97,7 @@ h4{margin:2px 0 8px;font-size:10.5px;color:var(--mut);text-transform:uppercase;l
 
 <div id="top" class="glass">
   <a class="back" href="/">&larr; Desk</a>
-  <div class="brand"><div class="logo"></div><div>Scam Network<small>live evidence map · public XRP Ledger data</small></div></div>
+  <div class="brand"><div class="logo"></div><div>Scam Network<small>live evidence map · public blockchain data</small></div></div>
   <div class="stats" id="stats"></div>
   <input id="search" placeholder="Search address, exchange, operator…" autocomplete="off">
 </div>
@@ -138,8 +138,10 @@ const nbrs = {}; D.links.forEach(l => { (nbrs[l.source] ||= new Set()).add(l.tar
 // ---------- stats ----------
 const S = D.stats;
 document.getElementById('stats').innerHTML = [
-  ['Wallets mapped', S.wallets, ''], ['Cash-out points', S.cashout_points, ''], ['XRP to exchanges', S.to_exchanges, ''],
-  ['Operator groups', S.operators, ''], ['XRP cashed out on your funds\' path', S.yours, 'you']].map(([k,v,c]) =>
+  ['Wallets mapped', S.wallets, ''], ['Cash-out points', S.cashout_points + (S.mc_cashouts||0), ''],
+  ...(S.xrpl ? [['XRP to exchanges', S.to_exchanges, '']] : []),
+  ['Chains', S.chains, ''], ['Operator groups', S.operators, ''],
+  ...(S.xrpl ? [['XRP cashed out on your funds\' path', S.yours, 'you']] : [])].map(([k,v,c]) =>
   `<div class="stat ${c}"><b data-v="${v}">0</b><span>${k}</span></div>`).join('');
 document.querySelectorAll('.stat b').forEach(el => { const v = +el.dataset.v; let t0 = null;
   const step = ts => { t0 ??= ts; const p = Math.min(1,(ts-t0)/1100), e = 1-Math.pow(1-p,3); el.textContent = fmt(Math.round(v*e)); if (p<1) requestAnimationFrame(step); };
@@ -179,7 +181,7 @@ play.onclick = () => {
     const v = Math.min(1000, +range.value + 2.2); range.value = v; setT(v);
     if (ts - lastTick > 450) { lastTick = ts; const recent = D.links.filter(l => l.t0 && l.t0 <= T).sort((a,b) => b.t0-a.t0)[0];
       if (recent) { const s = byId[idOf(recent.source)], t = byId[idOf(recent.target)];
-        ticker.innerHTML = `<b style="color:${recent.yours?'var(--you)':'#fff'}">${fmt(recent.xrp)} XRP</b> &nbsp;${esc(s?.name||short(s?.id))} → ${esc(t?.name||short(t?.id))}`; ticker.style.opacity = 1; } }
+        ticker.innerHTML = `<b style="color:${recent.yours?'var(--you)':'#fff'}">${recent.label ? esc(recent.label) : fmt(recent.xrp) + ' XRP'}</b> &nbsp;${esc(s?.name||short(s?.id))} → ${esc(t?.name||short(t?.id))}`; ticker.style.opacity = 1; } }
     if (v >= 1000) { playing = false; play.innerHTML = '&#9654;'; ticker.style.opacity = 0; return; }
     requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
@@ -286,7 +288,7 @@ function refresh() { G.nodeVisibility(visNode).linkVisibility(visLink); }
 const tip = document.getElementById('tip');
 document.addEventListener('mousemove', e => { tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; });
 function tipShow(n) { if (!n) { tip.style.opacity = 0; return; }
-  tip.innerHTML = `<b>${esc(n.name || short(n.id))}</b><br><span class="mut">${NAME[n.kind]} · ${fmt(n.vol)} XRP moved</span>`; tip.style.opacity = 1; }
+  tip.innerHTML = `<b>${esc(n.name || short(n.id))}</b><br><span class="mut">${NAME[n.kind]}${n.chain ? ' · ' + esc(n.chain) : ' · ' + fmt(n.vol) + ' XRP moved'}</span>`; tip.style.opacity = 1; }
 
 // ---------- inspector ----------
 const insp = document.getElementById('insp'), body = document.getElementById('inspBody');
@@ -301,9 +303,9 @@ function select(n) {
     ${n.yours ? '<span class="badge">YOUR FUNDS</span>' : ''}
     <div class="ttl">${esc(n.name || 'Unlabeled wallet')}</div>
     <div class="mono mut">${esc(n.id)}</div>
-    <div class="kv"><div><b>${fmt(n.bal)}</b><span>Balance XRP</span></div><div><b>${fmt(n.vol)}</b><span>Moved (this map)</span></div>
+    <div class="kv"><div><b>${n.chain ? esc(n.chain) : fmt(n.bal)}</b><span>${n.chain ? 'Chain' : 'Balance XRP'}</span></div><div><b>${fmt(n.vol)}</b><span>${n.chain ? 'Transfers' : 'Moved (this map)'}</span></div>
     <div><b>${(nbrs[n.id] || new Set()).size}</b><span>Counterparties</span></div><div><b>${n.ndeps || 0}</b><span>Deposits in</span></div></div>
-    <div class="links"><a href="https://livenet.xrpl.org/accounts/${n.id}" target="_blank">XRPL</a><a href="https://xrpscan.com/account/${n.id}" target="_blank">XRPScan</a><a href="https://bithomp.com/explorer/${n.id}" target="_blank">Bithomp</a></div>`;
+    <div class="links">${explorerLinks(n)}</div>`;
   if (n.role) h += `<p class="mut" style="margin:10px 0 0">${esc(n.role)}</p>`;
   if (g) h += `<div class="sep"></div><h4 style="color:${groupColor[g.id]}">${esc(g.name)} · ${g.size} wallets</h4><ul class="ev">` +
     g.links.filter(l => l.a === n.id || l.b === n.id).slice(0, 6).map(l => `<li>${esc(l.why)}: ${esc(l.detail)}</li>`).join('') + '</ul>';
@@ -315,6 +317,15 @@ function select(n) {
   if (n.kind === 'exchange') h += `<button class="btn primary" onclick="location.href='/submit'">Open freeze kit</button>`;
   body.innerHTML = h; insp.classList.add('on');
 }
+const EXP = {bitcoin:a=>[['mempool.space','https://mempool.space/address/'+a]], tron:a=>[['Tronscan','https://tronscan.org/#/address/'+a]],
+  solana:a=>[['Solscan','https://solscan.io/account/'+a]], ethereum:a=>[['Etherscan','https://etherscan.io/address/'+a]],
+  bsc:a=>[['BscScan','https://bscscan.com/address/'+a]], polygon:a=>[['PolygonScan','https://polygonscan.com/address/'+a]],
+  arbitrum:a=>[['Arbiscan','https://arbiscan.io/address/'+a]], base:a=>[['BaseScan','https://basescan.org/address/'+a]],
+  optimism:a=>[['Optimism','https://optimistic.etherscan.io/address/'+a]], avalanche:a=>[['Snowtrace','https://snowtrace.io/address/'+a]]};
+function explorerLinks(n){ const a = n.chain ? n.id.slice(n.chain.length+1) : n.id;
+  const L = n.chain ? (EXP[n.chain]||(()=>[]))(a) : [['XRPL','https://livenet.xrpl.org/accounts/'+a],['XRPScan','https://xrpscan.com/account/'+a],['Bithomp','https://bithomp.com/explorer/'+a]];
+  L.push(['Chainabuse','https://www.chainabuse.com/address/'+a]);
+  return L.map(([t,u])=>`<a href="${u}" target="_blank">${t}</a>`).join(''); }
 function focusGroup(id) { const ms = D.nodes.filter(n => n.group === id); if (!ms.length) return;
   focus = new Set(ms.flatMap(n => [n.id])); selected = null; insp.classList.remove('on');
   G.zoomToFit(700, 120, n => focus.has(n.id)); }

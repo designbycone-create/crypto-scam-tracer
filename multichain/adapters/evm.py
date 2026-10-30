@@ -36,14 +36,32 @@ def api_key():
     return ""
 
 
+# Free, key-less fallback: Blockscout explorers expose an Etherscan-compatible
+# API (module=account&action=txlist|tokentx). Used when no Etherscan key is set.
+BLOCKSCOUT = {
+    "ethereum": "https://eth.blockscout.com/api",
+    "base": "https://base.blockscout.com/api",
+    "optimism": "https://optimism.blockscout.com/api",
+    "arbitrum": "https://arbitrum.blockscout.com/api",
+    "polygon": "https://polygon.blockscout.com/api",
+}
+
+
 class EvmAdapter(Adapter):
     def available(self):
-        return (bool(api_key()),
-                "" if api_key() else "no Etherscan API key (set ETHERSCAN_API_KEY or etherscan.key); EVM chains skipped")
+        if api_key() or self.key in BLOCKSCOUT:
+            return True, ""
+        return False, (f"{self.info.name} needs a free Etherscan API key (etherscan_key in config.json); "
+                       "skipped until one is added")
 
     def _q(self, **params):
-        params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
-        data = http_json(V2, params=params)
+        if api_key():
+            params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
+            data = http_json(V2, params=params)
+        else:
+            params.pop("startblock", None)
+            params.pop("endblock", None)
+            data = http_json(BLOCKSCOUT[self.key], params=params)
         if isinstance(data, dict) and data.get("status") == "0" and "result" in data \
                 and not isinstance(data["result"], list):
             return []   # "No transactions found" etc.

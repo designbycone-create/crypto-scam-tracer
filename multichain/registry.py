@@ -11,6 +11,9 @@ def get_adapter(chain_key):
     if info.key == "tron":
         from .adapters.tron import TronAdapter
         return TronAdapter(info)
+    if info.key == "solana":
+        from .adapters.solana import SolanaAdapter
+        return SolanaAdapter(info)
     if info.evm_chainid is not None:
         from .adapters.evm import EvmAdapter
         return EvmAdapter(info)

@@ -121,10 +121,64 @@ def build():
     links = [{"source": a, "target": b, "xrp": round(f["xrp"], 2), "n": f["n"], "yours": f["yours"],
               "t0": f["t0"], "t1": f["t1"]}
              for (a, b), f in flows.items() if a in keep and b in keep]
+    # ---- other chains (multi-chain tracer) ----
+    mc = _j("mc_map.json")
+    cfg = _j("config.json")
+    seeds = {(c["chain"], c["address"].lower()) for c in cfg.get("cases") or [] if c.get("chain") != "xrpl"}
+    if mc.get("edges"):
+        evm = {"ethereum", "bsc", "polygon", "arbitrum", "base", "optimism", "avalanche"}
+        if any(c in evm for c, _ in seeds):
+            seeds |= {(k, a) for c, a in list(seeds) if c in evm for k in evm}
+        adj = {}
+        for e in mc["edges"]:
+            adj.setdefault((e.get("chain"), str(e.get("from")).lower()), []).append((e.get("chain"), str(e.get("to")).lower()))
+        reach, stack = set(), list(seeds)
+        while stack:
+            x = stack.pop()
+            if x not in reach:
+                reach.add(x)
+                stack += adj.get(x, [])
+        nid = lambda c, a: f"{c}:{a}"
+        mvol, mflows = {}, {}
+        for e in mc["edges"]:
+            c, a, b = e.get("chain"), e.get("from"), e.get("to")
+            k = (nid(c, a), nid(c, b))
+            f = mflows.setdefault(k, {"amt": {}, "n": 0, "t0": None, "yours": False})
+            f["amt"][e.get("asset")] = f["amt"].get(e.get("asset"), 0) + float(e.get("amount") or 0)
+            f["n"] += 1
+            t = e.get("epoch")
+            if t:
+                f["t0"] = min(f["t0"] or t, t)
+            f["yours"] = f["yours"] or (c, str(a).lower()) in reach
+            for x in k:
+                mvol[x] = mvol.get(x, 0) + 1
+        for key, n in mc.get("nodes", {}).items():
+            c, a = n.get("chain"), n.get("address")
+            k = nid(c, a)
+            if k not in mvol and (c, str(a).lower()) not in seeds:
+                continue
+            typ = n.get("type", "wallet")
+            kind = ("root" if (c, str(a).lower()) in seeds else "exchange" if typ == "exchange"
+                    else "swap" if typ == "bridge" else "hub" if typ == "mixer" else "wallet")
+            out_nodes.append({"id": k, "name": n.get("label") or ("SCAM WALLET" if kind == "root" else ""),
+                              "kind": kind, "role": f"{c} · {n.get('role', '')}", "bal": None, "vol": mvol.get(k, 0),
+                              "group": None, "yours": kind == "exchange" and (c, str(a).lower()) in reach,
+                              "deps": [], "ndeps": 0, "att": None, "chain": c,
+                              "t": min([f["t0"] for (x, y), f in mflows.items() if k in (x, y) and f["t0"]] or [0]) or None,
+                              "r": 4 + min(10, 2 * math.log2(1 + mvol.get(k, 0)))})
+        ids = {n["id"] for n in out_nodes}
+        for (a, b), f in mflows.items():
+            if a in ids and b in ids:
+                links.append({"source": a, "target": b, "xrp": round(sum(f["amt"].values()), 4), "n": f["n"],
+                              "yours": f["yours"], "t0": f["t0"], "t1": f["t0"],
+                              "label": " + ".join(f"{v:,.4f}".rstrip("0").rstrip(".") + f" {k}" for k, v in f["amt"].items())})
     groups = [{"id": g["id"], "name": g.get("name", g["id"]), "size": len(g["wallets"]),
                "links": g.get("links", [])[:30]} for g in ops.get("groups", [])]
     all_n = set(nodes) | set(eps) | {a for k in flows for a in k}
-    stats = {"wallets": len(all_n), "shown": len(out_nodes),
+    stats = {"wallets": len(all_n) + sum(1 for n in out_nodes if n.get("chain")), "shown": len(out_nodes),
+             "chains": len({n.get("chain") or "xrpl" for n in out_nodes}),
+             "xrpl": any(not n.get("chain") for n in out_nodes),
+             "mc_cashouts": sum(1 for n in out_nodes if n.get("chain") and n["kind"] in ("exchange", "swap")),
              "to_exchanges": round(sum(float(e.get("xrp") or 0) for v in eps.values() for e in v)),
              "cashout_points": len(eps), "operators": len(groups),
              "yours": round(sum(float(e.get("xrp") or 0) for v in eps.values() for e in v if e.get("hash") in yours_hash))}

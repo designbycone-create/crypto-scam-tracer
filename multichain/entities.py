@@ -63,6 +63,10 @@ STABLECOINS = {
     "base": {
         "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": ("USDC", "circle"),
     },
+    "solana": {   # SPL mints (stored lower-cased; lookups lower-case too)
+        "epjfwdd5aufqssqem2qn1xzybapc8g4wegggkzwytdt1v": ("USDC", "circle"),
+        "es9vmfrzacermjfrf4h2fyd4kconky11mcce8benwnyb": ("USDT", "tether"),
+    },
 }
 
 ISSUERS = {

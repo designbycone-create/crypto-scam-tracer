@@ -123,7 +123,7 @@ def submission_center(desk_note=""):
             if c.get("email") and c.get("verified"):
                 f = files.get(key)
                 txt = _read(os.path.join(KITS, f)) if f else ""
-                btns += f"<a class='btn alt' href='{e(_gmail(c['email'], 'URGENT - fraud victim, funds moving (XRP Ledger)', txt))}' target=_blank>Email draft</a>"
+                btns += f"<a class='btn alt' href='{e(_gmail(c['email'], 'URGENT - fraud victim, stolen crypto moving now', txt))}' target=_blank>Email draft</a>"
         f = files.get(key)
         if f:
             btns += (f"<button class='btn alt' onclick=\"copyFile('{f}',this)\">Copy text</button>"
@@ -157,17 +157,20 @@ def submission_center(desk_note=""):
             att_txt = "".join(f"<br><small class=mut>{e(v.get('confidence'))}: {e((v.get('evidence') or [''])[0])}</small>"
                               for v in list(atts.values())[:1])
             rows += (f"<tr id='{e(tid)}'><td><b>{e(t['entry'].get('name', tid))}</b>{att_txt}</td><td>{len(t['deposits'])}</td>"
-                     f"<td>{sum(d['xrp'] for d in t['deposits']):,.0f}</td>"
+                     f"<td>{e(_kit.amt_str(t['deposits']))}</td>"
                      f"<td>{'<br>'.join(e(c.get('label', c['type'])) for c in le) or '<span class=mut>officer route (unverified)</span>'}</td>"
                      f"<td><a href='/kit/{e(tid)}/officer_request.txt' target=_blank>officer request</a> · "
                      f"<a href='/kit/{e(tid)}/fund_inflow.csv'>CSV</a></td></tr>")
-        body.append(f"<table><tr><th>Platform</th><th>Deposits</th><th>XRP</th><th>LE channel</th><th>Kit</th></tr>{rows}</table>")
+        body.append(f"<table><tr><th>Platform</th><th>Deposits</th><th>Amount</th><th>LE channel</th><th>Kit</th></tr>{rows}</table>")
 
     # ---- issuers
     body.append("<h2 id=issuers>Issuer freezes (tokens the network holds)</h2>")
     toks = xrpl_tokens.load()
     if issuer_targets or any(op.get("kind") == "stablecoin_issuer" for op in mc_ops):
-        rows = "".join(f"<tr><td>{e(h['issuer_name'] or h['issuer'])}</td><td>{e(h['currency'])}</td><td>{h['balance']:,.2f}</td>"
+        rows = "".join(f"<tr><td>{e((op.get('issuer') or '').title())}</td><td>{e(op.get('asset'))} ({e(_kit._chain_name(op.get('chain')))})</td>"
+                       f"<td>{e(op.get('amount') or '?')}</td><td class=m>{e(op.get('address'))}</td><td>freeze</td></tr>"
+                       for op in mc_ops if op.get("kind") == "stablecoin_issuer")
+        rows += "".join(f"<tr><td>{e(h['issuer_name'] or h['issuer'])}</td><td>{e(h['currency'])}</td><td>{h['balance']:,.2f}</td>"
                        f"<td class=m>{e(h['wallet'])}</td><td>{'clawback' if h['clawback'] else 'freeze'}"
                        f"{' · <b class=ok>already frozen</b>' if h['frozen_by_issuer'] else ''}</td></tr>" for h in issuer_targets)
         body.append(f"<table><tr><th>Issuer</th><th>Token</th><th>Amount</th><th>Held by</th><th>Issuer can</th></tr>{rows}</table>"
@@ -189,12 +192,18 @@ def submission_center(desk_note=""):
 def _target_card(t, st, ex_status, mine):
     tid, ent = t["id"], t["entry"]
     rec = st["targets"].get(tid, {})
-    xrp = sum(d["xrp"] for d in t["deposits"] if d["yours"]) or sum(d["xrp"] for d in t["deposits"])
-    tags = ", ".join(sorted({str(d["tag"]) for d in t["deposits"] if d["yours"]}))
+    from . import kit as _kit
+    mine_d = [d for d in t["deposits"] if d["yours"]] or t["deposits"]
+    amt_txt = _kit.amt_str(mine_d)
+    tags = ", ".join(sorted({str(d["tag"]) for d in mine_d if d.get("tag") is not None}))
+    accts = ", ".join(sorted({f"{d['address'][:10]}… ({_kit._chain_name(d.get('chain', 'xrpl'))})"
+                              for d in mine_d if d.get("chain", "xrpl") != "xrpl"})[:4])
     out = [f"<div class='card you' id='{e(tid)}'><h3>{e(ent.get('name', 'Unidentified custodial service'))}"
            f"<span class='badge you'>YOUR FUNDS</span></h3>",
-           f"<div>{xrp:,.2f} XRP &middot; destination tag <b>{e(tags)}</b> &middot; "
-           f"<span class=clock>cash-out detected {e(tracker.elapsed(rec.get('yours_since') or rec.get('detected', '')))}</span></div>"]
+           f"<div>{e(amt_txt)} &middot; "
+           + (f"destination tag <b>{e(tags)}</b> &middot; " if tags else "")
+           + (f"deposit account <b>{e(accts)}</b> &middot; " if accts else "")
+           + f"<span class=clock>cash-out detected {e(tracker.elapsed(rec.get('yours_since') or rec.get('detected', '')))}</span></div>"]
     exs = ex_status.get(t["key"] or "", {})
     if exs.get("state") not in (None, "no public status feed", "none"):
         out.append(f"<div class=warn>Exchange status: {e(exs.get('description') or exs.get('state'))} {e(', '.join(exs.get('incidents') or []))}</div>")

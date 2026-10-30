@@ -188,6 +188,15 @@ def cmd_watch(a):
             entities.refresh(log=_log)  # only hits network when stale
             t = Tracer.load(MAP, max_nodes=a.max_nodes, max_depth=a.max_depth, cross_evm=not a.no_cross_evm, log=_log)
             before = (len(t.nodes), len(t.endpoints), len(t.freeze_ops))
+            try:   # the user's own case(s) from setup (re-read every cycle: setup may add one)
+                with open("config.json", encoding="utf-8-sig") as _f:
+                    for c in json.load(_f).get("cases") or []:
+                        if c.get("chain") != "xrpl" and not any(
+                                s[0] == c["chain"] and str(s[1]).lower() == c["address"].lower() for s in t.seeds):
+                            t.seeds.append((c["chain"], c["address"], c.get("after")))
+                            _log(f"case seed added: {c['chain']} {c['address']}")
+            except Exception as ex:
+                _log(f"(case seeds skipped: {ex})")
             try:   # incident-mode addresses (any non-XRPL chain) become seeds
                 from responder import incident as _inc
                 for r in _inc.load()["addresses"]:
@@ -256,7 +265,7 @@ def main():
     ix.add_argument("--xrpl-map", default="network_map.json")
 
     w = sub.add_parser("watch", help="Automated: run forever, re-trace, draft reports, phone-alert on changes")
-    w.add_argument("--interval", type=int, default=900, help="Seconds between cycles (default 900)")
+    w.add_argument("--interval", type=int, default=300, help="Seconds between cycles (default 300)")
     w.add_argument("--xrpl-map", default="network_map.json", help="XRPL watcher map to auto-import swap leads from")
     common(w)
 

@@ -21,6 +21,23 @@ star it and pass it on.
 
 ---
 
+## Supported chains
+
+| Chain | Live watching | Tracing & freeze kits | Lookup in setup | Notes |
+|---|---|---|---|---|
+| XRP Ledger | real-time | yes (+ destination tags, issuer freeze/clawback) | yes | deepest coverage |
+| Bitcoin | every 5 min | yes | yes | mempool.space, no key |
+| Ethereum, Base, Optimism, Arbitrum, Polygon | every 5 min | yes (+ USDT/USDC issuer freezes) | yes | Blockscout, no key |
+| BNB Chain, Avalanche | every 5 min | yes | yes | free Etherscan key needed for tracing |
+| Tron | every 5 min | yes (+ USDT-TRC20) | yes | TronGrid, no key |
+| Solana | every 5 min | yes (+ USDC/USDT SPL) | yes | public RPC, no key (set `solana_rpc` for heavy use) |
+
+Any asset on these chains works — native coins and tokens (USDT, USDC, …).
+Other chains: paste the scammer's address into Incident mode and the threat-intel
+lookup; full tracing needs an adapter (contributions welcome — one file per chain).
+
+---
+
 ## What it does
 
 Three tools that work together, each able to run on its own:

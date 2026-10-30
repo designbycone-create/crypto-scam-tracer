@@ -30,7 +30,13 @@ def _j(p):
 
 def needed():
     cfg = _j("config.json")
-    return not (cfg.get("scam_wallet") or cfg.get("watched_wallets"))
+    return not (cfg.get("scam_wallet") or cfg.get("watched_wallets") or cfg.get("cases"))
+
+
+def xrpl_case():
+    """True if this install has an XRP Ledger scam wallet to watch live."""
+    cfg = _j("config.json")
+    return bool(cfg.get("scam_wallet") or cfg.get("watched_wallets"))
 
 
 def lookup_tx(text, _post=None):
@@ -73,20 +79,43 @@ def _valid_xrpl(a):
 
 
 def save(form):
+    from .chainlookup import detect_address, CHAIN_NAMES
     scam = (form.get("scam_wallet") or "").strip()
-    if not _valid_xrpl(scam):
-        return False, "The scam wallet address isn't a valid XRP Ledger address."
+    chains = detect_address(scam)
+    if not chains:
+        return False, ("That doesn't look like a valid wallet address on a supported chain "
+                       "(XRP Ledger, Bitcoin, Ethereum/EVM, Tron, Solana).")
+    chain = (form.get("chain") or "").strip()
+    if chain not in chains:
+        chain = chains[0]
+    try:
+        after = int(form.get("epoch") or 0) or None
+    except ValueError:
+        after = None
+    if after:
+        after -= 3600      # an hour of margin before the payment
     cfg = _j("config.json")
     topic = (form.get("ntfy_topic") or "").strip() or cfg.get("ntfy_topic") or f"scamhunter-{secrets.token_hex(5)}"
-    cfg.update({"scam_wallet": scam,
-                "watched_wallets": {**(cfg.get("watched_wallets") or {}), scam: form.get("scam_label") or "scam wallet (from setup)"},
-                "ntfy_topic": topic, "min_xrp": cfg.get("min_xrp", 25), "victim_file": "victim.json"})
+    cfg.update({"ntfy_topic": topic, "min_xrp": cfg.get("min_xrp", 25), "victim_file": "victim.json"})
+    ek = (form.get("etherscan_key") or "").strip()
+    if ek and "•" not in ek:
+        cfg["etherscan_key"] = ek
+    cases = [c for c in (cfg.get("cases") or []) if not (c.get("chain") == chain and c.get("address") == scam)]
+    cases.append({"chain": chain, "address": scam, "after": after,
+                  "added": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+    cfg["cases"] = cases
+    if chain == "xrpl":
+        cfg["scam_wallet"] = scam
+        cfg["watched_wallets"] = {**(cfg.get("watched_wallets") or {}), scam: form.get("scam_label") or "scam wallet (from setup)"}
+    else:
+        _seed_multichain(chain, scam, after)
     victim = _j("victim.json")
     for k in ("name", "email", "phone", "victim_wallet", "tx_hash", "amount", "theft_time", "ic3_id", "scam_type"):
         v = (form.get(k) or "").strip()
         if v:
             victim[k] = v
     victim["scam_wallet"] = scam
+    victim["scam_chain"] = CHAIN_NAMES.get(chain, chain)
     victim.setdefault("country", "US")
     victim.setdefault("scam_type", "a cryptocurrency scam")
     reps = [r.strip() for r in (form.get("reports") or "").splitlines() if r.strip()]
@@ -98,6 +127,21 @@ def save(form):
             json.dump(data, f, indent=2)
         os.replace(tmp, path)
     return True, topic
+
+
+def _seed_multichain(chain, addr, after):
+    path = "mc_map.json"
+    m = _j(path) or {"nodes": {}, "edges": [], "endpoints": [], "handoffs": [], "freeze_ops": [], "seeds": []}
+    seeds = m.setdefault("seeds", [])
+    if not any(s[0] == chain and str(s[1]).lower() == addr.lower() for s in seeds):
+        seeds.append([chain, addr, after])
+    m.setdefault("case_seeds", [])
+    if [chain, addr] not in m["case_seeds"]:
+        m["case_seeds"].append([chain, addr])
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(m, f, indent=2, default=str)
+    os.replace(tmp, path)
 
 
 CSS = """:root{--bg:#070a12;--card:rgba(17,23,38,.8);--line:rgba(255,255,255,.09);--fg:#e9edf7;--mut:#8a93ab;--acc:#3da9ff;--red:#ff4d6d;--ok:#2ee6a8}
@@ -145,16 +189,23 @@ and never promises recovery. Never type your seed phrase or private key anywhere
 <form method=post action="/setup" id=f>
 
 <div class=step><h2><span class=num>1</span>Where did your crypto go?</h2>
-<p class=hint>Paste the transaction where you sent funds to the scammer &mdash; the hash, or the link from your wallet or an explorer
-(XRPScan, Bithomp, livenet.xrpl.org). We read it from the public XRP Ledger and fill in the rest.</p>
-<div class=topic><input id=txq class=mono placeholder="e.g. 1F7DA9E9...D390  or  https://xrpscan.com/tx/..." value="{e(pf.get('tx_hash',''))}">
+<p class=hint>Paste the transaction where you sent funds to the scammer &mdash; the hash/signature, or the link from your wallet or an
+explorer. Works for <b>XRP, Bitcoin, Ethereum and EVM chains (BNB, Polygon, Arbitrum, Base, Optimism, Avalanche), Tron and Solana</b>,
+including USDT/USDC. We read it from the public blockchain and fill in the rest.</p>
+<div class=topic><input id=txq class=mono placeholder="tx hash / signature, or an explorer link (xrpscan, etherscan, mempool.space, tronscan, solscan...)" value="{e(pf.get('tx_hash',''))}">
 <button type=button class=btn onclick=look()>Look it up</button></div>
 <div id=found class=found></div>
 <div class=or>or enter the scammer's wallet directly</div>
-<label>Scammer's wallet address (XRP Ledger, starts with r)</label>
-<input name=scam_wallet id=scam class=mono required value="{e(pf.get('scam_wallet') or cfg.get('scam_wallet',''))}" placeholder="r...">
+<label>Scammer's wallet address (any supported chain)</label>
+<input name=scam_wallet id=scam class=mono required value="{e(pf.get('scam_wallet') or cfg.get('scam_wallet',''))}" placeholder="r... / 0x... / T... / bc1... / Solana address" oninput="detect()">
+<div id=netrow style="display:none"><label>Which network? (Ethereum-style addresses exist on every EVM chain; we check all of them)</label>
+<select name=chain id=chain style="width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);color:var(--fg);border-radius:11px;padding:11px">
+<option value=ethereum>Ethereum</option><option value=bsc>BNB Smart Chain</option><option value=polygon>Polygon</option><option value=arbitrum>Arbitrum</option>
+<option value=base>Base</option><option value=optimism>Optimism</option><option value=avalanche>Avalanche</option></select></div>
+<input type=hidden name=epoch id=epoch value="">
+<div id=cands></div>
 <input type=hidden name=tx_hash id=h value="{e(pf.get('tx_hash',''))}"><input type=hidden name=victim_wallet id=vw value="{e(pf.get('victim_wallet',''))}">
-<div class=row><div><label>Amount you lost</label><input name=amount id=amt value="{e(pf.get('amount',''))}" placeholder="500 XRP"></div>
+<div class=row><div><label>Amount you lost</label><input name=amount id=amt value="{e(pf.get('amount',''))}" placeholder="500 XRP / 0.2 BTC / 1,000 USDT"></div>
 <div><label>When</label><input name=theft_time id=when value="{e(pf.get('theft_time',''))}" placeholder="2026-10-27 15:39 UTC"></div></div>
 <label>What kind of scam was it?</label><input name=scam_type value="{e(pf.get('scam_type',''))}" placeholder="fake giveaway, fake exchange, romance / investment scam...">
 </div>
@@ -177,6 +228,10 @@ the scammer moves money &mdash; especially when it hits an exchange, which is wh
 <div class=topic><input name=ntfy_topic id=topic class=mono value="{e(topic)}">
 <a class="btn ghost" href="https://ntfy.sh/{e(topic)}" target=_blank id=tlink>Open</a></div>
 <p class=hint style="margin-top:10px">Want a second channel (recommended)? After setup, run <span class=mono>python telegram_setup.py</span> to connect Telegram in about 2 minutes.</p>
+<details style="margin-top:8px"><summary class=mut style="cursor:pointer">Optional: free Etherscan key (only for BNB Chain / Avalanche cases)</summary>
+<p class=hint style="margin-top:8px">Ethereum, Base, Optimism, Arbitrum and Polygon are traced with no key. BNB Chain and Avalanche need a free key from
+<a href="https://etherscan.io/apis" target=_blank>etherscan.io/apis</a> (one key covers all EVM chains).</p>
+<input name=etherscan_key class=mono placeholder="paste key (optional)" value="{e('••••••••' if cfg.get('etherscan_key') else '')}"></details>
 </div>
 
 <button class="btn big">Start tracking</button>
@@ -184,14 +239,26 @@ the scammer moves money &mdash; especially when it hits an exchange, which is wh
 </form></div>
 <script>
 document.getElementById('topic').addEventListener('input',e=>document.getElementById('tlink').href='https://ntfy.sh/'+encodeURIComponent(e.target.value));
-async function look(){{const q=document.getElementById('txq').value, box=document.getElementById('found');box.style.display='block';box.innerHTML='Looking it up on the XRP Ledger&hellip;';
+const EVM=['ethereum','bsc','polygon','arbitrum','base','optimism','avalanche'];
+function detect(){{const v=document.getElementById('scam').value.trim();document.getElementById('netrow').style.display=/^0x[0-9a-fA-F]{{40}}$/.test(v)?'block':'none'}}
+const NAMES={{xrpl:'XRP Ledger',bitcoin:'Bitcoin',tron:'Tron',solana:'Solana',ethereum:'Ethereum',bsc:'BNB Smart Chain',polygon:'Polygon',arbitrum:'Arbitrum',base:'Base',optimism:'Optimism',avalanche:'Avalanche'}};
+function pick(a){{document.getElementById('scam').value=a;detect()}}
+async function look(){{const q=document.getElementById('txq').value, box=document.getElementById('found');box.style.display='block';box.innerHTML='Looking it up&hellip;';
  try{{const r=await (await fetch('/setup/lookup',{{method:'POST',headers:{{'Content-Type':'application/x-www-form-urlencoded'}},body:'q='+encodeURIComponent(q)}})).json();
  if(!r.ok){{box.innerHTML='<span class=err>'+r.error+'</span>';return}}
- box.innerHTML=`Found it. <b>${{r.amount}}</b> sent on <b>${{r.time}}</b><br>from your wallet <span class=mono>${{r.from}}</span><br>to <span class=mono><b>${{r.to}}</b></span> &larr; the scammer's wallet`
-  +(r.warning?`<br><span class=warn>${{r.warning}}</span>`:'')+(r.result&&r.result!=='tesSUCCESS'?`<br><span class=warn>Note: this transaction failed (${{r.result}}).</span>`:'');
- document.getElementById('scam').value=r.to;document.getElementById('h').value=r.hash;document.getElementById('vw').value=r.from;
- document.getElementById('amt').value=r.amount;document.getElementById('when').value=r.time;}}
+ let h=`Found it on <b>${{NAMES[r.chain]||r.chain}}</b>. <b>${{r.amount||''}}</b> sent on <b>${{r.time||'?'}}</b><br>from your wallet <span class=mono>${{r.from||'?'}}</span>`;
+ if(r.to)h+=`<br>to <span class=mono><b>${{r.to}}</b></span> &larr; the scammer's wallet`;
+ if(r.warning)h+=`<br><span class=warn>${{r.warning}}</span>`;
+ if(r.result&&r.result!=='tesSUCCESS')h+=`<br><span class=warn>Note: this transaction failed (${{r.result}}).</span>`;
+ box.innerHTML=h;
+ const c=document.getElementById('cands');c.innerHTML='';
+ if(r.candidates)c.innerHTML='<label>Which one is the scammer?</label>'+r.candidates.map(x=>`<div><label style="font-weight:500"><input type=radio name=cand style="width:auto" onclick="pick('${{x.to}}')"> <span class=mono>${{x.to}}</span> &mdash; ${{x.amount}}</label></div>`).join('');
+ if(r.to)document.getElementById('scam').value=r.to;
+ document.getElementById('h').value=r.hash||'';document.getElementById('vw').value=r.from||'';
+ document.getElementById('amt').value=r.amount||'';document.getElementById('when').value=r.time||'';document.getElementById('epoch').value=r.epoch||'';
+ if(EVM.includes(r.chain))document.getElementById('chain').value=r.chain; detect();}}
  catch(x){{box.innerHTML='<span class=err>Lookup failed: '+x+'</span>'}}}}
+detect();
 </script></body></html>"""
 
 

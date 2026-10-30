@@ -25,5 +25,7 @@
   },
   "incident_feeds": [],
   "radar_brands": [],
-  "radar_keywords": []
+  "radar_keywords": [],
+  "solana_rpc": "",
+  "cases": []
 }

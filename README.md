@@ -1,4 +1,4 @@
-# crypto-scam-tracer
+# crypto-scam-tracer — ScamHunter Desk™
 
 **A free, open-source toolkit for victims of cryptocurrency fraud.** Watch the
 scammer's wallet in real time, follow the stolen money across blockchains, and
@@ -261,3 +261,7 @@ Provided as-is under the MIT License, for lawful use by victims and
 investigators. It performs only public blockchain lookups and open-source
 intelligence on public infrastructure. It is not legal or financial advice. Verify
 every contact route before sending anything, and work with law enforcement.
+
+---
+
+© 2026 Matthew Cone / FPH LLC · Code under the MIT License · "ScamHunter Desk" is a trademark of FPH LLC — see [NOTICE.md](NOTICE.md).

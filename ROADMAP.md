@@ -7,7 +7,7 @@ needs for their own case: live watchers, network evidence map, Submission
 Center with freeze kits and Officer Packet, incident mode, radar, claim checker,
 chain-of-custody hashing.
 
-**Institutional edition — paid (planned).** For police departments, fraud
+**Institutional edition — paid (planned; developed privately by FPH LLC, proprietary license).** For police departments, fraud
 attorneys, credit unions, banks and private investigators who handle many cases:
 - multi-case workspaces and an intake queue for victim referrals
 - agency letterhead and officer details pre-filled on every packet

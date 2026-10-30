@@ -95,7 +95,17 @@ def collect():
             ent = {**ent, "attribution": att}
             if key is None and att.get("confidence") in ("verified", "likely"):
                 ent["name"] = f"{att['name']} (attributed)"
-        tid = key or f"unidentified-{ep['address'][:10]}"
+        brand = (ep.get("label") or "").split("(")[0].strip()
+        if key is None and brand:
+            # labeled by an explorer but not in the verified directory yet
+            import re as _re
+            ent = {**ent, "name": brand,
+                   "note": f"Identified as {brand} by public explorer labels; no verified freeze channel in the "
+                           "directory yet. Officer route: find its official law-enforcement / compliance page. "
+                           "SEAL 911 can also reach it."}
+            tid = "svc-" + _re.sub(r"[^a-z0-9]+", "-", brand.lower()).strip("-")
+        else:
+            tid = key or f"unidentified-{ep['address'][:10]}"
         t = targets.setdefault(tid, {"id": tid, "key": key, "entry": ent, "deposits": [], "yours": False,
                                      "addresses": set()})
         if att and att.get("name"):
@@ -499,6 +509,10 @@ def build(log=print):
     manifest_rows += [(f"_case/{fn}", custody.sha256_file(os.path.join(ROOT, "_case", fn))) for fn in case_files]
     _write(os.path.join(ROOT, "_case", "officer_packet.html"),
            officer_packet_html(root, targets, issuer_targets, case, manifest_rows), changed)
+    # forget targets that no longer exist (e.g. now attributed to an exchange) unless you tracked them
+    for old_tid in list(st["targets"]):
+        if old_tid not in targets and not any(k.split(":")[0] == old_tid for k in st["status"]):
+            st["targets"].pop(old_tid, None)
     tracker.save(st)
     if changed:
         log(f"freeze kits: {len(changed)} file(s) updated across {len(targets)} target(s)")

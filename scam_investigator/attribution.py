@@ -216,6 +216,11 @@ def attribute(addr, known=None, bithomp_token=None, _post=None, _get=None, label
             ev.append(f"activated (first funded) by {al} ({act})")
             if custodial and conf is None:
                 name, conf = _brand(al), "likely"
+            elif conf is None:
+                # a private wallet first funded by an exchange withdrawal: that exchange
+                # holds KYC for whoever withdrew -- a lead for the officer, not a label
+                name, conf = f"funded from {_brand(al)}", "hint"
+                ev.append(f"KYC lead: {_brand(al)} knows who made the withdrawal that created this wallet")
         else:
             ev.append(f"activated by {act}")
 

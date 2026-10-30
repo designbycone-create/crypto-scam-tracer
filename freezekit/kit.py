@@ -268,11 +268,20 @@ def _add_multichain(add):
             continue
         ch, hot = ep.get("chain"), ep.get("address")
         info = CHAINS.get(ch)
+        seedset = {(c, (a or "").lower()) for c, a in seeds}
         for e in edges:
             if e.get("chain") != ch or e.get("to") != hot:
                 continue
             yours = (ch, hot) in reach if seeds else False
-            add({"address": e.get("from") if nodes.get(f"{ch}:{e.get('from')}", {}).get("type") == "wallet" else hot,
+            frm = e.get("from")
+            # The sender is the customer's DEPOSIT address only if it looks like one: an
+            # unlabeled wallet that isn't one of the scammer's own wallets (a case seed)
+            # and that only forwards into exchanges (a deposit address just sweeps).
+            outs = [x for x in edges if x.get("chain") == ch and x.get("from") == frm]
+            sweeps_only = all(nodes.get(f"{ch}:{x.get('to')}", {}).get("type") in ("exchange", "bridge") for x in outs)
+            is_deposit = (nodes.get(f"{ch}:{frm}", {}).get("type") == "wallet"
+                          and (ch, (frm or "").lower()) not in seedset and sweeps_only)
+            add({"address": frm if is_deposit else hot,
                  "label": ep.get("label"), "destination_tag": None, "hash": e.get("txid"), "time": e.get("time"),
                  "chain": ch, "asset": e.get("asset"), "amount": e.get("amount"),
                  "tx_url": info.explorer_tx(e.get("txid")) if info else None, "post_theft": True},

@@ -133,7 +133,20 @@ def network_wallets():
         addrs += list(d.get("nodes", {}).keys()) + list(d.get("watchlist", []))
         if d.get("root"):
             addrs.insert(0, d["root"])
-    seen, out = set(), []
+    # Exchange / custodial wallets hold thousands of customers' tokens -- not the
+    # scammers'. Only scan the network's own wallets.
+    exch = set()
+    for path in ("scam_network.json", "network_map.json"):
+        d = {}
+        try:
+            with open(path, encoding="utf-8") as f:
+                d = json.load(f)
+        except Exception:
+            pass
+        exch |= {e.get("address") for e in d.get("endpoints", [])}
+        exch |= {a for a, n in d.get("nodes", {}).items()
+                 if n.get("is_exchange") or "exchange" in str(n.get("role", "")) or "swap" in str(n.get("role", ""))}
+    seen, out = set(exch), []
     for a in addrs:
         if isinstance(a, str) and a.startswith("r") and a not in seen:
             seen.add(a)

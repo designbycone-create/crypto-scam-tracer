@@ -56,19 +56,33 @@ def job_kits(desk):
 
 
 def job_tokens(desk, seen):
+    """Alert ONLY for tokens from a known, accountable issuer (RLUSD, ...) that can
+    still be frozen / clawed back. Other holdings are listed in the Submission
+    Center without alerts (meme-token issuers rarely act)."""
+    import json as _json
     from freezekit import xrpl_tokens
+    try:
+        with open("token_alerts_sent.json", encoding="utf-8") as f:
+            seen |= set(_json.load(f))
+    except Exception:
+        pass
     r = xrpl_tokens.scan(xrpl_tokens.network_wallets(), log=_log)
     for h in r["holdings"]:
-        if not (h["freezable"] or h["clawback"]) or h["frozen_by_issuer"]:
+        if not h.get("issuer_name") or h["frozen_by_issuer"] or not (h["freezable"] or h["clawback"]):
             continue
         k = f"tok:{h['wallet']}:{h['issuer']}:{h['currency']}"
         if k in seen:
             continue
         seen.add(k)
-        _alert(f"FREEZABLE TOKEN in scam network: {h['currency']}",
-               f"{h['balance']:,.2f} {h['currency']} held by {h['wallet']}. Issuer {h['issuer_name'] or h['issuer']} "
+        _alert(f"FREEZABLE {h['currency']} in scam network",
+               f"{h['balance']:,.2f} {h['currency']} held by {h['wallet']}. {h['issuer_name']} "
                f"can {'claw back' if h['clawback'] else 'freeze'} it. Request is in the Submission Center.",
                key=k, url=f"{desk}/submit#issuers")
+    try:
+        with open("token_alerts_sent.json", "w", encoding="utf-8") as f:
+            _json.dump(sorted(seen), f)
+    except Exception:
+        pass
 
 
 def job_feeds_status_radar():

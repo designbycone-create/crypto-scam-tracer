@@ -137,7 +137,10 @@ def collect():
         t["deposits"].sort(key=lambda d: (not d["yours"], str(d.get("time"))))
 
     toks = xrpl_tokens.load() or {}
-    issuer_targets = [h for h in toks.get("holdings", []) if h.get("freezable") or h.get("clawback")]
+    # known, accountable issuers first; then other freezable tokens (largest first, capped)
+    hold = [h for h in toks.get("holdings", []) if h.get("freezable") or h.get("clawback")]
+    issuer_targets = [h for h in hold if h.get("issuer_name")] + \
+        [h for h in hold if not h.get("issuer_name")][:15]
     mc = _j("mc_map.json") or {}
     return root, targets, issuer_targets, mc.get("freeze_ops", [])
 

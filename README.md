@@ -174,7 +174,7 @@ Critical alerts (your funds hitting an exchange) go to **every** channel you
 configure, so one channel being down or over quota never loses one. Test them
 with `python alerts.py test`.
 
-- **Telegram** — create a bot with @BotFather, put `bot_token` and your
+- **Telegram** — create a bot with @BotFather, then run `python telegram_setup.py` (it finds your chat id and saves it). Or manually: put `bot_token` and your
   `chat_id` under `"telegram"` in `config.json`.
 - **Email** — a Gmail *app password* under `"alert_email"` (critical alerts only).
 - **ntfy** — below.

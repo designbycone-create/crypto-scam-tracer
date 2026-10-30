@@ -139,7 +139,7 @@ const nbrs = {}; D.links.forEach(l => { (nbrs[l.source] ||= new Set()).add(l.tar
 const S = D.stats;
 document.getElementById('stats').innerHTML = [
   ['Wallets mapped', S.wallets, ''], ['Cash-out points', S.cashout_points, ''], ['XRP to exchanges', S.to_exchanges, ''],
-  ['Operator groups', S.operators, ''], ['Your funds traced', S.yours, 'you']].map(([k,v,c]) =>
+  ['Operator groups', S.operators, ''], ['XRP cashed out on your funds\' path', S.yours, 'you']].map(([k,v,c]) =>
   `<div class="stat ${c}"><b data-v="${v}">0</b><span>${k}</span></div>`).join('');
 document.querySelectorAll('.stat b').forEach(el => { const v = +el.dataset.v; let t0 = null;
   const step = ts => { t0 ??= ts; const p = Math.min(1,(ts-t0)/1100), e = 1-Math.pow(1-p,3); el.textContent = fmt(Math.round(v*e)); if (p<1) requestAnimationFrame(step); };

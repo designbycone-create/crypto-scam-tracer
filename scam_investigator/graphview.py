@@ -46,6 +46,15 @@ def build():
                     pass
     except FileNotFoundError:
         pass
+    try:   # cash-outs the live watcher logged before cashouts.jsonl existed
+        import re
+        with open("netwatch_events.log", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                m = re.search(r"(?:CASH-OUT|BRIDGE/SWAP): .*?tx ([0-9A-F]{64})", line)
+                if m:
+                    yours_hash.add(m.group(1))
+    except FileNotFoundError:
+        pass
     yours_hash |= {e.get("hash") for e in fm.get("edges", [])}
     nodes = {}
     for src in (ev, fm):

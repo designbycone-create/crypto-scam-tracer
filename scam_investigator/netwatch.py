@@ -96,6 +96,31 @@ def load_map():
     return None
 
 
+CASHOUTS = "cashouts.jsonl"
+
+
+def _carry_over(old, net):
+    """Merge live-detected nodes, edges and cash-outs from the previous map into a
+    freshly back-mapped one. The rebuild re-derives the graph from history and can
+    miss flows the live stream caught; the record must only ever grow."""
+    if not old:
+        return
+    for a, n in old.get("nodes", {}).items():
+        net["nodes"].setdefault(a, n)
+    have = {e.get("hash") for e in net.get("edges", [])}
+    for e in old.get("edges", []):
+        if e.get("hash") not in have:
+            net["edges"].append(e)
+    have = {(e.get("hash"), e.get("address")) for e in net.get("endpoints", [])}
+    for e in old.get("endpoints", []):
+        if (e.get("hash"), e.get("address")) not in have:
+            net.setdefault("endpoints", []).append(e)
+    for a in old.get("watchlist", []):
+        if a not in net.get("watchlist", []) and not old.get("nodes", {}).get(a, {}).get("is_exchange"):
+            net.setdefault("watchlist", []).append(a)
+    _refresh_summary(net)
+
+
 def save_map(net):
     net["generated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     netmap.save(net, MAP_JSON)
@@ -108,7 +133,9 @@ def save_map(net):
 
 async def backfill():
     log_event("Back-mapping the network (stolen funds, time-forward)...")
+    old = load_map()
     net = await netmap.map_network(SCAM_WALLET, max_nodes=MAX_NODES, min_xrp=MIN_XRP)
+    _carry_over(old, net)   # never lose live-detected hops / cash-outs on a rebuild
     save_map(net)
     s = net["summary"]
     log_event(f"Map: {s['total_nodes']} nodes, {s['hop_wallets']} hop wallets, "
@@ -172,6 +199,12 @@ async def _process(net, tx, meta, seen):
               "xrp": amt, "hash": h, "time": ripple_time(tx.get("date")),
               "is_swap": is_swap, "swap_name": dn.get("swap_name")}
         net.setdefault("endpoints", []).append(ep)
+        # Permanent record of YOUR funds' cash-outs: survives map rebuilds, read by freezekit.
+        try:
+            with open(CASHOUTS, "a", encoding="utf-8") as f:
+                f.write(json.dumps({**ep, "from": sender, "detected": now()}) + "\n")
+        except Exception as ex:
+            log_event(f"(cash-out record failed: {ex})")
         # Auto-DRAFT (never auto-send) a freeze/preservation report for this endpoint.
         report_path = None
         try:

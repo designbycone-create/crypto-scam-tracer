@@ -99,12 +99,39 @@ def collect():
         t["deposits"].append(d)
         t["addresses"].add(ep.get("address"))
 
+    # YOUR cash-outs: the live watcher's permanent record + its event log (older installs)
+    mine = {}
+    try:
+        with open("cashouts.jsonl", encoding="utf-8-sig") as f:
+            for line in f:
+                try:
+                    ep = json.loads(line)
+                    mine[ep["hash"]] = ep
+                except Exception:
+                    pass
+    except FileNotFoundError:
+        pass
+    try:
+        import re
+        with open("netwatch_events.log", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                m = re.search(r"(?:CASH-OUT|BRIDGE/SWAP): .*? tag (\d+)\s+.*?tx ([0-9A-F]{64})", line)
+                if m:
+                    mine.setdefault(m.group(2), {"hash": m.group(2), "destination_tag": int(m.group(1))})
+    except FileNotFoundError:
+        pass
+    all_eps = {ep.get("hash"): ep for ep in evid.get("endpoints", []) + freeze.get("endpoints", [])}
+    for h, ep in mine.items():
+        if not ep.get("address") and h in all_eps:
+            ep = {**all_eps[h], **{k: v for k, v in ep.items() if v is not None}}
+        if ep.get("address"):
+            add(ep, True, freeze.get("edges", []) + evid.get("edges", []))
     for ep in freeze.get("endpoints", []):
         if ep.get("address"):
-            add(ep, ep.get("post_theft", True), freeze.get("edges", []))
+            add(ep, ep.get("hash") in mine or ep.get("post_theft", True), freeze.get("edges", []))
     for ep in evid.get("endpoints", []):
         if ep.get("address"):
-            add(ep, False, evid.get("edges", []))
+            add(ep, ep.get("hash") in mine, evid.get("edges", []))
     for t in targets.values():
         t["addresses"] = sorted(a for a in t["addresses"] if a)
         t["deposits"].sort(key=lambda d: (not d["yours"], str(d.get("time"))))

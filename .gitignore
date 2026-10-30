@@ -45,3 +45,4 @@ radar.json
 exchange_status.json
 channels_overrides.json
 *.tmp
+cashouts.jsonl

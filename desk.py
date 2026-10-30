@@ -560,7 +560,26 @@ def _free_port(preferred):
     return preferred
 
 
+def ensure_deps():
+    """Make sure the Python running the Desk has the watchers' dependencies.
+    (Windows often has several Pythons; the watchers run under this one.)"""
+    try:
+        import websockets  # noqa: F401
+        return
+    except ImportError:
+        pass
+    req = os.path.join(HERE, "requirements.txt")
+    print("Installing dependencies for", sys.executable, flush=True)
+    for extra in (["--user"], []):
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "-q", *extra, "-r", req], check=True, timeout=600)
+            return
+        except Exception as e:
+            print("  pip attempt failed:", e, flush=True)
+
+
 def main():
+    ensure_deps()
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8787)
     ap.add_argument("--no-open", action="store_true")

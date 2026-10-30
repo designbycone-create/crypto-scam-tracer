@@ -87,7 +87,8 @@ def job_tokens(desk, seen):
 
 
 def job_feeds_status_radar():
-    from . import incident, status, radar
+    from . import incident, status, radar, intel
+    intel.refresh(log=_log)          # only re-downloads once a day
     incident.pull_feeds(log=_log)
     status.check(log=_log)
     new = radar.rotate(log=_log)
@@ -98,8 +99,9 @@ def job_feeds_status_radar():
 
 
 def job_attribution():
-    from scam_investigator import attribution
+    from scam_investigator import attribution, operators
     attribution.run(log=_log)
+    operators.run(log=_log)
 
 
 def job_risk():

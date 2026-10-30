@@ -45,7 +45,7 @@ PLEDGE = ("<div class=pledge><b>Free for victims. Always.</b> This tool never as
 
 def shell(title, body, refresh=None):
     nav = ("<div class=nav><a href='/'>Desk</a><a href='/graph'>Network graph</a><a href='/submit'>Submission Center</a><a href='/incident'>Incident mode</a>"
-           "<a href='/radar'>Scam radar</a><a href='/check'>Claim checker</a></div>")
+           "<a href='/radar'>Scam radar</a><a href='/intel'>Threat intel</a><a href='/check'>Claim checker</a></div>")
     meta = f"<meta http-equiv=refresh content={refresh}>" if refresh else ""
     return (f"<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
             f"{meta}<title>{e(title)}</title><style>{CSS}</style>{JS}</head><body>{nav}{body}</body></html>")
@@ -297,12 +297,46 @@ EIP-7702-delegated or mixer-funded EVM wallets. Last scan: {e(rk.get('scanned', 
 <table><tr><th>Chain</th><th>Wallet</th><th>Signals</th></tr>{rrows or '<tr><td colspan=3 class=mut>Nothing yet.</td></tr>'}</table>""")
 
 
+# --------------------------------------------------------------- intel ------
+
+def intel_page(q=""):
+    from responder import intel
+    idx = intel.load()
+    srcs = idx.get("sources", {})
+    rows = "".join(
+        f"<tr><td><a href='{e(v.get('home'))}' target=_blank>{e(v.get('name'))}</a></td><td>{e(v.get('kind'))}</td>"
+        f"<td>{(v.get('count') or 0):,}</td><td>{e(v.get('updated') or '-')}</td>"
+        f"<td>{'<span class=ok>ok</span>' if v.get('ok') else '<span class=warn>' + e(v.get('error', 'not loaded')) + '</span>'}</td>"
+        f"<td><small class=mut>{e(v.get('license'))}</small></td></tr>" for v in srcs.values())
+    res = ""
+    if q:
+        hits = intel.check(q)
+        links = " ".join(f"<a class='btn alt' href='{e(u)}' target=_blank>{e(l)}</a>" for l, u in intel.links_for(q))
+        if hits:
+            res = ("<div class='card you'><div class=verdict style='color:var(--warn)'>FLAGGED</div><ul>"
+                   + "".join(f"<li><b>{e(s_)}</b> &mdash; {e(d)}</li>" for s_, d in hits) + f"</ul>{links}</div>")
+        else:
+            res = (f"<div class=card><div class=verdict style='color:var(--ok)'>Not on any loaded list</div>"
+                   f"<p class=mut>That is not proof it is safe &mdash; most scam wallets are never reported. "
+                   f"Check the community reports too:</p>{links}</div>")
+    n_a, n_d = len(idx.get("addresses", {})), len(idx.get("domains", {}))
+    return shell("Threat intel", f"""<h1>&#128373; Threat intel</h1>
+<p class=mut>Flagged scam wallets and phishing sites from public, maintained datasets &mdash; beyond your own case. Refreshed daily in the
+background; the claim checker and Incident mode check against them automatically. Last built: {e(idx.get('built', 'not yet (first refresh runs within 30 min of start)'))}.</p>
+<div class=card><form method=get action='/intel'><input name=q value='{e(q)}' placeholder='Paste any wallet address or website' style='width:70%'>
+<button class=btn>Look up</button></form>{res}</div>
+<h2>Datasets loaded &mdash; {n_a:,} addresses · {n_d:,} domains</h2>
+<table><tr><th>Source</th><th>Type</th><th>Entries</th><th>Updated</th><th>Status</th><th>License</th></tr>{rows or '<tr><td colspan=6 class=mut>Loading on first run&hellip;</td></tr>'}</table>
+<p class=mut><small>XRP Ledger note: public scam lists cover few XRPL wallets (Chainabuse's API doesn't support XRP). Your own case maps, incident
+addresses and Bithomp's fraud flags fill that gap. Data is fetched from each publisher at runtime and not redistributed.</small></p>""")
+
+
 # --------------------------------------------------------------- check ------
 
 def check_page(text="", result=None):
     res = ""
     if result:
-        color = {"KNOWN SCAM NETWORK": "var(--warn)", "HIGH RISK": "var(--warn)", "CAUTION": "#d97706"}.get(result["verdict"], "var(--ok)")
+        color = {"KNOWN SCAM": "var(--warn)", "HIGH RISK": "var(--warn)", "CAUTION": "#d97706"}.get(result["verdict"], "var(--ok)")
         res = (f"<div class=card><div class=verdict style='color:{color}'>{e(result['verdict'])}</div>"
                + "".join(f"<p class=warn><b>&#9888; {e(k)}</b></p>" for k in result["known"])
                + ("<ul>" + "".join(f"<li>{e(f)}</li>" for f in result["flags"]) + "</ul>" if result["flags"] else "")

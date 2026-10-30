@@ -110,75 +110,30 @@ submitted → acknowledged → frozen) shows what's left.
 
 ## Quick start
 
-Requires **Python 3.9+**.
+**Windows (one line, no admin needed)** — open PowerShell and paste:
 
-```bash
-git clone https://github.com/designbycone-create/crypto-scam-tracer.git
-cd crypto-scam-tracer
-pip install -r requirements.txt
-
-# set up your case (these files stay private; they're git-ignored)
-cp config.example.json config.json
-cp victim.example.json victim.json
-#   -> edit config.json: put the scam wallet in "watched_wallets" and "scam_wallet"
-#   -> edit victim.json: your IC3 complaint number, report links, contact (all optional)
+```powershell
+irm https://raw.githubusercontent.com/designbycone-create/crypto-scam-tracer/main/install.ps1 | iex
 ```
 
-### The Desk — easiest way to run everything (recommended)
+It installs Python if needed, puts the Desk in `%USERPROFILE%\ScamHunter`,
+adds Desktop / Start Menu shortcuts, starts it at sign-in, and opens the
+**setup page** in your browser:
 
-One command starts **and supervises** all the watchers in the background and
-opens a live dashboard in your browser — watcher health, where your funds are
-right now (parked vs. cashed out), every real freeze opportunity with a
-one-click draft button, and recent activity. If a watcher ever dies, the Desk
-restarts it.
+1. **Where did your crypto go?** Paste the transaction hash or explorer link of
+   the payment you sent. The Desk reads it from the XRP Ledger and fills in the
+   scammer's wallet, your wallet, the amount and the time. (Or paste the
+   scammer's address directly.)
+2. **About you** (optional) — name, email, IC3 number, other reports. Used only
+   in the drafts *you* choose to send.
+3. **Alerts** — a private ntfy topic is generated; subscribe in the free ntfy
+   app. Telegram is one command (`python telegram_setup.py`).
 
-```bash
-python desk.py          # Windows: double-click run_desk.cmd   ·   macOS/Linux: ./run_desk.sh
-```
+Press **Start tracking**. The watchers start, and within minutes the Desk shows
+where your funds are, the network behind the scam, and freeze kits.
 
-Leave it running; the dashboard auto-refreshes. Close the window to stop
-everything. Prefer to run the pieces individually? Keep reading.
-
-The Desk shows:
-- **A live status line** — how many watchers are running, how long ago the
-  last XRP Ledger ledger was received (proof the connection is actually live),
-  and when the network was last mapped. A stale connection is detected and
-  reconnected automatically.
-- **Your funds** — parked in a wallet, or cashed out to an exchange (with the
-  freeze draft one click away).
-- **The network behind the scam** — continuously built and logged: every
-  wallet the scam wallet feeds, the consolidation wallets that relay the money,
-  and every exchange the operation cashes out through. These wallets move
-  *other victims'* stolen funds too; the record documents all of it.
-- **An evidence record ready for law enforcement** — open the full network
-  map, or download a plain-text, time-ordered evidence file (wallets, flows,
-  exchange deposits, destination tags, tx hashes) to attach to an IC3
-  complaint or send to an exchange's law-enforcement desk.
-
-You can also build the evidence record on its own:
-```bash
-python -m scam_investigator.network_intel --once   # writes scam_network.html + ic3_evidence.txt
-```
-
-### Run just the live watcher
-```bash
-python xrpl_watcher.py
-```
-
-### Map the scam network and draft reports
-```bash
-python -m scam_investigator netmap            # builds network_map.html + freeze-request drafts
-python -m scam_investigator investigate --address <scam_wallet> --domain <scam_site.com>
-python -m scam_investigator ceasedesist --domain <scam_site.com>
-```
-
-### Trace across chains
-```bash
-# funds landed on Tron? start there:
-python -m multichain trace --chain tron --address T...
-# run it as an automated daemon:
-python -m multichain watch
-```
+**Mac / Linux / manual:** `git clone` this repo, `pip install -r requirements.txt`,
+`python desk.py` — the same setup page opens.
 
 ---
 

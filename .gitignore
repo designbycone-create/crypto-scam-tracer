@@ -48,3 +48,6 @@ channels_overrides.json
 cashouts.jsonl
 token_alerts_sent.json
 attribution.json
+intel_index.json
+operators.json
+operators_cache.json

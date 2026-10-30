@@ -46,6 +46,17 @@ SERVICES = [
 
 _state_lock = threading.Lock()
 _state = {}
+_procs = {}   # label -> running Popen (so setup can restart everything with the new case)
+
+
+def restart_all():
+    """Stop every watcher; supervise() restarts each one, reading the new config."""
+    for label, proc in list(_procs.items()):
+        try:
+            if proc.poll() is None:
+                proc.terminate()
+        except Exception:
+            pass
 
 
 def _now():
@@ -75,6 +86,7 @@ def supervise(label, argv, logfile, stop_evt):
             lf.write(f"\n--- [{_now()}] desk starting {label} ---\n")
             lf.flush()
             proc = subprocess.Popen(argv, cwd=HERE, stdout=lf, stderr=subprocess.STDOUT)
+            _procs[label] = proc
             with _state_lock:
                 _state[label] = {"pid": proc.pid, "alive": True, "restarts": restarts, "started": _now()}
             _write_status()
@@ -369,7 +381,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/check'>Claim checker</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -386,7 +398,7 @@ small{{font-size:12px}}</style></head><body>
 <h2>Recent activity</h2>{ev}
 
 <p class=mut style=margin-top:20px><small>Scam wallet: <span class=m>{e(root)}</span>{(' · your tx: <span class=m>'+e(stolen[:24])+'&hellip;</span>') if stolen else ''}<br>
-Nothing is ever sent without you. Data is public and verifiable on the XRP Ledger.</small></p>
+Nothing is ever sent without you. <a href='/setup'>Case setup</a>. Data is public and verifiable on the XRP Ledger.</small></p>
 </body></html>"""
 
 
@@ -411,8 +423,13 @@ class Handler(BaseHTTPRequestHandler):
             from freezekit import web
         except Exception:
             web = None
+        from freezekit import setup as _setup
         if path in ("/", "/index.html"):
+            if _setup.needed():
+                return self._redirect("/setup")
             return self._send(render(), "text/html; charset=utf-8")
+        if path == "/setup":
+            return self._send(_setup.page(), "text/html; charset=utf-8")
         if path == "/network":
             body = _read_text("scam_network.html") or "<p>Network map not built yet — check back in a few minutes.</p>"
             return self._send(body, "text/html; charset=utf-8")
@@ -432,6 +449,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(web.incident_page(), "text/html; charset=utf-8")
             if path == "/radar":
                 return self._send(web.radar_page(), "text/html; charset=utf-8")
+            if path == "/intel":
+                from urllib.parse import parse_qs
+                q = (parse_qs(query).get("q") or [""])[0]
+                return self._send(web.intel_page(q), "text/html; charset=utf-8")
             if path == "/check":
                 return self._send(web.check_page(), "text/html; charset=utf-8")
             if path.startswith("/kit/"):
@@ -439,6 +460,11 @@ class Handler(BaseHTTPRequestHandler):
                 if r:
                     return self._send(r[0], r[1])
         self._send("Not found", "text/plain", code=404)
+
+    def _redirect(self, where):
+        self.send_response(303)
+        self.send_header("Location", where)
+        self.end_headers()
 
     def _local_origin(self):
         """Only accept form posts from the Desk's own pages (blocks cross-site POSTs)."""
@@ -457,6 +483,16 @@ class Handler(BaseHTTPRequestHandler):
         from freezekit import web
         path = self.path.partition("?")[0]
         try:
+            if path == "/setup/lookup":
+                from freezekit import setup as _setup
+                return self._send(json.dumps(_setup.lookup_tx(form.get("q", ""))), "application/json")
+            if path == "/setup":
+                from freezekit import setup as _setup
+                ok, info = _setup.save(form)
+                if not ok:
+                    return self._send(_setup.page(info, prefill=form), "text/html; charset=utf-8")
+                threading.Thread(target=lambda: (time.sleep(1), restart_all()), daemon=True).start()
+                return self._send(_setup.done_page(info), "text/html; charset=utf-8")
             if path == "/submit/status":
                 web.handle_status_post(form)
                 ref = self.headers.get("Referer") or "/submit"

@@ -63,6 +63,14 @@ def check(text, lookup_cert=True, _first_cert=None):
         key = a.lower() if chain == "ethereum" else a
         if key in known:
             hits.append(f"{chain} address {a} is {known[key]}.")
+        else:
+            try:
+                from . import intel
+                for src, det in intel.check(a):
+                    if src != "Your cases":
+                        hits.append(f"{chain} address {a} is on a public scam/sanctions list: {src}.")
+            except Exception:
+                pass
     domains = []
     for m in _URL.finditer(text):
         dom = m.group(1).lower().strip(".")
@@ -73,6 +81,13 @@ def check(text, lookup_cert=True, _first_cert=None):
         base = ".".join(dom.split(".")[-2:])
         if dom in known or base in known:
             hits.append(f"Domain {dom} is {known.get(dom) or known.get(base)}.")
+        try:
+            from . import intel
+            for src, det in intel.check(dom):
+                if src != "Your cases":
+                    hits.append(f"Domain {dom} is on a public phishing list: {src} ({det}).")
+        except Exception:
+            pass
         try:
             from .radar import load as _rl
             rd = _rl()["domains"].get(dom) or _rl()["domains"].get(base)
@@ -103,7 +118,7 @@ def check(text, lookup_cert=True, _first_cert=None):
             flags.append(why)
     flags = list(dict.fromkeys(flags))
     if hits:
-        verdict = "KNOWN SCAM NETWORK"
+        verdict = "KNOWN SCAM"
     elif len(flags) >= 2:
         verdict = "HIGH RISK"
     elif flags:
@@ -111,7 +126,7 @@ def check(text, lookup_cert=True, _first_cert=None):
     else:
         verdict = "NO KNOWN RED FLAGS"
     advice = ("Do not send funds or connect a wallet. Report it (Chainabuse) and add any addresses to Incident mode."
-              if verdict in ("KNOWN SCAM NETWORK", "HIGH RISK") else
+              if verdict in ("KNOWN SCAM", "HIGH RISK") else
               "Verify independently: type the company's address yourself, check its official app and verified accounts. "
               "No red flags here does not mean it is safe.")
     return {"verdict": verdict, "known": hits, "flags": flags, "advice": advice}

@@ -11,6 +11,7 @@ is safe to merge as-is; turning it on is the five small patches below.
 | `drain.py` | **I signed something** — drain transactions (tokens pulled out by someone else's tx), drainer contract, receivers, likely kit fee wallet, revoke-first steps, tracer seeds | Same |
 | `sitewatch.py` | **Sites I use** — DNS / registrar / lock / IP / certificate / script-host changes on the real dApp domain | Yes (Cloudflare DoH, RDAP, crt.sh) |
 | `compromised.py` | **Same-day incident list** — paste a post naming hijacked sites; flagged everywhere immediately | Yes |
+| `prescreen.py` | **Check before you send** — background check on a receiving wallet: lists, identity, behavior (fresh / victim-collector / pass-through), flagged counterparties, poisoning lookalikes & dust, XRPL tag required, EVM wrong network; STOP / CAUTION / NO RED FLAGS; audit log | Yes (XRPL, Tron, BTC, ETH/Base/OP/Arb/Polygon key-less; Solana list checks only) |
 | `web.py` | Desk pages for all of the above | — |
 
 ## Patches to turn it on
@@ -29,6 +30,12 @@ if path == "/shield":
         res = drain.analyze(wallet)
         drain.seed_tracer(res)
     return self._send(sw.shield_page(wallet, mode, res), "text/html; charset=utf-8")
+if path == "/prescreen":
+    from urllib.parse import parse_qs
+    from shield import web as sw, prescreen
+    f = {k: v[0] for k, v in parse_qs(query).items()}
+    res = prescreen.screen(f["address"], f.get("chain") or None, f.get("tag"), f.get("me")) if f.get("address") else None
+    return self._send(sw.prescreen_page(f, res), "text/html; charset=utf-8")
 if path == "/sitewatch":
     from shield import web as sw
     return self._send(sw.sitewatch_page(), "text/html; charset=utf-8")
@@ -62,6 +69,10 @@ def job_sitewatch(desk):
 ```
 and add `(1800, job_sitewatch, (desk,))` to `sched`.
 
+**4a. Claim checker → pre-screen**: when a pasted message contains an address,
+also run `prescreen.screen(addr)` and fold a STOP/CAUTION verdict into the
+claim-checker verdict ("send 500 XRP to r…" then shows the wallet's record).
+
 **4. Claim checker** (`responder/claimcheck.py`, in the domain loop):
 ```python
 from shield import compromised
@@ -77,7 +88,7 @@ and in the address loop: `compromised.check_address(a)`.
 already seeded into the tracer, so the normal Desk flow (kits, officer packet,
 issuer freezes) takes over.
 
-`.gitignore` additions: `compromised.json`, `sitewatch.json`.
+`.gitignore` additions: `compromised.json`, `sitewatch.json`, `prescreen_log.jsonl`.
 
 ## Known limits (be honest in the UI)
 - Can't intercept a signature: the wallet is where signing happens. Shield is
@@ -89,6 +100,10 @@ issuer freezes) takes over.
 - Solana / Tron approvals (delegate, TRC-20 approve) are not covered yet.
 
 ## Commercial path
+`prescreen.py` is the seed of a **counterparty-screening API** for OTC desks,
+crypto-accepting merchants and credit unions: same checks, JSON over HTTP,
+per-check audit log (already written to `prescreen_log.jsonl`).
+
 `sitewatch.py` is the seed of the **protocol monitor** (paid, shared with
 PatchPulse): per-team dashboards, Slack/Telegram/SEAL routing, registrar-lock /
 DNSSEC / CAA audit, 5-minute checks, an on-call promise.

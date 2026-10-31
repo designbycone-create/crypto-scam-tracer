@@ -138,3 +138,41 @@ def compromised_post(form):
     from . import compromised
     nd, na = compromised.add(form.get("text", ""), form.get("label", "").strip())
     return compromised_page(f"Added {len(nd)} domain(s) and {len(na)} address(es).")
+
+
+# ------------------------------------------------------------ prescreen ---
+
+VERDICT = {"STOP": ("#ff4d6d", "Don't send."), "CAUTION": ("#ffb020", "Think twice before sending."),
+           "NO RED FLAGS FOUND": ("#2ee6a8", "Nothing bad found -- that's not a guarantee.")}
+LVL = {"stop": ("#ff4d6d", "&#9940;"), "caution": ("#ffb020", "&#9888;&#65039;"), "info": ("#7cc4ff", "&#8505;&#65039;")}
+
+
+def prescreen_page(form=None, result=None):
+    f = form or {}
+    body = ["<h1>&#128270; Check before you send</h1>",
+            "<p class=mut>A background check on the wallet you're about to pay: scam and sanctions lists, the networks you track, "
+            "how the wallet behaves, who it deals with, and the common mistakes (poisoned lookalike addresses, missing tags, wrong network). "
+            "Read-only &mdash; nothing is sent and no signature is asked for.</p>",
+            f"""<div class=card><form method=get action='/prescreen'>
+<label>Address you're about to send to</label><input name=address class=m value='{e(f.get("address", ""))}' style='width:100%' placeholder='r... / 0x... / T... / bc1...'>
+<div style='display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-top:8px'>
+<select name=chain><option value=''>Network: auto</option>{''.join(f"<option{' selected' if f.get('chain') == c else ''}>{c}</option>" for c in ['ethereum','bsc','polygon','arbitrum','base','optimism','avalanche'])}</select>
+<input name=tag value='{e(f.get("tag", ""))}' placeholder='Destination tag / memo (if any)'>
+<input name=me class=m value='{e(f.get("me", ""))}' placeholder='Your own wallet (optional, catches poisoning)'></div>
+<button class=btn style='margin-top:10px'>Check this wallet</button></form></div>"""]
+    if result and not result.get("ok"):
+        body.append(f"<p class=warn>{e(result.get('error'))}</p>")
+    elif result:
+        col, line = VERDICT[result["verdict"]]
+        body.append(f"<div class=card style='border:2px solid {col}'><div style='font-size:26px;font-weight:800;color:{col}'>{e(result['verdict'])}</div>"
+                    f"<div>{e(line)}</div><div class='m mut' style='margin-top:6px'>{e(result['address'])} &middot; {e(result['chain'])}"
+                    f"{(' &middot; ' + e(result['identity'])) if result.get('identity') else ''}</div></div>")
+        rows = ""
+        for x in sorted(result["findings"], key=lambda x: ["stop", "caution", "info"].index(x["level"])):
+            c, icon = LVL[x["level"]]
+            rows += f"<tr><td style='color:{c};white-space:nowrap'>{icon} {e(x['section'])}</td><td>{e(x['text'])}</td></tr>"
+        body.append(f"<table>{rows or '<tr><td class=mut>No findings.</td></tr>'}</table>")
+        body.append(f"<p class=mut><small>{e(result['note'])} Checked {e(result['checked'])} &middot; "
+                    f"{result['stats']['movements']} movements reviewed. Also see "
+                    f"<a href='https://www.chainabuse.com/address/{e(result['address'])}' target=_blank>Chainabuse reports</a>.</small></p>")
+    return _shell("Check before you send", "".join(body))

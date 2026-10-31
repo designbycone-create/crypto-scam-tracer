@@ -54,14 +54,10 @@ def _flagged(addr):
 
 
 def _logs(chain, topic0, owner, address=None):
-    p = {"module": "logs", "action": "getLogs", "fromBlock": 0, "toBlock": "latest",
-         "topic0": topic0, "topic1": evm.pad(owner), "topic0_1_opr": "and"}
-    if address:
-        p["address"] = address
-    return evm.explorer(chain, **p)
+    return evm.logs(chain, topic0, evm.pad(owner), address=address)
 
 
-def scan_chain(wallet, chain, pause=0.25):
+def scan_chain(wallet, chain, pause=0.1):
     wallet = wallet.lower()
     out, seen = [], set()
     # ERC-20 + NFT single approvals share the Approval signature; ERC-721 has 4 topics.
@@ -141,28 +137,98 @@ def scan_chain(wallet, chain, pause=0.25):
     return sorted(out, key=lambda a: order[a["risk"]])
 
 
+def grade(items, wallet=None):
+    """Risk-grade non-EVM approval items (same levels as EVM)."""
+    for a in items:
+        flag = _flagged(a["spender"]) if a.get("spender") else None
+        kind = a["kind"]
+        if flag:
+            a["risk"], a["why"] = "danger", f"spender is on {flag[0]} ({flag[1]})"
+        elif kind in ("regular_key", "signer"):
+            a["risk"] = "danger" if a.get("master_disabled") else "high"
+            a["why"] = ("someone else can sign for your whole account" + (" and your master key is disabled" if a.get("master_disabled") else "")
+                        + " -- if you didn't set this up, it's a takeover")
+        elif kind == "nft_offer":
+            a["risk"], a["why"] = "high", "NFT sell offer for 0 or to a fixed buyer -- a common XRPL phishing signature"
+        elif kind == "spl_delegate":
+            a["risk"], a["why"] = ("high" if a["unlimited"] else "review"), "a delegate can move these tokens without asking you"
+        elif kind in ("check", "pay_channel"):
+            a["risk"], a["why"] = "review", f"{a['spender']} can claim up to this amount"
+        elif a["unlimited"] and a.get("spender_is_contract") is False:
+            a["risk"], a["why"] = "high", "unlimited approval to a plain wallet, not an app contract"
+        elif a["unlimited"]:
+            a["risk"], a["why"] = "review", "unlimited approval; revoke if you no longer use this app"
+        else:
+            a["risk"], a["why"] = "ok", "limited approval"
+    order = {"danger": 0, "high": 1, "review": 2, "ok": 3}
+    return sorted(items, key=lambda a: order[a["risk"]])
+
+
+def family(wallet):
+    try:
+        from freezekit.chainlookup import detect_address
+        fams = detect_address(wallet)
+    except Exception:
+        fams = []
+    if not fams:
+        return None, []
+    if len(fams) > 1 or fams[0] in evm.CHAINS:
+        return "evm", [c for c in fams if c in evm.CHAINS] or list(evm.CHAINS)
+    return fams[0], fams
+
+
 def scan(wallet, chains=None, log=print):
-    chains = chains or [c for c in evm.CHAINS if evm.available(c)]
-    res = {"wallet": wallet, "chains": {}, "skipped": []}
-    for c in chains:
-        if not evm.available(c):
-            res["skipped"].append(c)
-            continue
+    """Open approvals / standing permissions on ANY major chain."""
+    fam, fam_chains = family(wallet)
+    res = {"wallet": wallet, "family": fam, "chains": {}, "skipped": [], "notes": [], "takeover": []}
+    if fam is None:
+        res["error"] = "Not a wallet address we recognize."
+        return res
+    if fam == "evm":
+        for c in chains or fam_chains:
+            note = evm.coverage_note(c)
+            if note:
+                res["notes"].append(note)
+            try:
+                res["chains"][c] = scan_chain(wallet, c)
+            except Exception as e:
+                log(f"approvals: {c} failed ({e})")
+                res["chains"][c] = []
+                res.setdefault("errors", {})[c] = str(e)[:120]
+            try:   # EIP-7702: an EOA that delegated its code can be drained by that code
+                code = (evm.get_code(c, wallet) or "0x").lower()
+                if code.startswith("0xef0100"):
+                    res["takeover"].append(("high", f"{c}: your wallet delegates its code to 0x{code[8:48]} (EIP-7702). "
+                                                    "If you didn't set this up in a trusted wallet, it can move your funds."))
+            except Exception:
+                pass
+    elif fam in ("tron", "solana", "xrpl"):
+        mod = __import__(f"shield.{fam}", fromlist=["x"])
         try:
-            res["chains"][c] = scan_chain(wallet, c)
+            res["chains"][fam] = grade(mod.approvals(wallet))
         except Exception as e:
-            log(f"approvals: {c} failed ({e})")
-            res["chains"][c] = []
-            res.setdefault("errors", {})[c] = str(e)[:120]
+            res["chains"][fam] = []
+            res.setdefault("errors", {})[fam] = str(e)[:120]
+        try:
+            res["takeover"] += mod.takeover(wallet)
+        except Exception as e:
+            res.setdefault("errors", {})[f"{fam}-takeover"] = str(e)[:120]
+    elif fam == "bitcoin":
+        res["chains"]["bitcoin"] = []
+        res["notes"].append("Bitcoin has no token approvals. If funds left without you, the wallet's seed/private key was "
+                            "exposed: move what's left to a NEW wallet created on a clean device.")
     allx = [a for v in res["chains"].values() for a in v]
     res["summary"] = {k: sum(1 for a in allx if a["risk"] == k) for k in ("danger", "high", "review", "ok")}
+    res["summary"]["danger"] += sum(1 for l, _ in res["takeover"] if l == "danger")
     return res
 
 
 if __name__ == "__main__":
     r = scan(sys.argv[1], sys.argv[2:] or None)
+    for lvl, txt in r.get("takeover", []):
+        print(f"[{lvl:6}] ACCOUNT: {txt}")
     for c, items in r["chains"].items():
         for a in items:
             amt = "UNLIMITED" if a["unlimited"] else a["amount"]
             print(f"[{a['risk']:6}] {c:9} {a['symbol']:10} -> {a['spender']}  {amt}  {a['why']}")
-    print(r["summary"], "skipped:", r["skipped"])
+    print(r.get("summary"), *r.get("notes", []), sep="\n")

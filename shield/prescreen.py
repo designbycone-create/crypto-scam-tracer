@@ -96,18 +96,33 @@ def history_xrpl(addr, limit=400):
             "flags": int(info.get("Flags") or 0), "domain": dom}
 
 
+def evm_presence(addr):
+    """Which EVM chains this address is active on (nonce or balance), via RPC on all of them."""
+    from . import evm
+    seen = {}
+    for c in evm.CHAINS:
+        try:
+            n = int(evm.rpc(c, "eth_getTransactionCount", [addr, "latest"]) or "0x0", 16)
+            b = int(evm.rpc(c, "eth_getBalance", [addr, "latest"]) or "0x0", 16)
+            if n or b:
+                seen[c] = {"nonce": n, "balance": b / 1e18}
+        except Exception:
+            pass
+    return seen
+
+
 def history_evm(addr, chain):
     from . import evm
     a = addr.lower()
     moves = []
-    for tx in evm.explorer(chain, module="account", action="txlist", address=a, page=1, offset=400, sort="desc"):
+    for tx in evm.native_txs(chain, a):
         v = int(tx.get("value") or 0) / 1e18
         if tx.get("isError") == "1" or v == 0:
             continue
         d = "in" if (tx.get("to") or "").lower() == a else "out"
         moves.append({"dir": d, "cp": (tx.get("from") if d == "in" else tx.get("to") or "").lower(),
                       "amount": v, "asset": "native", "t": int(tx.get("timeStamp") or 0)})
-    for t in evm.explorer(chain, module="account", action="tokentx", address=a, page=1, offset=400, sort="desc"):
+    for t in evm.token_transfers(chain, a):
         dec = int(t.get("tokenDecimal") or 18)
         d = "in" if (t.get("to") or "").lower() == a else "out"
         moves.append({"dir": d, "cp": (t.get("from") if d == "in" else t.get("to") or "").lower(),
@@ -118,7 +133,8 @@ def history_evm(addr, chain):
         bal = int(evm.rpc(chain, "eth_getBalance", [a, "latest"]) or "0x0", 16) / 1e18
     except Exception:
         bal = None
-    return {"exists": bool(moves) or code not in ("0x", "0x0"), "moves": moves, "balance": bal, "code": code}
+    return {"exists": bool(moves) or code not in ("0x", "0x0"), "moves": moves, "balance": bal, "code": code,
+            "coverage": evm.coverage_note(chain)}
 
 
 def history_tron(addr):
@@ -307,7 +323,8 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
     fams = detect_address(addr)
     if not fams:
         return {"ok": False, "error": "That isn't a wallet address we recognize (XRP Ledger, EVM, Tron, Bitcoin, Solana)."}
-    if chain not in fams:
+    chain_given = chain in fams
+    if not chain_given:
         chain = fams[0]
     key = addr.lower() if addr.startswith("0x") else addr
     findings = []   # (level, section, text)
@@ -324,17 +341,23 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
         elif chain == "bitcoin":
             h = history_btc(addr)
         elif chain == "solana":
-            h = {"exists": None, "moves": []}
-            findings.append(("info", "Behavior", "Solana behavior checks aren't in this draft yet; list checks still apply."))
+            from . import solana
+            h = solana.history(addr)
         else:
-            from . import evm
-            h = history_evm(addr, chain) if evm.available(chain) else {"exists": None, "moves": []}
+            pres = evm_presence(addr)
+            if not chain_given and pres:
+                chain = max(pres, key=lambda c: pres[c]["nonce"])     # most-used EVM chain
+            h = history_evm(addr, chain)
+            if h.get("coverage"):
+                findings.append(("info", "Coverage", h["coverage"]))
             if (h.get("code") or "0x").lower().startswith("0xef0100"):
                 findings.append(("caution", "Behavior", "EIP-7702 delegated wallet: its code is controlled by "
                                  f"0x{h['code'][8:48]}. Unusual for a normal recipient."))
-            if h.get("exists") is False and len(fams) > 1:
-                findings.append(("caution", "Mistakes", f"No activity on {chain}. If you expect this address to be active, "
-                                 "check you're sending on the right network."))
+            if chain_given and chain not in pres and pres:
+                findings.append(("caution", "Mistakes", f"No activity on {chain}, but this address IS active on "
+                                 f"{', '.join(pres)}. Make sure you're sending on the network the recipient expects."))
+            elif pres:
+                findings.append(("info", "Identity", "Active on: " + ", ".join(pres)))
     except Exception as e:
         h = {"exists": None, "moves": []}
         findings.append(("info", "Behavior", f"Couldn't read history right now ({str(e)[:80]})."))

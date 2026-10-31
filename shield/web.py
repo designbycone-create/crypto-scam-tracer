@@ -30,7 +30,8 @@ def _approval_rows(res):
             amt = "Unlimited" if a["unlimited"] else f"{a['amount']:,.4f}"
             rows += (f"<tr><td><b style='color:{col}'>{lab}</b><br><small class=mut>{e(a['why'])}</small></td>"
                      f"<td>{e(chain)}</td><td>{e(a['symbol'])}<br><small class=mut>{e(a['kind'])}</small></td><td>{e(amt)}</td>"
-                     f"<td class=m>{e(a['spender'])}</td><td><a class=btn href='{e(a['revoke'])}' target=_blank>Revoke</a></td></tr>")
+                     f"<td class=m>{e(a['spender'])}</td><td><a class=btn href='{e(a['revoke'])}' target=_blank>Revoke</a>"
+                     + (f"<br><small class=mut>{e(a['revoke_hint'])}</small>" if a.get("revoke_hint") else "") + "</td></tr>")
     return rows
 
 
@@ -40,20 +41,34 @@ def shield_page(q=None, mode=None, result=None):
             "tokens, so you can revoke the ones you don't use. <b>I signed something</b> is for after a bad signature: it finds what "
             "was taken, who took it, and what to do in the next ten minutes. Read-only: it never asks for a seed phrase or a signature.</p>",
             f"""<div class=card><form method=get action='/shield'>
-<input name=wallet value='{e(q or "")}' placeholder='Your wallet address (0x...)' style='width:60%'>
+<input name=wallet value='{e(q or "")}' placeholder='Your wallet address (0x… / T… / Solana / r… / bc1…)' style='width:60%'>
 <button class=btn name=mode value=check>Check my wallet</button>
 <button class='btn red' name=mode value=drain>I signed something</button></form>
-<small class=mut>Ethereum, Base, Optimism, Arbitrum and Polygon work with no setup; BNB Chain and Avalanche need the free Etherscan key.</small></div>"""]
+<small class=mut>Works on Ethereum, BNB Chain, Polygon, Arbitrum, Base, Optimism, Avalanche, Tron, Solana and the XRP Ledger
+(Bitcoin has no approvals). No keys needed; BNB Chain and Avalanche check the last 30 days unless you add a full-history key.</small></div>"""]
+    def _account(res):
+        out = ""
+        for lvl, txt in (res or {}).get("takeover") or []:
+            col = RISK.get(lvl, RISK["high"])[0]
+            out += f"<div class=card style='border:2px solid {col}'><b style='color:{col}'>ACCOUNT {e(lvl.upper())}</b> &mdash; {e(txt)}</div>"
+        for n in (res or {}).get("notes") or []:
+            out += f"<p class=mut><small>{e(n)}</small></p>"
+        if (res or {}).get("error"):
+            out += f"<p class=warn>{e(res['error'])}</p>"
+        return out
     if result and mode == "check":
+        body.append(_account(result))
         s = result.get("summary", {})
         body.append(f"<h2>Open approvals &mdash; {s.get('danger', 0)} revoke now · {s.get('high', 0)} high risk · "
                     f"{s.get('review', 0)} to review · {s.get('ok', 0)} ok</h2>")
         rows = _approval_rows(result)
         body.append(f"<table><tr><th>Risk</th><th>Chain</th><th>Token</th><th>Allowed</th><th>Spender</th><th></th></tr>{rows}</table>"
                     if rows else "<p class=ok>No open approvals found.</p>")
-        if result.get("skipped"):
-            body.append(f"<p class=mut><small>Not checked (needs Etherscan key): {e(', '.join(result['skipped']))}</small></p>")
+
     if result and mode == "drain":
+        body.append(_account(result.get("open_approvals")))
+        for n in result.get("notes") or []:
+            body.append(f"<p class=mut><small>{e(n)}</small></p>")
         drains = result.get("drains", [])
         if not drains:
             body.append("<div class=card><b>No drain transactions found</b> &mdash; nothing was pulled out by someone else's transaction "

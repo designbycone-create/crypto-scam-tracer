@@ -23,28 +23,19 @@ from collections import Counter, defaultdict
 from . import evm
 
 
-def _own_sent(chain, wallet):
-    sent = set()
-    for tx in evm.explorer(chain, module="account", action="txlist", address=wallet, page=1, offset=1000, sort="desc"):
-        if (tx.get("from") or "").lower() == wallet:
-            sent.add((tx.get("hash") or "").lower())
-    return sent
-
-
 def find_chain(wallet, chain, since_epoch=None):
+    """EVM: token transfers OUT of the wallet in transactions the wallet did not send."""
     wallet = wallet.lower()
-    sent = _own_sent(chain, wallet)
-    drains = defaultdict(lambda: {"hash": None, "time": None, "out": [], "in_tx": []})
-    toks = evm.explorer(chain, module="account", action="tokentx", address=wallet, page=1, offset=1000, sort="desc")
-    for t in toks:
+    drains = defaultdict(lambda: {"hash": None, "time": None, "out": []})
+    for t in evm.token_transfers(chain, wallet):
         h = (t.get("hash") or "").lower()
-        if (t.get("from") or "").lower() != wallet or h in sent:
+        if (t.get("from") or "").lower() != wallet:
             continue
         try:
             ep = int(t.get("timeStamp") or 0)
         except ValueError:
             ep = 0
-        if since_epoch and ep < since_epoch:
+        if since_epoch and ep and ep < since_epoch:
             continue
         d = drains[h]
         d["hash"], d["time"] = h, ep
@@ -55,18 +46,21 @@ def find_chain(wallet, chain, since_epoch=None):
     for h, d in drains.items():
         try:
             tx = evm.rpc(chain, "eth_getTransactionByHash", [h]) or {}
+        except Exception:
+            tx = {}
+        sender = (tx.get("from") or "").lower()
+        if not sender or sender == wallet:
+            continue          # the wallet sent this itself: a normal transfer, not a drain
+        contract = (tx.get("to") or "").lower()
+        try:
             rc = evm.rpc(chain, "eth_getTransactionReceipt", [h]) or {}
         except Exception:
-            tx, rc = {}, {}
-        sender = (tx.get("from") or "").lower()
-        contract = (tx.get("to") or "").lower()
-        # every token transfer in the drain tx: shows the split between affiliate and kit operator
+            rc = {}
         split = Counter()
         for lg in rc.get("logs", []):
             tp = lg.get("topics") or []
-            if len(tp) == 3 and tp[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef":
-                if evm.topic_addr(tp[1]) == wallet or evm.topic_addr(tp[1]) == contract:
-                    split[evm.topic_addr(tp[2])] += int(lg.get("data") or "0x0", 16)
+            if len(tp) == 3 and tp[0] == evm.TRANSFER and evm.topic_addr(tp[1]) in (wallet, contract):
+                split[evm.topic_addr(tp[2])] += int(lg.get("data") or "0x0", 16)
         split.pop(wallet, None)
         if contract in split and len(split) > 1:
             split.pop(contract)   # contract only passed the tokens through to the real receivers
@@ -76,13 +70,30 @@ def find_chain(wallet, chain, since_epoch=None):
 
 
 def analyze(wallet, chains=None, since_epoch=None, log=print):
-    chains = chains or [c for c in evm.CHAINS if evm.available(c)]
-    drains = []
-    for c in chains:
+    from .approvals import family
+    fam, fam_chains = family(wallet)
+    drains, notes = [], []
+    if fam == "evm":
+        chains = chains or fam_chains
+        for c in chains:
+            n = evm.coverage_note(c)
+            if n:
+                notes.append(n)
+            try:
+                drains += find_chain(wallet, c, since_epoch)
+            except Exception as e:
+                log(f"drain: {c} failed ({e})")
+    elif fam in ("tron", "solana", "xrpl"):
+        chains = [fam]
         try:
-            drains += find_chain(wallet, c, since_epoch)
+            drains += __import__(f"shield.{fam}", fromlist=["x"]).drains(wallet)
         except Exception as e:
-            log(f"drain: {c} failed ({e})")
+            log(f"drain: {fam} failed ({e})")
+    elif fam == "bitcoin":
+        chains = ["bitcoin"]
+        notes.append("Bitcoin has no approvals: if coins left without you, the seed/private key was exposed. Every outgoing "
+                     "transaction is signed by your key, so we can't separate yours from the thief's -- check your outgoing "
+                     "history and start a case with the thief's address.")
     receivers_all = Counter()
     for d in drains:
         for r in d["receivers"]:
@@ -97,21 +108,27 @@ def analyze(wallet, chains=None, since_epoch=None, log=print):
     contracts = sorted({(d["chain"], d["drainer_contract"]) for d in drains if d["drainer_contract"]})
     try:
         from .approvals import scan as approvals_scan
-        appr = approvals_scan(wallet, chains=list({d["chain"] for d in drains}) or chains, log=log)
+        appr = approvals_scan(wallet, chains=(list({d["chain"] for d in drains}) or chains) if fam == "evm" else None, log=log)
     except Exception as e:
         appr = {"error": str(e)}
-    return {
-        "wallet": wallet, "drains": sorted(drains, key=lambda d: d["time"] or 0),
-        "drainer_contracts": contracts, "receivers": seeds,
-        "likely_fee_wallets": [k for k, n in fee.most_common() if n >= 1],
-        "open_approvals": appr,
-        "next_steps": [
-            "REVOKE every approval marked danger/high now (revoke.cash links below) - an open approval keeps draining new deposits.",
+    taken = [t for l, t in (appr.get("takeover") or []) if l == "danger"] if isinstance(appr, dict) else []
+    steps = [
+            "REVOKE every permission marked danger/high now (links and instructions below) - an open approval keeps draining new deposits.",
             "Move anything left in this wallet to a NEW wallet created on a clean device. Treat this wallet as burned.",
             "SEAL 911 (Telegram @seal_911_bot): send the drainer contract + receiver wallets below.",
             "Report the site you connected to: Chainabuse, Google Safe Browsing, the domain's registrar abuse form.",
-            "Start tracing: the receiver wallets are seeded into the multi-chain tracer; USDT/USDC there can be frozen by the issuer.",
-        ],
+            "Start tracing: the receiver wallets are seeded into the multi-chain tracer; USDT/USDC there can be frozen by the issuer."]
+    if taken:
+        steps = ["ACCOUNT TAKEN OVER: " + taken[0],
+                 "Contact SEAL 911 now (Telegram @seal_911_bot) -- they can sometimes race the attacker or coordinate a rescue.",
+                 "Stop sending anything to this address (including from exchanges) -- the attacker can move it.",
+                 ] + steps[2:]
+    return {
+        "wallet": wallet, "family": fam, "notes": notes, "drains": sorted(drains, key=lambda d: d["time"] or 0),
+        "drainer_contracts": contracts, "receivers": seeds,
+        "likely_fee_wallets": [k for k, n in fee.most_common() if n >= 1],
+        "open_approvals": appr,
+        "next_steps": steps,
     }
 
 

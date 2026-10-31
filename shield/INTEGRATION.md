@@ -5,14 +5,31 @@ is safe to merge as-is; turning it on is the five small patches below.
 
 ## What's in it
 
-| Module | Retail feature | Free? |
-|---|---|---|
-| `approvals.py` | **Check my wallet** — every open ERC-20 / NFT-all / Permit2 approval, read live, graded danger/high/review/ok, revoke links (revoke.cash) | Yes (ETH, Base, OP, Arbitrum, Polygon key-less; BNB/Avax need the free Etherscan key) |
-| `drain.py` | **I signed something** — drain transactions (tokens pulled out by someone else's tx), drainer contract, receivers, likely kit fee wallet, revoke-first steps, tracer seeds | Same |
-| `sitewatch.py` | **Sites I use** — DNS / registrar / lock / IP / certificate / script-host changes on the real dApp domain | Yes (Cloudflare DoH, RDAP, crt.sh) |
-| `compromised.py` | **Same-day incident list** — paste a post naming hijacked sites; flagged everywhere immediately | Yes |
-| `prescreen.py` | **Check before you send** — background check on a receiving wallet: lists, identity, behavior (fresh / victim-collector / pass-through), flagged counterparties, poisoning lookalikes & dust, XRPL tag required, EVM wrong network; STOP / CAUTION / NO RED FLAGS; audit log | Yes (XRPL, Tron, BTC, ETH/Base/OP/Arb/Polygon key-less; Solana list checks only) |
-| `web.py` | Desk pages for all of the above | — |
+| Module | Feature |
+|---|---|
+| `approvals.py` | **Check my wallet** — open approvals / standing permissions, graded danger / high / review / ok, revoke links or instructions, plus account-takeover checks |
+| `drain.py` | **I signed something** — what was pulled out, by whom, where it went, likely kit fee wallet; steps switch to "account taken over" mode when needed |
+| `prescreen.py` | **Check before you send** — background check on a receiving wallet; STOP / CAUTION / NO RED FLAGS; audit log |
+| `sitewatch.py` | **Sites I use** — DNS / registrar / lock / IP / certificate / script-host changes on real dApp domains |
+| `compromised.py` | **Same-day incident list** — paste a post naming hijacked sites; flagged everywhere |
+| `evm.py`, `tron.py`, `solana.py`, `xrpl.py` | per-chain plumbing |
+| `web.py` | Desk pages |
+
+### Chain coverage (no API keys needed for any of it)
+
+| Chain | Approvals / permissions | Takeover checks | Drain detection | Pre-screen | History source |
+|---|---|---|---|---|---|
+| Ethereum, Base, Optimism, Arbitrum, Polygon | ERC-20, NFT approve-all, Permit2 | EIP-7702 delegation | ✓ | ✓ | Blockscout (full history) |
+| BNB Chain, Avalanche | same | same | ✓ | ✓ (token activity) | public RPC log window, **last 30 days** (Etherscan's free tier dropped these chains in late 2025; a paid Etherscan or Routescan key restores full history) |
+| Tron | TRC-20 approvals | **permission-update hijack** | ✓ (transferFrom by others) | ✓ | TronGrid |
+| Solana | SPL token delegates | **account "Assign" hijack**, foreign close authority | ✓ (moves without your signature) | ✓ (last ~60 txs) | public RPC (`solana_rpc` for a faster free endpoint) |
+| XRP Ledger | RegularKey, SignerList, Checks, PayChannels, NFT sell offers | **master disabled + foreign regular key** | ✓ (payments after key change, checks cashed by others) | ✓ | public full-history servers |
+| Bitcoin | n/a (no approvals) — explains key compromise | n/a | n/a | ✓ | mempool.space |
+
+`python shield/test_allchains_offline.py` exercises every row with simulated data (17 checks).
+
+Also in this branch: `multichain/adapters/evm.py` — the tracer now follows BNB Chain and
+Avalanche without a paid key (RPC log window), since Etherscan's free tier no longer covers them.
 
 ## Patches to turn it on
 

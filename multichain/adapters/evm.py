@@ -47,15 +47,36 @@ BLOCKSCOUT = {
 }
 
 
+# Etherscan's FREE tier stopped covering BNB, Base, OP and Avalanche (late 2025);
+# those use Blockscout (Base, OP) or the key-less RPC log window (BNB, Avalanche).
+ETHERSCAN_FREE_CHAINIDS = {1, 137, 42161}
+
+
 class EvmAdapter(Adapter):
+    def _use_etherscan(self):
+        if not api_key():
+            return False
+        try:
+            import scamconfig
+            paid = (scamconfig.get("etherscan_paid") or "") == "yes"
+        except Exception:
+            paid = False
+        return paid or self.info.evm_chainid in ETHERSCAN_FREE_CHAINIDS
+
+    def _rpc_window(self):
+        return not self._use_etherscan() and self.key not in BLOCKSCOUT
+
     def available(self):
-        if api_key() or self.key in BLOCKSCOUT:
-            return True, ""
-        return False, (f"{self.info.name} needs a free Etherscan API key (etherscan_key in config.json); "
-                       "skipped until one is added")
+        return True, ""     # every EVM chain works; BNB/Avalanche fall back to the recent RPC log window
 
     def _q(self, **params):
-        if api_key():
+        if self._rpc_window():
+            # key-less fallback (recent token transfers only): reuse shield's RPC log window
+            from shield import evm as sevm
+            if params.get("action") == "tokentx":
+                return sevm.token_transfers(self.key, params["address"])
+            return []    # native-coin history isn't available from logs
+        if self._use_etherscan():
             params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
             data = http_json(V2, params=params)
         else:

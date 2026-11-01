@@ -17,6 +17,7 @@
   "bsc_rpc": "",
   "opbnb_rpc": "",
   "ethereum_rpc": "",
+  "ankr_key": "",
   "telegram": {
     "bot_token": "",
     "chat_id": ""

@@ -97,7 +97,7 @@ def save(form):
     cfg = _j("config.json")
     topic = (form.get("ntfy_topic") or "").strip() or cfg.get("ntfy_topic") or f"scamhunter-{secrets.token_hex(5)}"
     cfg.update({"ntfy_topic": topic, "min_xrp": cfg.get("min_xrp", 25), "victim_file": "victim.json"})
-    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc", "opbnb_rpc", "ethereum_rpc"):
+    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc", "opbnb_rpc", "ethereum_rpc", "ankr_key"):
         v = (form.get(k) or "").strip()
         if v and "•" not in v:
             cfg[k] = v
@@ -240,6 +240,9 @@ public services sometimes block home connections or only show recent activity; a
 <p class=hint style="margin-top:8px"><b>BNB Chain endpoint</b>: BNB has no free history service. A free NodeReal account gives an address like
 <span class=mono>https://bsc-mainnet.nodereal.io/v1/&lt;key&gt;</span> (<a href="https://nodereal.io" target=_blank>nodereal.io</a>).</p>
 <input name=bsc_rpc class=mono placeholder="https://... (optional)" value="{e('••••••••' if cfg.get('bsc_rpc') else '')}">
+<p class=hint style="margin-top:8px"><b>Ankr key</b>: full BNB Chain history (plus backup for the other chains). Free account at
+<a href="https://www.ankr.com/rpc/" target=_blank>ankr.com</a>; paste the key or the multichain URL.</p>
+<input name=ankr_key class=mono placeholder="ankr key (optional)" value="{e('••••••••' if cfg.get('ankr_key') else '')}">
 <p class=hint style="margin-top:8px"><b>Routescan key</b>: Avalanche works without it; a free key raises the daily limit. <a href="https://routescan.io" target=_blank>routescan.io</a></p>
 <input name=routescan_key class=mono placeholder="paste key (optional)" value="{e('••••••••' if cfg.get('routescan_key') else '')}"></details>
 </div>

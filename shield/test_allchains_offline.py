@@ -72,6 +72,29 @@ results.append(ok(evm.provider("ethereum") == "blockscout_pro", "free Blockscout
 rows = evm.explorer("ethereum", module="account", action="tokentx", address=V)
 results.append(ok(rows and "chainid=1" in seen[0] and "proapi_test" in seen[0] and "eth.blockscout.com" in seen[1],
                   "Blockscout key request carries chainid+key; on 403 it falls back to the public instance"))
+# Ankr: BNB Chain full history; Etherscan-shaped rows; logs paginate by block
+scamconfig.get = lambda k, d=None: "https://rpc.ankr.com/multichain/abc123" if k == "ankr_key" else _orig_get(k, d)
+sent = []
+def _ankr(method, p):
+    sent.append((method, p))
+    if method == "ankr_getTokenTransfers":
+        return {"transfers": [{"transactionHash": "0xt1", "fromAddress": V, "toAddress": RCV, "valueRawInteger": "5000000000000000000",
+                               "tokenDecimals": 18, "tokenSymbol": "USDT", "contractAddress": TOK, "timestamp": now - 99, "blockHeight": 7}]}
+    if method == "ankr_getLogs":
+        return {"logs": [{"address": TOK, "topics": p["topics"][0] + [evm.pad(V), evm.pad(BAD)], "data": "0x", "blockNumber": "0x10",
+                          "transactionHash": "0xa1", "logIndex": "0x0", "timestamp": now}]}
+    return {}
+evm.ANKR_POST = _ankr
+results.append(ok(evm.provider("bsc") == "ankr" and evm._ankr_key() == "abc123", "BNB uses Ankr when a key is set (URL or bare key accepted)"))
+rows = evm.token_transfers("bsc", V)
+results.append(ok(rows and rows[0]["value"] == "5000000000000000000" and rows[0]["tokenDecimal"] == "18" and rows[0]["from"] == V.lower(),
+                  "Ankr transfers mapped to Etherscan shape"))
+lg = evm.logs("bsc", approvals.APPROVAL, evm.pad(V))
+q = [p for m, p in sent if m == "ankr_getLogs"][0]
+results.append(ok(len(lg) == 1 and q["topics"] == [[approvals.APPROVAL], [evm.pad(V)]] and q["fromBlock"] == 0,
+                  "Ankr full-range approval logs with topic filter"))
+results.append(ok(evm.coverage_note("bsc") == "", "BNB with Ankr reports full history (no coverage warning)"))
+evm.ANKR_POST = None
 scamconfig.get = _orig_get
 evm.HTTP_GET = lambda url: {"result": []}
 results.append(ok("bsc_rpc" in evm.coverage_note("bsc"), "BNB coverage note tells the user exactly what to add"))

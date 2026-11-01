@@ -12,7 +12,9 @@ Provider order per chain (first that applies; a failure falls through to the nex
                            "routescan_key" raises it to 5 rps / 100K/day.
   5. RPC log window     -- key-less last resort: eth_getLogs over the recent block window,
                            filtered to the chain's major tokens. RECENT ONLY (~30 days).
-  BNB Chain: no free key-less history API. Set "bsc_rpc" to a free personal endpoint
+  6. Ankr Advanced API -- "ankr_key" (free account, rate-limited): FULL history on BNB Chain and a
+                           backup for the chains above. No opBNB.
+  BNB Chain: no free key-less history API. Use "ankr_key" (full history), or set "bsc_rpc" to a free personal endpoint
   (NodeReal MegaNode free tier: https://bsc-mainnet.nodereal.io/v1/<key>) for the log
   window, or a paid Etherscan key for full history. Without it: balance/contract checks only.
   Paid providers (Moralis, Alchemy paid, Etherscan paid) can be added to PROVIDERS later.
@@ -21,6 +23,7 @@ Every result says which provider produced it, so the UI can be honest.
 import json
 import re
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -47,6 +50,10 @@ ROUTESCAN = "https://api.routescan.io/v2/network/mainnet/evm/{cid}/etherscan/api
 BLOCKSCOUT_PRO = "https://api.blockscout.com/v2/api"
 BLOCKSCOUT_PRO_CHAINS = {"ethereum", "base", "optimism", "arbitrum", "polygon"}
 ROUTESCAN_CHAINS = {"avalanche"}
+ANKR = "https://rpc.ankr.com/multichain/{key}"
+ANKR_NAMES = {"ethereum": "eth", "bsc": "bsc", "polygon": "polygon", "arbitrum": "arbitrum", "base": "base",
+              "optimism": "optimism", "avalanche": "avalanche"}     # Ankr Advanced API (no opBNB)
+ANKR_POST = None   # test hook: f(method, params) -> result
 WINDOW_DAYS = 30
 # Major tokens per chain for filtered log queries (public RPCs require an address filter)
 MAJOR_TOKENS = {
@@ -112,6 +119,8 @@ def providers(chain):
         out.append("blockscout")
     if chain in ROUTESCAN_CHAINS:
         out.append("routescan")
+    if chain in ANKR_NAMES and _cfg("ankr_key"):
+        out.append("ankr")       # full history incl. BNB Chain; free key, rate-limited
     return out
 
 
@@ -152,8 +161,9 @@ def coverage_note(chain):
         return (f"{chain}: transaction history NOT checked -- no free public BNB Chain endpoint answers history queries. "
                 "Add a free personal endpoint as \"bsc_rpc\" in config.json (NodeReal / Ankr / QuickNode free tier).")
     if p == "rpc_window" and COVERED.get(chain, WINDOW_DAYS) < WINDOW_DAYS - 0.5:
-        return (f"{chain}: only the last {COVERED[chain]} days of major-token activity could be checked in time "
-                "(slow free endpoint). Re-run later or add a free personal RPC endpoint for this chain.")
+        fix = ("busy address on a rate-limited endpoint; an Ankr key (\"ankr_key\") gives full history"
+               if _cfg(f"{chain}_rpc") else "slow free endpoint; add a free personal RPC endpoint for this chain")
+        return (f"{chain}: only the last {COVERED[chain]} days of activity could be checked in time ({fix}).")
     if p == "rpc_window":
         hint = ("a free Blockscout key (\"blockscout_key\", dev.blockscout.com) gives full history"
                 if chain in BLOCKSCOUT_PRO_CHAINS else "a paid Etherscan key gives full history")
@@ -194,6 +204,70 @@ def _url(chain, p, params):
     raise LookupError("no explorer")
 
 
+def _ankr_key():
+    k = _cfg("ankr_key")
+    return k.rstrip("/").rsplit("/", 1)[-1] if "/" in k else k
+
+
+def ankr_call(method, params):
+    if ANKR_POST:
+        return ANKR_POST(method, params)
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
+    for attempt in range(4):
+        req = urllib.request.Request(ANKR.format(key=_ankr_key()), data=body, headers=UA)
+        try:
+            with urllib.request.urlopen(req, timeout=40) as r:
+                d = json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            txt = e.read().decode("utf-8", "replace")
+            if attempt < 3 and (e.code in (401, 429) or "rate limit" in txt.lower()):
+                time.sleep(4 * (attempt + 1))      # the free plan throttles bursts (sometimes as a 401)
+                continue
+            raise RuntimeError(f"ankr HTTP {e.code}: {txt[:120]}")
+        err = d.get("error")
+        if err:
+            msg = str(err.get("message", err))
+            m = re.search(r"retry in (\d+)s", msg)
+            if attempt < 3 and ("rate limit" in msg.lower() or m):
+                time.sleep(int(m.group(1)) if m else 5)
+                continue
+            raise RuntimeError(f"ankr: {msg[:160]}")
+        return d.get("result") or {}
+    raise RuntimeError("ankr: rate limited")
+
+
+def _ankr(chain, params):
+    """Translate an Etherscan-style call to Ankr's Advanced API; return Etherscan-shaped rows."""
+    bc, a, act = [ANKR_NAMES[chain]], params.get("address"), params.get("action")
+    desc = params.get("sort", "desc") == "desc"
+    size = int(params.get("offset") or 1000)
+    if act == "tokentx":
+        r = ankr_call("ankr_getTokenTransfers", {"blockchain": bc, "address": [a], "pageSize": size, "descOrder": desc})
+        return [{"hash": t.get("transactionHash"), "from": (t.get("fromAddress") or "").lower(),
+                 "to": (t.get("toAddress") or "").lower(), "value": str(t.get("valueRawInteger") or "0"),
+                 "tokenDecimal": str(t.get("tokenDecimals") or 18), "tokenSymbol": t.get("tokenSymbol") or "token",
+                 "contractAddress": (t.get("contractAddress") or "").lower(), "timeStamp": str(t.get("timestamp") or 0),
+                 "blockNumber": str(t.get("blockHeight") or 0)} for t in r.get("transfers") or []]
+    if act == "txlist":
+        r = ankr_call("ankr_getTransactionsByAddress", {"blockchain": bc, "address": [a], "pageSize": size, "descOrder": desc})
+        hx = lambda v: int(v, 16) if isinstance(v, str) and v.startswith("0x") else int(v or 0)
+        return [{"hash": t.get("hash"), "from": (t.get("from") or "").lower(), "to": (t.get("to") or "").lower(),
+                 "value": str(hx(t.get("value"))), "timeStamp": str(hx(t.get("timestamp"))),
+                 "blockNumber": str(hx(t.get("blockNumber"))),
+                 "isError": "0" if t.get("status") in ("0x1", 1, "1", None) else "1"} for t in r.get("transactions") or []]
+    if params.get("module") == "logs":
+        tps = [params.get("topic0"), params.get("topic1"), params.get("topic2")]
+        while tps and not tps[-1]:
+            tps.pop()
+        q = {"blockchain": bc, "fromBlock": int(params.get("fromBlock") or 0), "toBlock": "latest",
+             "topics": [[t] if t else [] for t in tps], "pageSize": 1000, "descOrder": False}
+        if params.get("address"):
+            q["address"] = [params["address"]]
+        r = ankr_call("ankr_getLogs", q)
+        return [dict(lg, timeStamp=str(lg.get("timestamp") or "")) for lg in r.get("logs") or []]
+    raise LookupError(f"ankr: unsupported {act}")
+
+
 def explorer(chain, **params):
     """Etherscan-compatible explorer call. Tries each provider in order; a provider that errors is
     skipped for the rest of the run. Raises LookupError when no explorer is left for this chain."""
@@ -203,6 +277,8 @@ def explorer(chain, **params):
         if p in ("rpc_window", "none"):
             raise LookupError(f"no explorer ({last})" if last else "no explorer")
         try:
+            if p == "ankr":
+                return _ankr(chain, params)
             d = _get(_url(chain, p, params))
         except Exception as e:
             last = e

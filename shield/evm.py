@@ -245,7 +245,7 @@ def logs(chain, topic0, topic1=None, topic2=None, address=None):
             for _ in range(20):                       # explorers cap a page at 1,000 logs
                 page = explorer(chain, **p)
                 for lg in page:
-                    k = (lg.get("transactionHash"), lg.get("logIndex"))
+                    k = (lg.get("transactionHash"), lg.get("logIndex"), lg.get("address"), tuple(lg.get("topics") or []))
                     if k not in seen:
                         seen.add(k)
                         out.append(lg)
@@ -284,7 +284,7 @@ def token_transfers(chain, addr):
     rows = []
     for direction, lg_list in (("out", logs(chain, TRANSFER, pad(a))), ("in", logs(chain, TRANSFER, None, pad(a)))):
         for lg in lg_list:
-            tp = lg.get("topics") or []
+            tp = [x for x in (lg.get("topics") or []) if x]
             if len(tp) != 3:
                 continue          # ERC-721 has 4 topics; skip NFTs here
             sym, dec = token_meta(chain, lg["address"])

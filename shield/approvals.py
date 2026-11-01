@@ -62,7 +62,7 @@ def scan_chain(wallet, chain, pause=0.1):
     out, seen = [], set()
     # ERC-20 + NFT single approvals share the Approval signature; ERC-721 has 4 topics.
     for lg in _logs(chain, APPROVAL, wallet):
-        t = lg.get("topics") or []
+        t = [x for x in (lg.get("topics") or []) if x]   # Blockscout pads topics with nulls
         if len(t) < 3:
             continue
         token, spender = lg["address"].lower(), evm.topic_addr(t[2])
@@ -80,7 +80,7 @@ def scan_chain(wallet, chain, pause=0.1):
                     "amount": None if cur >= UNLIMITED else cur / 10 ** dec, "unlimited": cur >= UNLIMITED})
         time.sleep(pause)
     for lg in _logs(chain, APPROVAL_FOR_ALL, wallet):
-        t = lg.get("topics") or []
+        t = [x for x in (lg.get("topics") or []) if x]   # Blockscout pads topics with nulls
         if len(t) < 3:
             continue
         coll, op = lg["address"].lower(), evm.topic_addr(t[2])
@@ -96,7 +96,7 @@ def scan_chain(wallet, chain, pause=0.1):
                         "spender": op, "amount": None, "unlimited": True})
     for topic in (PERMIT2_APPROVAL, PERMIT2_PERMIT):
         for lg in _logs(chain, topic, wallet, address=PERMIT2):
-            t = lg.get("topics") or []
+            t = [x for x in (lg.get("topics") or []) if x]   # Blockscout pads topics with nulls
             if len(t) < 4:
                 continue
             token, spender = evm.topic_addr(t[2]), evm.topic_addr(t[3])

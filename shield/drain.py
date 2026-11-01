@@ -58,7 +58,7 @@ def find_chain(wallet, chain, since_epoch=None):
             rc = {}
         split = Counter()
         for lg in rc.get("logs", []):
-            tp = lg.get("topics") or []
+            tp = [x for x in (lg.get("topics") or []) if x]
             if len(tp) == 3 and tp[0] == evm.TRANSFER and evm.topic_addr(tp[1]) in (wallet, contract):
                 split[evm.topic_addr(tp[2])] += int(lg.get("data") or "0x0", 16)
         split.pop(wallet, None)

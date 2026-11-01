@@ -68,7 +68,7 @@ def short(a):
     return "0x" + (h or "0")
 
 
-def get(path, retries=2):
+def get(path, retries=3):
     if GET:
         return GET(path)
     url = base() + path
@@ -80,8 +80,10 @@ def get(path, retries=2):
             if e.code == 404:
                 return None
             if e.code == 429 and attempt < retries:
-                time.sleep(2 * (attempt + 1))
+                time.sleep(2 * (attempt + 1))      # free endpoints cap requests per second
                 continue
+            if e.code == 410:                     # pruned (older than this node keeps)
+                return None
             raise
 
 
@@ -221,35 +223,70 @@ def sent_txs(addr, limit=400):
     out, hi = [], seq
     while hi > 0 and len(out) < limit:
         lo = max(0, hi - 100)
-        page = get(f"/accounts/{norm(addr)}/transactions?start={lo}&limit={hi - lo}") or []
+        try:
+            page = get(f"/accounts/{norm(addr)}/transactions?start={lo}&limit={hi - lo}") or []
+        except Exception:
+            break
         out += page[::-1]          # newest first
+        if len(page) < hi - lo:
+            break                  # this node doesn't keep older transactions (pruned)
         hi = lo
+    acct = dict(acct, _sent_available=len(out), _sent_total=seq)
     return out[:limit], acct
 
 
-def received_indexer(addr, limit=300):
-    """Deposits into the wallet from others, via the indexer: [{version, amount_raw, asset_id, t}] or None."""
-    q = """query($a:String!,$n:Int!){ fungible_asset_activities(where:{owner_address:{_eq:$a},type:{_like:"%Deposit%"},
-           is_transaction_success:{_eq:true}}, order_by:{transaction_version:desc}, limit:$n){
-           transaction_version amount asset_type transaction_timestamp } }"""
+def indexer_moves(addr, limit=400):
+    """Full in/out history from the indexer: [moves] or None if the indexer isn't reachable."""
+    a = norm(addr)
+    q1 = """query($a:String!,$n:Int!){ fungible_asset_activities(where:{owner_address:{_eq:$a},is_transaction_success:{_eq:true}},
+            order_by:{transaction_version:desc}, limit:$n){ transaction_version type amount asset_type transaction_timestamp } }"""
     try:
-        rows = gql(q, {"a": norm(addr), "n": limit}).get("fungible_asset_activities") or []
+        mine = gql(q1, {"a": a, "n": limit}).get("fungible_asset_activities") or []
     except Exception:
         return None
-    out = []
-    for r in rows:
+    mine = [m for m in mine if m.get("amount") not in (None, "0") and ("Deposit" in (m.get("type") or "") or "Withdraw" in (m.get("type") or ""))]
+    vers = sorted({int(m["transaction_version"]) for m in mine})
+    others = []
+    q2 = """query($v:[bigint!],$a:String!){ fungible_asset_activities(where:{transaction_version:{_in:$v},owner_address:{_neq:$a}}){
+            transaction_version type amount asset_type owner_address } }"""
+    for i in range(0, len(vers), 100):
         try:
-            ts = r.get("transaction_timestamp") or ""
+            others += gql(q2, {"v": vers[i:i + 100], "a": a}).get("fungible_asset_activities") or []
+        except Exception:
+            break
+    by_v = {}
+    for o in others:
+        by_v.setdefault(int(o["transaction_version"]), []).append(o)
+    moves = []
+    for m in mine:
+        d = "in" if "Deposit" in m["type"] else "out"
+        aid = m.get("asset_type") or ""
+        aid = aid if "::" in aid else short(aid)
+        sym, dec = asset_meta(aid)
+        opp = "Withdraw" if d == "in" else "Deposit"
+        cands = [o for o in by_v.get(int(m["transaction_version"]), []) if opp in (o.get("type") or "")
+                 and (o.get("asset_type") or "") == (m.get("asset_type") or "")]
+        cp = norm(max(cands, key=lambda o: int(o.get("amount") or 0))["owner_address"]) if cands else None
+        ts = m.get("transaction_timestamp") or ""
+        try:
             t = calendar.timegm(time.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S")) if ts else 0
         except Exception:
             t = 0
-        out.append({"version": int(r["transaction_version"]), "amount_raw": int(r.get("amount") or 0),
-                    "asset_id": short(r["asset_type"]) if "::" not in (r.get("asset_type") or "") else r["asset_type"], "t": t})
-    return out
+        moves.append({"dir": d, "cp": cp, "amount": int(m["amount"]) / 10 ** dec, "asset": sym, "asset_id": aid,
+                      "t": t, "hash": None, "version": int(m["transaction_version"])})
+    return moves
 
 
 def history(addr, limit=400):
-    """Normalized history for the pre-screen."""
+    """Normalized history for the pre-screen: the indexer's full in/out history when reachable,
+    else what the fullnode still keeps of the wallet's sent transactions."""
+    im = indexer_moves(addr, limit)
+    if im is not None:
+        acct = account(addr)
+        bal = balance(addr)
+        return {"exists": acct is not None or bool(im) or (bal or 0) > 0, "moves": sorted(im, key=lambda m: m["t"]),
+                "balance": bal, "complete": len(im) < limit, "created": None,
+                "coverage": None if len(im) < limit else f"Aptos: the most recent {limit} payments in and out were checked."}
     txs, acct = sent_txs(addr, limit)
     moves, seen = [], set()
     for tx in txs:
@@ -258,31 +295,17 @@ def history(addr, limit=400):
         for m in moves_for(tx, addr):
             moves.append(m)
             seen.add(tx.get("version"))
-    sent_complete = acct is not None and len(txs) >= int((acct or {}).get("sequence_number") or 0)
-    rec = received_indexer(addr)
-    if rec:
-        for r in rec:
-            if str(r["version"]) in {str(v) for v in seen}:
-                continue
-            try:
-                tx = get(f"/transactions/by_version/{r['version']}")
-                ms = [m for m in moves_for(tx, addr) if m["dir"] == "in"]
-            except Exception:
-                ms = []
-            if ms:
-                moves += ms
-            else:
-                sym, dec = asset_meta(r["asset_id"])
-                moves.append({"dir": "in", "cp": None, "amount": r["amount_raw"] / 10 ** dec, "asset": sym,
-                              "asset_id": r["asset_id"], "t": r["t"], "hash": None})
+    total = int((acct or {}).get("_sent_total") or 0)
+    sent_complete = acct is not None and len(txs) >= total
     bal = balance(addr)
-    complete = bool(sent_complete and rec is not None and len(rec) < 300)
-    cov = None
-    if rec is None:
-        cov = ("Aptos: everything this wallet SENT was checked; payments it RECEIVED from others weren't (add a free "
-               "Geomi key as \"aptos_indexer_key\" for that), so collector / pass-through checks are limited.")
-    elif not sent_complete or len(rec) >= 300:
-        cov = f"Aptos: the most recent {limit} sent and 300 received transactions were checked."
+    complete = False      # without the indexer, payments received from others are unknown
+    if acct is not None and not sent_complete:
+        cov = (f"Aptos: only the {len(txs)} most recent of this wallet's {total:,} sent transactions are still kept by the "
+               "data source, and payments it RECEIVED weren't checked (the Aptos indexer was busy). "
+               "A free Geomi key (\"aptos_indexer_key\") gives full history.")
+    else:
+        cov = ("Aptos: everything this wallet SENT was checked; payments it RECEIVED from others weren't (the Aptos indexer "
+               "was busy; a free Geomi key as \"aptos_indexer_key\" fixes that), so collector / pass-through checks are limited.")
     exists = acct is not None or bool(moves) or (bal or 0) > 0
     return {"exists": exists, "moves": sorted(moves, key=lambda m: m["t"]), "balance": bal,
             "complete": complete, "coverage": cov, "created": None}

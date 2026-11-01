@@ -95,6 +95,34 @@ covs = [f["text"] for f in p["findings"] if f["section"] == "Coverage"]
 r.append(ok(p["ok"] and covs and "RECEIVED" in covs[0], "pre-screen states that received payments weren't checked without an indexer key"))
 r.append(ok(not any("Fresh" in f["text"] for f in p["findings"]), "no false 'fresh wallet' claim when history is incomplete"))
 
+# indexer path: full in/out history with counterparties
+def GQL(q, v):
+    if "_neq" in q:
+        return {"fungible_asset_activities": [
+            {"transaction_version": "200", "type": "0x1::fungible_asset::Withdraw", "amount": "5000000", "asset_type": USDT, "owner_address": RCV},
+            {"transaction_version": "201", "type": "0x1::fungible_asset::Deposit", "amount": "4990000", "asset_type": USDT, "owner_address": DRAINER}]}
+    return {"fungible_asset_activities": [
+        {"transaction_version": "201", "type": "0x1::fungible_asset::Withdraw", "amount": "4990000", "asset_type": USDT, "transaction_timestamp": "2026-11-01T12:00:05"},
+        {"transaction_version": "200", "type": "0x1::fungible_asset::Deposit", "amount": "5000000", "asset_type": USDT, "transaction_timestamp": "2026-11-01T12:00:00"}]}
+ap.GQL = GQL
+h = ap.history(VICTIM)
+ins = [m for m in h["moves"] if m["dir"] == "in"]; outs = [m for m in h["moves"] if m["dir"] == "out"]
+r.append(ok(ins and ins[0]["cp"] == ap.norm(RCV) and ins[0]["amount"] == 5.0 and outs[0]["cp"] == ap.norm(DRAINER)
+            and h["complete"] and not h["coverage"], "indexer: full in/out history with counterparties"))
+ap.GQL = lambda q, v: (_ for _ in ()).throw(RuntimeError("429"))
+
+# pruned node: account says 3,585,656 sent, node only keeps the last few
+_orig = GET
+def GET2(path):
+    if path == f"/accounts/{ap.norm(VICTIM)}":
+        return {"sequence_number": "3585656", "authentication_key": ap.norm(VICTIM)}
+    return _orig(path)
+ap.GET = GET2
+h = ap.history(VICTIM)
+r.append(ok("only the 3 most recent" in (h["coverage"] or "") and "3,585,656" in h["coverage"] and not h["complete"],
+            "pruned node: says exactly how much history was reachable (no false 'all checked')"))
+ap.GET = GET
+
 # tracer adapter
 from multichain.registry import get_adapter
 outs = get_adapter("aptos").outgoing(VICTIM)

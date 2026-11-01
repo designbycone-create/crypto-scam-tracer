@@ -29,12 +29,16 @@ if (-not $py) {
 }
 Write-Host "Python OK ($py)"
 
-# 2. Download / update (keeps your case files)
+# 2. Download / update (keeps your case files). Pin the exact version so the Desk's Updates page knows what's installed.
+$sha = $null
+try { $sha = (Invoke-RestMethod 'https://api.github.com/repos/designbycone-create/crypto-scam-tracer/commits/main' -TimeoutSec 20).sha } catch {}
+if ($sha) { $Repo = "https://github.com/designbycone-create/crypto-scam-tracer/archive/$sha.zip" }
 Invoke-WebRequest $Repo -OutFile $Zip -UseBasicParsing
 $tmp = Join-Path $env:TEMP 'scamhunter_x'; Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 Expand-Archive $Zip $tmp -Force
 New-Item -ItemType Directory $Dir -Force | Out-Null
 Copy-Item (Join-Path (Get-ChildItem $tmp)[0].FullName '*') $Dir -Recurse -Force
+if ($sha) { Set-Content -Path (Join-Path $Dir 'VERSION') -Value $sha -NoNewline }
 Write-Host "Installed to $Dir"
 
 # 3. Dependencies

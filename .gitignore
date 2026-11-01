@@ -57,3 +57,6 @@ prescreen_log.jsonl
 evidence_store/
 evidence_bundles/
 capture_errors.log
+VERSION
+update_state.json
+backups/

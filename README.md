@@ -144,7 +144,7 @@ adds Desktop / Start Menu shortcuts, starts it at sign-in, and opens the
 2. **About you** (optional) — name, email, IC3 number, other reports. Used only
    in the drafts *you* choose to send.
 3. **Alerts** — a private ntfy topic is generated; subscribe in the free ntfy
-   app. Telegram connects from the Desk's **Phone alerts** page in about 2 minutes (no command line).
+   app. Updates install from the Desk's **Updates** page (one click, backed up, self-tested, undoable). Telegram connects from the Desk's **Phone alerts** page in about 2 minutes (no command line).
 
 Press **Start tracking**. The watchers start, and within minutes the Desk shows
 where your funds are, the network behind the scam, and freeze kits.

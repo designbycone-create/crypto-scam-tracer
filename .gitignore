@@ -60,3 +60,4 @@ capture_errors.log
 VERSION
 update_state.json
 backups/
+benchmark/data/results.jsonl

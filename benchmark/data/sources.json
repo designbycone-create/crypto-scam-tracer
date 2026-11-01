@@ -1,0 +1,74 @@
+{
+ "defillama_okex": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/okex/index.js",
+  "sha256": "c08799550fc6ab1401304eccc5bf2358e38800887a63efdba71031444383e09d",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "okx proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_huobi": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/huobi/index.js",
+  "sha256": "512ee6c67f92674499d301350ca3b683a745d1388cef0a226881c756ebad84d8",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "htx proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_gate-io": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/gate-io/index.js",
+  "sha256": "ca6d5afab98672ccbe7c3621491b75133dbec998a3a82d39d51c6d31252a8652",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "gate proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_bitget": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/bitget/index.js",
+  "sha256": "55402dd8299d8112306850dcb7498bc6beab91e6e1abf25bc848616748569bf4",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "bitget proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_bitstamp": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/bitstamp/index.js",
+  "sha256": "b39b3b3bd0b1c4032505392a0341d7d72ad332fcdcea474d2689027ae020dbb3",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "bitstamp proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_kucoin": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/kucoin/index.js",
+  "sha256": "840ad01ba1696a6a5b3d6ea35b53018adee7c1a4daad11277fd070cc82d519f8",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "kucoin proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_bitfinex": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/bitfinex/index.js",
+  "sha256": "68bc0edf9e94f5a227434b57a88d96de80ab881fe8b38ae36779c89a960c614c",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "bitfinex proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "defillama_binance": {
+  "url": "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/binance/index.js",
+  "sha256": "7ff3afcb677c9d7b7ad9aab065b2899ec8f45fa05a150970119515dafbee5dab",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "binance proof-of-reserves wallets published by the exchange (via DefiLlama)"
+ },
+ "ofac_eth": {
+  "url": "https://raw.githubusercontent.com/0xB10C/ofac-sanctioned-digital-currency-addresses/lists/sanctioned_addresses_ETH.txt",
+  "sha256": "5545c44c2e0b861181261327301c5b51242b7bec0d9c527dcc2a8d6af72b7918",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "OFAC sanctions list (US Treasury)"
+ },
+ "ofac_xbt": {
+  "url": "https://raw.githubusercontent.com/0xB10C/ofac-sanctioned-digital-currency-addresses/lists/sanctioned_addresses_XBT.txt",
+  "sha256": "a72d4f30fb2c30294c0040bd2a338efc3a5ed4c3679ab30057a90c6a8a48abc6",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "OFAC sanctions list (US Treasury)"
+ },
+ "ofac_trx": {
+  "url": "https://raw.githubusercontent.com/0xB10C/ofac-sanctioned-digital-currency-addresses/lists/sanctioned_addresses_TRX.txt",
+  "sha256": "c5005805ada68a84015f375bf8b00b09cea1cbe906c6c497f452170f527dc3ac",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "OFAC sanctions list (US Treasury)"
+ },
+ "scamsniffer": {
+  "url": "https://raw.githubusercontent.com/scamsniffer/scam-database/main/blacklist/address.json",
+  "sha256": "5f5e5fcb1c20015d4a00466dda2ca924b0341bf833fc095d683fe1e80150b012",
+  "retrieved": "2026-11-01T22:48:12Z",
+  "what": "ScamSniffer scam database (GPL-3.0 data)"
+ }
+}

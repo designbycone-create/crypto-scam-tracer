@@ -1,0 +1,167 @@
+{"id": "ex-okx-ethereum-0x17e91b98", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "ethereum", "address": "0x17e91b98988937cb59dc163b0b11781f9785591a", "source": "defillama_okex"}
+{"id": "ex-okx-ethereum-0x30907c9e", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "ethereum", "address": "0x30907c9e513a3e57860d61baa95bfc94ff615d19", "source": "defillama_okex"}
+{"id": "ex-okx-ethereum-0x06959153", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "ethereum", "address": "0x06959153b974d0d5fdfd87d561db6d8d4fa0bb0b", "source": "defillama_okex"}
+{"id": "ex-okx-ethereum-0x48480aad", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "ethereum", "address": "0x48480aad203e8b030f82754b3c75869c9895c6bf", "source": "defillama_okex"}
+{"id": "ex-okx-tron-TCw6YaWm3y", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "tron", "address": "TCw6YaWm3y6DvxY7M8hrCDnrJGeGMumzGJ", "source": "defillama_okex"}
+{"id": "ex-okx-tron-TUAVzJ916T", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "tron", "address": "TUAVzJ916T7z6oqpdCCaTv6ipC2mmBMJev", "source": "defillama_okex"}
+{"id": "ex-okx-tron-TWGZbjofbT", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "tron", "address": "TWGZbjofbTLY3UCjCV4yiLkRg89zLqwRgi", "source": "defillama_okex"}
+{"id": "ex-okx-tron-TDq3zUoRN2", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "tron", "address": "TDq3zUoRN2z4UktF7yKaQqejfwa9qjnYdM", "source": "defillama_okex"}
+{"id": "ex-okx-xrpl-rBPzKpfEh6", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "xrpl", "address": "rBPzKpfEh6Pv9qjh6gt9E66BL8UVbcZxHP", "source": "defillama_okex"}
+{"id": "ex-okx-xrpl-rQfxZ8c12u", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "xrpl", "address": "rQfxZ8c12uByDtLVnT1a56aXkcBFdDMwhq", "source": "defillama_okex"}
+{"id": "ex-okx-xrpl-rUzWJkXyEt", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "xrpl", "address": "rUzWJkXyEtT8ekSSxkBYPqCvHpngcy6Fks", "source": "defillama_okex"}
+{"id": "ex-okx-xrpl-r4eVDKE3P5", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "xrpl", "address": "r4eVDKE3P5vK1zsc98dCeBDUM3JqyE4rUU", "source": "defillama_okex"}
+{"id": "ex-okx-bitcoin-3A99Y9QPb9", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "bitcoin", "address": "3A99Y9QPb9ot6ZYMgvv7fDoxLXW8BBQrTa", "source": "defillama_okex"}
+{"id": "ex-okx-bitcoin-34a5mYcdFK", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "bitcoin", "address": "34a5mYcdFKromE59zXX5TmfMx8YMoywAi7", "source": "defillama_okex"}
+{"id": "ex-okx-bitcoin-39AN24C9Zd", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "bitcoin", "address": "39AN24C9ZdwEpDx4Wn3rh1Y7bdoZxBDufQ", "source": "defillama_okex"}
+{"id": "ex-okx-bitcoin-3Bovhhx3TU", "group": "exchange", "truth": "legit", "exchange": "okx", "chain": "bitcoin", "address": "3Bovhhx3TUGpGFd9ARZaM1kkF6Wny6PPFr", "source": "defillama_okex"}
+{"id": "ex-htx-ethereum-0xcac725be", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "ethereum", "address": "0xcac725bef4f114f728cbcfd744a731c2a463c3fc", "source": "defillama_huobi"}
+{"id": "ex-htx-ethereum-0x0a98fb70", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "ethereum", "address": "0x0a98fb70939162725ae66e626fe4b52cff62c2e5", "source": "defillama_huobi"}
+{"id": "ex-htx-ethereum-0x08deb627", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "ethereum", "address": "0x08deb6278d671e2a1adc7b00839b402b9cf3375d", "source": "defillama_huobi"}
+{"id": "ex-htx-ethereum-0x46705dff", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "ethereum", "address": "0x46705dfff24256421a05d056c29e81bdc09723b8", "source": "defillama_huobi"}
+{"id": "ex-htx-tron-TF2fmSbg5H", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "tron", "address": "TF2fmSbg5HAD34KPUH7WtWCxxvgXHohzYM", "source": "defillama_huobi"}
+{"id": "ex-htx-tron-TDvf1dSBhR", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "tron", "address": "TDvf1dSBhR7dEskJs17HxGHheJrjXhiFyM", "source": "defillama_huobi"}
+{"id": "ex-htx-tron-TFTWNgDBkQ", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "tron", "address": "TFTWNgDBkQ5wQoP8RXpRznnHvAVV8x5jLu", "source": "defillama_huobi"}
+{"id": "ex-htx-tron-TRSXRWudzf", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "tron", "address": "TRSXRWudzfzY4jH7AaMowdMNUXDkHisbcd", "source": "defillama_huobi"}
+{"id": "ex-htx-xrpl-ra4haepf6f", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "xrpl", "address": "ra4haepf6fehiCfVvB33j1D7vmv7JJD8M5", "source": "defillama_huobi"}
+{"id": "ex-htx-xrpl-rPzT7GA6vW", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "xrpl", "address": "rPzT7GA6vWU3PvYSXBpdP5fQPnzwVLwL24", "source": "defillama_huobi"}
+{"id": "ex-htx-xrpl-raC4udvEee", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "xrpl", "address": "raC4udvEeeni6aLPHbz9RKjHTQiWxKPfom", "source": "defillama_huobi"}
+{"id": "ex-htx-xrpl-rKUDvXFJMF", "group": "exchange", "truth": "legit", "exchange": "htx", "chain": "xrpl", "address": "rKUDvXFJMFu65LqPTH3Yfpii4rbKT9bSQT", "source": "defillama_huobi"}
+{"id": "ex-gate-ethereum-0x1389b353", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "ethereum", "address": "0x1389b35399a49195f55b16f7348c07a1554e25ed", "source": "defillama_gate-io"}
+{"id": "ex-gate-ethereum-0x840760ae", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "ethereum", "address": "0x840760aed6bbd878c46c5850d3af0a61afcd09c8", "source": "defillama_gate-io"}
+{"id": "ex-gate-ethereum-0x9bbe47fe", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "ethereum", "address": "0x9bbe47fe66b3580551aac3124cf9fc6560252b19", "source": "defillama_gate-io"}
+{"id": "ex-gate-ethereum-0x4dc3bda3", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "ethereum", "address": "0x4dc3bda32a72eadae470e580188b61fa36e9ccea", "source": "defillama_gate-io"}
+{"id": "ex-gate-tron-TUt2HuZFZv", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "tron", "address": "TUt2HuZFZvXAMmF9uh7BqujvMXsZ4F1pif", "source": "defillama_gate-io"}
+{"id": "ex-gate-tron-TCr9697xxW", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "tron", "address": "TCr9697xxWMbZznvpJh8uVQzAQR9cLXZm9", "source": "defillama_gate-io"}
+{"id": "ex-gate-tron-TYAavN2xCD", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "tron", "address": "TYAavN2xCDro5Gdip8UU6W9oQmM43rNxzQ", "source": "defillama_gate-io"}
+{"id": "ex-gate-tron-TDyR4wBeod", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "tron", "address": "TDyR4wBeodpigiKmnwyBQC8UfsCH1T25XF", "source": "defillama_gate-io"}
+{"id": "ex-gate-xrpl-rHJ2fHJvW9", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "xrpl", "address": "rHJ2fHJvW97WY5X7BTBpXKCaJut8yUPxjd", "source": "defillama_gate-io"}
+{"id": "ex-gate-xrpl-rLzxZuZuAH", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "xrpl", "address": "rLzxZuZuAHM7k3FzfmhGkXVwScM4QSxoY7", "source": "defillama_gate-io"}
+{"id": "ex-gate-xrpl-rNu9U5sSou", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "xrpl", "address": "rNu9U5sSouNoFunHp9e9trsLV6pvsSf54z", "source": "defillama_gate-io"}
+{"id": "ex-gate-xrpl-rHcFoo6a9q", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "xrpl", "address": "rHcFoo6a9qT5NHiVn1THQRhsEGcxtYCV4d", "source": "defillama_gate-io"}
+{"id": "ex-gate-bitcoin-1HpED69tpK", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "bitcoin", "address": "1HpED69tpKSaEaWpY3Udt1DtcVcuCUoh2Y", "source": "defillama_gate-io"}
+{"id": "ex-gate-bitcoin-18AV9vQZYm", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "bitcoin", "address": "18AV9vQZYm6yvG1W5JadaHSHR2b2xzujLf", "source": "defillama_gate-io"}
+{"id": "ex-gate-bitcoin-3HroDXv8hm", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "bitcoin", "address": "3HroDXv8hmzKRtaSfBffRgedKpru8fgy6M", "source": "defillama_gate-io"}
+{"id": "ex-gate-bitcoin-14kmvhQrWr", "group": "exchange", "truth": "legit", "exchange": "gate", "chain": "bitcoin", "address": "14kmvhQrWrNEHbrSKBySj4qHGjemDtS3SF", "source": "defillama_gate-io"}
+{"id": "ex-bitget-ethereum-0x15560877", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "ethereum", "address": "0x15560877043a89358f59b3896dfac2a3e1212658", "source": "defillama_bitget"}
+{"id": "ex-bitget-ethereum-0x9e00816f", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "ethereum", "address": "0x9e00816f61a709fa124d36664cd7b6f14c13ee05", "source": "defillama_bitget"}
+{"id": "ex-bitget-ethereum-0x70213959", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "ethereum", "address": "0x70213959a644baa94840bbfb4129550bceceb3c2", "source": "defillama_bitget"}
+{"id": "ex-bitget-ethereum-0x5bdf8521", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "ethereum", "address": "0x5bdf85216ec1e38d6458c870992a69e38e03f7ef", "source": "defillama_bitget"}
+{"id": "ex-bitget-tron-TBf14pAU2a", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "tron", "address": "TBf14pAU2aZ2kYjnfwDgcVDF2nH6kVHhkZ", "source": "defillama_bitget"}
+{"id": "ex-bitget-tron-TJ7hhYhVha", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "tron", "address": "TJ7hhYhVhaxNx6BPyq7yFpqZrQULL3JSdb", "source": "defillama_bitget"}
+{"id": "ex-bitget-tron-TN9DMsWq8C", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "tron", "address": "TN9DMsWq8CwE9GZV4akjxUzwG93PPceuiV", "source": "defillama_bitget"}
+{"id": "ex-bitget-tron-TKCFasXqJw", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "tron", "address": "TKCFasXqJw3ezQiF1qYWYd78Edfb2NvpBV", "source": "defillama_bitget"}
+{"id": "ex-bitget-xrpl-rMCVBYFYtV", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "xrpl", "address": "rMCVBYFYtVJy6F4gUSd7RrM8GXApM6MNDN", "source": "defillama_bitget"}
+{"id": "ex-bitget-xrpl-r3AEihLNr8", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "xrpl", "address": "r3AEihLNr81VYUf5PdfH5wLPqtJJyJs6yY", "source": "defillama_bitget"}
+{"id": "ex-bitget-xrpl-rnQ3YeYzjk", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "xrpl", "address": "rnQ3YeYzjkLS1oum4FZ9HXzAksm23CaQGS", "source": "defillama_bitget"}
+{"id": "ex-bitget-xrpl-rGDreBvnHr", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "xrpl", "address": "rGDreBvnHrX1get7na3J4oowN19ny4GzFn", "source": "defillama_bitget"}
+{"id": "ex-bitget-bitcoin-12ov5BL4Nb", "group": "exchange", "truth": "legit", "exchange": "bitget", "chain": "bitcoin", "address": "12ov5BL4NbCn8GsdeV6fdPa5HrHGsdAopK", "source": "defillama_bitget"}
+{"id": "ex-bitstamp-xrpl-rvYAfWj5gh", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "xrpl", "address": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-xrpl-rDsbeomae4", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "xrpl", "address": "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-xrpl-rnuDDzvYWT", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "xrpl", "address": "rnuDDzvYWTPqXTDVvwE9oLGLgxzV7Rpnpe", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-xrpl-r3KfqsuMjp", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "xrpl", "address": "r3KfqsuMjp85ddhNN2xNAAbmrNKUgFbcpk", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-ethereum-0xf666814c", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "ethereum", "address": "0xf666814c2ae92ca0e06667f80dac1eb8a97e48ae", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-ethereum-0x88a4df73", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "ethereum", "address": "0x88a4df73aac310484c60c4c0ac4904cab938c20b", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-ethereum-0x3262f13a", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "ethereum", "address": "0x3262f13a39efaca789ae58390441c9ed76bc658a", "source": "defillama_bitstamp"}
+{"id": "ex-bitstamp-ethereum-0x5c95a672", "group": "exchange", "truth": "legit", "exchange": "bitstamp", "chain": "ethereum", "address": "0x5c95a672e34b3252482ed9a215f2926d2887845d", "source": "defillama_bitstamp"}
+{"id": "ex-kucoin-ethereum-0xf8da05c6", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "ethereum", "address": "0xf8da05c625a6e601281110cba52b156e714e1dc2", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-ethereum-0xe8c15aad", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "ethereum", "address": "0xe8c15aad9d4cd3f59c9dfa18828b91a8b2c49596", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-ethereum-0x88bd4d3e", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "ethereum", "address": "0x88bd4d3e2997371bceefe8d9386c6b5b4de60346", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-ethereum-0xa2d69adf", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "ethereum", "address": "0xa2d69adf0b62fa32825d73f086cd4689743543db", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-tron-TGeCMTmmQK", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "tron", "address": "TGeCMTmmQKBrs8Vmx7YNGbPa2d3ZspDLNN", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-tron-THyqxuWrRP", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "tron", "address": "THyqxuWrRPLZDdvSLVEWLofJ3qYvBhyc4R", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-tron-TEHcECc7JU", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "tron", "address": "TEHcECc7JU4hudBDoWASXKpGkwQxVe5qUH", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-tron-TNYEPjMiVJ", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "tron", "address": "TNYEPjMiVJiggES7AYL7mtmuen2oXicbXk", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-xrpl-rfZ1kn1AUw", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "xrpl", "address": "rfZ1kn1AUwD8bVMnDsD6ifzw7y2zMRp1Ci", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-xrpl-rBxszqhQkh", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "xrpl", "address": "rBxszqhQkhPALtkSpGuVeqR6hNtZ8xTH3T", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-xrpl-rAnqRGVpsS", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "xrpl", "address": "rAnqRGVpsS6XaUbQjwpQmoE4y1MthZhT9", "source": "defillama_kucoin"}
+{"id": "ex-kucoin-xrpl-rPjmhP2WK4", "group": "exchange", "truth": "legit", "exchange": "kucoin", "chain": "xrpl", "address": "rPjmhP2WK4mfTZX9Ywoqz3eMPzfWj2vezU", "source": "defillama_kucoin"}
+{"id": "ex-bitfinex-ethereum-0x77134cbc", "group": "exchange", "truth": "legit", "exchange": "bitfinex", "chain": "ethereum", "address": "0x77134cbc06cb00b66f4c7e623d5fdbf6777635ec", "source": "defillama_bitfinex"}
+{"id": "ex-bitfinex-ethereum-0xe733455f", "group": "exchange", "truth": "legit", "exchange": "bitfinex", "chain": "ethereum", "address": "0xe733455faddf4999176e99a0ec084e978f5552ed", "source": "defillama_bitfinex"}
+{"id": "ex-bitfinex-ethereum-0x618f37d7", "group": "exchange", "truth": "legit", "exchange": "bitfinex", "chain": "ethereum", "address": "0x618f37d7ff7b140e604172466cd42d1ec35e0544", "source": "defillama_bitfinex"}
+{"id": "ex-bitfinex-ethereum-0xed9eef56", "group": "exchange", "truth": "legit", "exchange": "bitfinex", "chain": "ethereum", "address": "0xed9eef56e64a8e779cfae9ddedb25d11ba2b2425", "source": "defillama_bitfinex"}
+{"id": "ex-bitfinex-tron-TXFBqBbqJo", "group": "exchange", "truth": "legit", "exchange": "bitfinex", "chain": "tron", "address": "TXFBqBbqJommqZf7BV8NNYzePh97UmJodJ", "source": "defillama_bitfinex"}
+{"id": "ex-bitfinex-tron-TMhJviFWia", "group": "exchange", "truth": "legit", "exchange": "bitfinex", "chain": "tron", "address": "TMhJviFWiaxvqKLdng9dmsi1H5H5yTGEeu", "source": "defillama_bitfinex"}
+{"id": "ex-binance-ethereum-0x42a93a9f", "group": "exchange", "truth": "legit", "exchange": "binance", "chain": "ethereum", "address": "0x42a93a9f5cfda54716c414b6eaf07cf512f46ead", "source": "defillama_binance"}
+{"id": "ex-binance-ethereum-0x1fa4a73a", "group": "exchange", "truth": "legit", "exchange": "binance", "chain": "ethereum", "address": "0x1fa4a73a3f0133f0025378af00236f3abdee5d63", "source": "defillama_binance"}
+{"id": "ex-binance-ethereum-0xba2ae424", "group": "exchange", "truth": "legit", "exchange": "binance", "chain": "ethereum", "address": "0xba2ae424d960c26247dd6c32edc70b295c744c43", "source": "defillama_binance"}
+{"id": "ex-binance-ethereum-0xc47b3342", "group": "exchange", "truth": "legit", "exchange": "binance", "chain": "ethereum", "address": "0xc47b3342df38d747033b6041f54e4e5e300c8d18", "source": "defillama_binance"}
+{"id": "bad-ofac_eth-0x4f47bc49", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x4f47bc496083c727c5fbe3ce9cdf2b0f6496270c", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xb5a69da6", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xb5a69da691670f62510793f79a9b36c7db1a7b7c", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x252a8bd2", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x252a8bd2319d8a555b872990601221b3a2053bce", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x7ff9cfad", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x7ff9cfad3877f21d41da833e2f775db0569ee3d9", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x9dd7fa4b", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x9dd7fa4b4950154f7e75bdd8a77266b99b94ec08", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xef85a6fa", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xef85a6fafa5942a964dc618e94e230881d29ce2a", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xac4cc4b6", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xac4cc4b68ea24bbfaac8fd127b67ed445accce22", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x532b77b3", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x532b77b33a040587e9fd1800088225f99b8b0e8a", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xf2235d55", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xf2235d55b2950a0b1317469d72d07ae65b2e27cb", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x04dba119", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x04dba1194ee10112fe6c3207c0687def0e78bacf", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x8d79c73d", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x8d79c73daae8630c88de372ba8f57592fa987607", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x21b8d56b", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x21b8d56bda776bbe68655a16895afd96f5534fed", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x6b0736fe", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x6b0736fed0634e15e19cc57fba19cd179c13abca", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xf3701f44", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xf3701f445b6bdafedbca97d1e477357839e4120d", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xa7e5d5a7", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xa7e5d5a720f06526557c513402f2e6b5fa20b008", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x0330070f", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x0330070fd38ec3bb94f58fa55d40368271e9e54a", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xa0e1c89e", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xa0e1c89ef1a489c9c7de96311ed5ce5d32c20e4b", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x901bb958", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x901bb9583b24d97e995513c6778dc6888ab6870e", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0xc455f7fd", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xc455f7fd3e0e12afd51fba5c106909934d8a0e4a", "source": "ofac_eth"}
+{"id": "bad-ofac_eth-0x50237169", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x502371699497d08d5339c870851898d6d72521dd", "source": "ofac_eth"}
+{"id": "bad-ofac_xbt-19D8PHBjZH", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "19D8PHBjZH29uS1uPZ4m3sVyqqfF8UFG9o", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-175BUqf8JC", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "175BUqf8JCU1uoG1iTRKTacDa4uvJDUCw2", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1Sf6e4xQv8", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1Sf6e4xQv8muMZqYPTdRFf3e5o5eWcg9F", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1BCWMwpR4M", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1BCWMwpR4M1nYUuuYe2bmzrNuwGoF9ZAbA", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-3MD3riFB6U", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "3MD3riFB6U8PykypF6qkvSj8R2SGdUDPn3", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-3NPognMSbz", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "3NPognMSbzyA2JYW2fpkVKWyBMi2XTq2Zt", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1Hhe61Bwxs", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1Hhe61Bwxs8Hd2WxzWY9FQyZicBiZGeSNW", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-bc1qsmv6lk", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "bc1qsmv6lkrw65l30yazdqpdjjtwzpvk9f8gfh0cy7", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-bc1ql7rnd7", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "bc1ql7rnd70aejdxt3f9fzdlfazjlc9hvdmut8ad8s", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1D6gG9iKEh", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1D6gG9iKEhPitTcWRJiniuj1jYM2hNeAfJ", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1LAh7PQwpd", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1LAh7PQwpd1uGiLHae5C5Xz9QXse3y2phq", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1Js6goCey2", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1Js6goCey2NaqPQptiLANLQGuk4d6mowjP", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-372Wk9NLrM", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "372Wk9NLrMkJzKgqJdatWJy4bYRfxFjgat", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-bc1qw8evft", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "bc1qw8evftpgc8wsmkemd8yl5fg2husza5z802xaym", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-bc1q6w463k", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "bc1q6w463k7mhsgguwgqtcratm4vm42rncwhvvkeck", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-15cRqR3TXS", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "15cRqR3TXS1JehBGWERuxFE8NhWZzfoeeU", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-36XqYWGvUQ", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "36XqYWGvUQwBrYLRVuegN4pJJJSPWL1WEu", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-12jVCWW1Zh", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "12jVCWW1ZhTLA5yVnroEJswqKwsfiZKsax", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-bc1qwz0l2c", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "bc1qwz0l2ceddckwdy5rh6zyrm3x4ha6gn5f2da5zg", "source": "ofac_xbt"}
+{"id": "bad-ofac_xbt-1AjZPMsnmp", "group": "known_bad", "truth": "bad", "chain": "bitcoin", "address": "1AjZPMsnmpdK2Rv9KQNfMurTXinscVro9V", "source": "ofac_xbt"}
+{"id": "bad-ofac_trx-TXR4FDAZZL", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TXR4FDAZZLDSvuRxveW9aBMybbaS12WWHk", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TGu8xk3u1Q", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TGu8xk3u1QcA9FNCQZ4RUTvniiCjNkjXkA", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TYZKYK2fbv", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TYZKYK2fbvw3EAPES2daFvoV4DqPna43Jd", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TS729BUXeZ", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TS729BUXeZWBhJGPKCdK75q7VU4nhkJkYT", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TCUTmWspsa", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TCUTmWspsaJb3U5JUs5AhVcGwaftyK1qtp", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TNVbVXAgUT", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TNVbVXAgUT83Sv7E9oZwWutXqzs13sr6xN", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TVgJTK9qPg", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TVgJTK9qPg7wGTyeTG2MYF8aKMEx883xYU", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TG83Fk56S2", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TG83Fk56S2mycAUMYHZyZp9wMg6DCf4bUn", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TCUmMCHQEb", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TCUmMCHQEbFFdGvfdg2LeS64QfzUKP2AgW", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TJjRAn9kLi", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TJjRAn9kLiyh8h6gjBjaYjkfDkskgZfyW9", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TAgZxxuvfu", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TAgZxxuvfuKYJY5UPC1DXF8NPHbKtTzEGu", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TCA9vmjsYw", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TCA9vmjsYw9MtPKEwRBtGhKFRfr4CLxJAv", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TT4WKPQscK", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TT4WKPQscK7fkxrPj1E9PjZp1HTVBUpoTm", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TCu5onCzXu", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TCu5onCzXuqxjvVzdB2tR4FLuF66d4yRqf", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TKRNCETxbi", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TKRNCETxbiMmyyMraCkgdXKdLr1ZkmKxV5", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TBEmt7kPSw", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TBEmt7kPSwAv6NJTYKNdBVW524bUfPwJpJ", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TMStbg5fgb", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TMStbg5fgb4uTV7fK1gEYF9hKAzP3siPsG", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TWoRwYzsif", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TWoRwYzsifrD79DHDpTHC8fq787MvH9Qro", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TEKeY9i4Cc", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TEKeY9i4CcVySJMmhuh2AxZhtgTmugYUMW", "source": "ofac_trx"}
+{"id": "bad-ofac_trx-TEsxMcVocw", "group": "known_bad", "truth": "bad", "chain": "tron", "address": "TEsxMcVocweTM82Mdmc5diKC6qyCWqSpPv", "source": "ofac_trx"}
+{"id": "bad-scamsniffer-0x85bc0d58", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x85bc0d58556f41f0463927c9dcb81d190f452610", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xe36d6371", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xe36d6371d5742504a8d1679ea7a6aa5d81e82dbb", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xcad5230d", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xcad5230d7c8ca75786e225918757d23e7a7498ce", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xbe03bc41", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xbe03bc41e09809935eeb492a0eb170f92a5ec594", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x24c71431", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x24c7143109dae8d10e686ed98100881c413fe3f8", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x6d5a8ca1", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x6d5a8ca1eb1ad2e4873b8da3a3c2452635b3da8a", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x16b23964", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x16b2396478d693312c314c78c9655078e4ad1182", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x77accbaa", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x77accbaa010e579781aec0960d948757b6a75a3b", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x05a8841d", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x05a8841d3122ff1931d082b593cadda549459538", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x1dfb78f8", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x1dfb78f82b083ac5d7d184954aec66ed33090b2b", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xa7061688", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xa7061688c5eab3665f57e590390fe8529eb5e3ee", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xebca295e", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xebca295e309e3bed2695dbc2a04d22cbd1bd6bad", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xdc9bc901", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xdc9bc901de1c0eb3ee7209982601d44f11cb376c", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xcca3791a", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xcca3791ad3d340ac1e507c83bdd445039427657b", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0xb23f71ff", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0xb23f71ff33c08f3a718f1a95c47509f24f854939", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x13563fc2", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x13563fc204ec40cd52f0429fdf085ce88a55f51b", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x880aa1dc", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x880aa1dcf0fd4da09a6d1d440bff6356709a0c3b", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x26a71c85", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x26a71c85d41c0eddb65c10de4f290b405b47dc2b", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x7c1fb735", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x7c1fb7350d1060fc05ee309ee9692978260dc6a4", "source": "scamsniffer"}
+{"id": "bad-scamsniffer-0x068e7552", "group": "known_bad", "truth": "bad", "chain": "ethereum", "address": "0x068e755258285ca7b4cd3acb0e855b878e89a9e1", "source": "scamsniffer"}

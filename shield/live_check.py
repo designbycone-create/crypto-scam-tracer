@@ -10,8 +10,8 @@ CASES = [
     ("approvals", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", ["base", "arbitrum", "polygon", "optimism", "avalanche", "bsc"]),
     ("drain", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", ["polygon"]),
     ("prescreen", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", None),
-    ("approvals", "TNXoiAJ3dct8Fjg4M9fkLFh9S2v9TWc32G", None),
-    ("prescreen", "TNXoiAJ3dct8Fjg4M9fkLFh9S2v9TWc32G", None),
+    ("approvals", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", None),     # USDT contract (valid, busy)
+    ("prescreen", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", None),
     ("approvals", "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", None),
     ("prescreen", "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", None),
     ("approvals", "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN", None),

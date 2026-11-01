@@ -63,15 +63,24 @@ def takeover(wallet):
     if acct and acct.get("owner") and acct["owner"] != SYSTEM:
         found.append(("danger", f"Your wallet account is now owned by program {acct['owner']} instead of the System Program "
                                 "-- the 'Assign' drainer trick. Treat this wallet as lost; move anything you still can."))
-    for info in token_accounts(wallet):
-        ca = info.get("closeAuthority")
-        if ca and ca != wallet:
-            found.append(("high", f"Token account {info.get('_pubkey')} can be closed by {ca}, not you."))
+    foreign = [(i.get("_pubkey"), i.get("closeAuthority")) for i in token_accounts(wallet)
+               if i.get("closeAuthority") and i.get("closeAuthority") != wallet]
+    if foreign:
+        who = sorted({ca for _, ca in foreign})
+        found.append(("high", f"{len(foreign)} token account(s) can be closed by someone other than you "
+                              f"({', '.join(who[:3])}{'...' if len(who) > 3 else ''}). Normal wallets have none; "
+                              "if you didn't set this up, move those tokens."))
     return found
 
 
 def _tx(sig):
-    return rpc("getTransaction", [sig, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
+    import time as _t
+    if RPC is None:
+        _t.sleep(0.35)          # the free public RPC rate-limits hard; pace requests
+    try:
+        return rpc("getTransaction", [sig, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
+    except Exception:
+        return None
 
 
 def _deltas(tx, wallet):
@@ -98,7 +107,7 @@ def _deltas(tx, wallet):
     return wallet in signers, sol, tok
 
 
-def drains(wallet, limit=40):
+def drains(wallet, limit=25):
     out = []
     sigs = rpc("getSignaturesForAddress", [wallet, {"limit": limit}]) or []
     for s in sigs:
@@ -128,7 +137,7 @@ def drains(wallet, limit=40):
     return out
 
 
-def history(addr, limit=60):
+def history(addr, limit=30):
     acct = None
     try:
         acct = (rpc("getAccountInfo", [addr, {"encoding": "jsonParsed"}]) or {}).get("value")
@@ -155,4 +164,7 @@ def history(addr, limit=60):
                 moves.append({"dir": "in" if delta > 0 else "out", "cp": cp, "amount": abs(delta),
                               "asset": SYMBOLS.get(mint, "SPL"), "t": t})
     bal = ((acct or {}).get("lamports") or 0) / 1e9 if acct else 0.0
-    return {"exists": bool(acct) or bool(sigs), "moves": moves, "balance": bal}
+    return {"exists": bool(acct) or bool(sigs), "moves": moves, "balance": bal,
+            "complete": len(sigs) < limit,
+            "coverage": None if len(sigs) < limit else f"Solana: last {limit} transactions reviewed (public RPC is rate-limited; "
+                                                       "set \"solana_rpc\" to a free Helius/QuickNode endpoint for more)."}

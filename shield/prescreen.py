@@ -86,13 +86,23 @@ def history_xrpl(addr, limit=400):
         marker = r.get("marker")
         if not marker or len(moves) >= limit:
             break
+    created = None
+    try:
+        from scam_investigator.attribution import activator  # noqa: F401  (ensures module present)
+        rr = _xrpl("account_tx", {"account": addr, "ledger_index_min": -1, "ledger_index_max": -1, "limit": 1, "forward": True}) or {}
+        t0 = (rr.get("transactions") or [{}])[0]
+        tx0 = t0.get("tx_json") or t0.get("tx") or {}
+        if tx0.get("date"):
+            created = tx0["date"] + 946684800
+    except Exception:
+        pass
     dom = None
     if info.get("Domain"):
         try:
             dom = bytes.fromhex(info["Domain"]).decode("utf-8", "replace")
         except ValueError:
             pass
-    return {"exists": True, "moves": moves, "balance": int(info.get("Balance", 0)) / 1e6,
+    return {"exists": True, "moves": moves, "created": created, "complete": not marker, "balance": int(info.get("Balance", 0)) / 1e6,
             "flags": int(info.get("Flags") or 0), "domain": dom}
 
 
@@ -133,7 +143,9 @@ def history_evm(addr, chain):
         bal = int(evm.rpc(chain, "eth_getBalance", [a, "latest"]) or "0x0", 16) / 1e18
     except Exception:
         bal = None
+    full = evm.provider(chain) not in ("rpc_window", "none") and chain not in evm.FALLBACK
     return {"exists": bool(moves) or code not in ("0x", "0x0"), "moves": moves, "balance": bal, "code": code,
+            "complete": full and len(moves) < 900,
             "coverage": evm.coverage_note(chain)}
 
 
@@ -157,11 +169,17 @@ def history_tron(addr):
                           "asset": (t.get("token_info") or {}).get("symbol") or "TRC20", "t": int((t.get("block_timestamp") or 0) / 1000)})
     except Exception:
         pass
-    return {"exists": bool(moves), "moves": moves, "balance": None}
+    return {"exists": bool(moves), "moves": moves, "balance": None, "complete": len(moves) < 150}
 
 
 def history_btc(addr):
     moves = []
+    total = None
+    try:
+        st = _get(f"https://mempool.space/api/address/{addr}") or {}
+        total = (st.get("chain_stats") or {}).get("tx_count")
+    except Exception:
+        pass
     try:
         for tx in _get(f"https://mempool.space/api/address/{addr}/txs") or []:
             ins = [(v.get("prevout") or {}).get("scriptpubkey_address") for v in tx.get("vin", [])]
@@ -176,7 +194,8 @@ def history_btc(addr):
                     moves.append({"dir": "in", "cp": next((i for i in ins if i), None), "amount": got / 1e8, "asset": "BTC", "t": ep})
     except Exception:
         pass
-    return {"exists": bool(moves), "moves": moves, "balance": None}
+    return {"exists": bool(moves), "moves": moves, "balance": None,
+            "complete": total is not None and total <= 50}
 
 
 # ------------------------------------------------------------- checks ------
@@ -239,15 +258,18 @@ def behavior(h, now=None):
     if not h.get("exists") or not moves:
         return [("caution", "No history at all on this chain: a brand-new or unused address can't be vetted. "
                             "Scam wallets are often created hours before they're used.")]
-    first = moves[0]["t"]
+    # Only call a wallet "fresh" when we know its true start: the account's creation
+    # (activation) time, or a history we read all the way back to the beginning.
+    first = h.get("created") or (moves[0]["t"] if h.get("complete") else None)
     age_days = (now - first) / DAY if first else None
     if age_days is not None and age_days < 7:
-        out.append(("caution", f"Fresh: first activity {max(0, age_days):.1f} day(s) ago."))
+        out.append(("caution", f"Fresh: created / first active {max(0, age_days):.1f} day(s) ago."))
     ins = [m for m in moves if m["dir"] == "in"]
     outs = [m for m in moves if m["dir"] == "out"]
     senders = Counter(m["cp"] for m in ins)
     receivers = Counter(m["cp"] for m in outs)
-    if len(senders) >= 15 and len(receivers) <= max(3, len(senders) // 8):
+    paid_out = sum(m["amount"] for m in outs) >= 0.5 * (sum(m["amount"] for m in ins) or 1)
+    if len(senders) >= 15 and receivers and paid_out and len(receivers) <= max(3, len(senders) // 8):
         out.append(("caution", f"Victim-collector pattern: received from {len(senders)} different wallets, "
                                f"but pays out to only {len(receivers)} -- how giveaway and investment-scam wallets look."))
     vin, vout = sum(m["amount"] for m in ins), sum(m["amount"] for m in outs)
@@ -343,6 +365,8 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
         elif chain == "solana":
             from . import solana
             h = solana.history(addr)
+            if h.get("coverage"):
+                findings.append(("info", "Coverage", h["coverage"]))
         else:
             pres = evm_presence(addr)
             if not chain_given and pres:

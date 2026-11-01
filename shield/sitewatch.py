@@ -38,11 +38,11 @@ DEFAULT_WATCH = ["app.uniswap.org", "app.aave.com", "curve.fi", "pancakeswap.fin
 GET = None   # test hook: f(url) -> str
 
 
-def _get(url, limit=1_500_000):
+def _get(url, limit=1_500_000, timeout=None):
     if GET:
         return GET(url)
     req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=20) as r:
+    with urllib.request.urlopen(req, timeout=timeout or (60 if "crt.sh" in url else 20)) as r:
         return r.read(limit).decode("utf-8", "replace")
 
 
@@ -54,7 +54,7 @@ def _apex(domain):
 
 def dns(name, rtype):
     try:
-        d = json.loads(_get(f"https://cloudflare-dns.com/dns-query?name={urllib.parse.quote(name)}&type={rtype}"))
+        d = json.loads(_get(f"https://dns.google/resolve?name={urllib.parse.quote(name)}&type={rtype}"))
         return sorted({a.get("data", "").rstrip(".").lower() for a in d.get("Answer", []) if a.get("data")})
     except Exception:
         return None

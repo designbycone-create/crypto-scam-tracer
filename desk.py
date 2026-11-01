@@ -426,7 +426,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -522,6 +522,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/update":
             from freezekit import update_web
             return self._send(update_web.page(), "text/html; charset=utf-8")
+        if path == "/requests":
+            from freezekit import requests_web
+            return self._send(requests_web.page(), "text/html; charset=utf-8")
         if path in ("/shield", "/prescreen", "/sitewatch", "/compromised", "/evidence"):
             from urllib.parse import parse_qs
             qs = {k: v[0] for k, v in parse_qs(query).items()}
@@ -644,6 +647,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/update":
                 from freezekit import update_web
                 return self._send(update_web.post(form), "text/html; charset=utf-8")
+            if path == "/requests":
+                from freezekit import requests_web
+                return self._send(requests_web.post(form), "text/html; charset=utf-8")
         except Exception as ex:
             return self._send(f"Error: {ex}", "text/plain", code=500)
         self._send("Not found", "text/plain", code=404)

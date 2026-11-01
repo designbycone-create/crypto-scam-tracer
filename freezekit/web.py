@@ -45,7 +45,7 @@ PLEDGE = ("<div class=pledge><b>Free for victims. Always.</b> This tool never as
 
 def shell(title, body, refresh=None):
     nav = ("<div class=nav><a href='/'>Desk</a><a href='/graph'>Network graph</a><a href='/submit'>Submission Center</a><a href='/incident'>Incident mode</a>"
-           "<a href='/radar'>Scam radar</a><a href='/intel'>Threat intel</a><a href='/check'>Claim checker</a><a href='/shield'>Wallet shield</a><a href='/prescreen'>Check before you send</a><a href='/sitewatch'>Sites I use</a><a href='/evidence'>Court evidence</a><a href='/alerts'>Phone alerts</a></div>")
+           "<a href='/radar'>Scam radar</a><a href='/intel'>Threat intel</a><a href='/check'>Claim checker</a><a href='/shield'>Wallet shield</a><a href='/prescreen'>Check before you send</a><a href='/sitewatch'>Sites I use</a><a href='/evidence'>Court evidence</a><a href='/requests'>Officer packets</a><a href='/alerts'>Phone alerts</a></div>")
     meta = f"<meta http-equiv=refresh content={refresh}>" if refresh else ""
     return (f"<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
             f"{meta}<title>{e(title)}</title><style>{CSS}</style>{JS}</head><body>{nav}{body}</body></html>")

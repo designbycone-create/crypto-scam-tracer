@@ -124,6 +124,13 @@ try:
 except FileExistsError:
     ok(True, "sealed bundle is never overwritten")
 
+ok(res.get("pdf") and os.path.exists(res["pdf"]) and "report.pdf" in json.load(open(os.path.join(res["dir"], "manifest.json")))["files"],
+   "sealed PDF produced inside the bundle and covered by the manifest")
+pp = res["pdf"]; pdfb = open(pp, "rb").read()
+open(pp, "wb").write(pdfb.replace(b"Blockchain", b"Blockchaim", 1))
+ok(not bv.main(res["dir"], out=lambda *_: None), "verifier catches an edited PDF")
+open(pp, "wb").write(pdfb)
+ok(any("Seal ID" in l and "PASS" in l for l in buf), "verifier recomputes the Seal ID printed on every page")
 rep = open(os.path.join(res["dir"], "report.md"), encoding="utf-8").read()
 ok("Inferences: opinions, not facts" in rep and "Could be wrong if" in rep, "report separates inferences and lists failure modes")
 cert = open(os.path.join(res["dir"], "certification_template.md"), encoding="utf-8").read()

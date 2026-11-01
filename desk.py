@@ -675,6 +675,7 @@ def ensure_deps():
     (Windows often has several Pythons; the watchers run under this one.)"""
     try:
         import websockets  # noqa: F401
+        import reportlab  # noqa: F401
         return
     except ImportError:
         pass

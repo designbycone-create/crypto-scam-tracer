@@ -99,6 +99,11 @@ def main(root=HERE, online=False, out=print):
     check(chain_ok, f"{n} read(s) logged, chain {why}")
     check(prev == man.get("capture_log_head"), "log ends at the head hash recorded when sealed")
 
+    if man.get("seal_id"):
+        fb = open(os.path.join(root, "findings.json"), "rb").read()
+        sid = hashlib.sha256(fb + man["capture_log_head"].encode()).hexdigest()[:16].upper()
+        check(sid == man["seal_id"], f"Seal ID {man['seal_id']} matches the findings and evidence log (the ID printed on every PDF page)")
+
     out("\n4. Raw evidence blobs")
     blobdir = os.path.join(root, "blobs")
     names = os.listdir(blobdir) if os.path.isdir(blobdir) else []

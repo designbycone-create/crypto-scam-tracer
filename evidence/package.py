@@ -172,7 +172,8 @@ def report_md(findings: Findings, case_id, scope, examiner, sealed, tool):
     return "\n".join(out)
 
 
-def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="evidence_bundles", actions_log=None):
+def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="evidence_bundles", actions_log=None,
+          large_print=False):
     examiner = examiner or {}
     sealed = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     commit, dirty = _git()
@@ -213,6 +214,14 @@ def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="evide
     if actions_log and os.path.exists(actions_log):
         shutil.copyfile(actions_log, os.path.join(d, "actions_log.jsonl"))
 
+    sid, pdf_note = None, None
+    try:   # sealed PDF: written before the manifest so its hash is sealed with everything else
+        from . import pdf as _pdf
+        _, sid = _pdf.build(d, case_id, json.loads(files["findings.json"]), scope, examiner, tool, sealed, head,
+                            STANDARD_LIMITS, large=large_print)
+    except ImportError:
+        pdf_note = "PDF not produced: the reportlab library is not installed (pip install reportlab)"
+
     def manifest_files():
         res = {}
         for root, _, fs in os.walk(d):
@@ -224,7 +233,9 @@ def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="evide
 
     # certification text quotes the manifest hash, so the manifest is sealed first and the
     # certification template is written after it; it is a form to be signed, not evidence.
-    manifest = {"case_id": case_id, "sealed_utc": sealed, "tool": tool, "capture_log_head": head,
+    if sid is None:
+        sid = hashlib.sha256(files["findings.json"].encode("utf-8") + head.encode()).hexdigest()[:16].upper()
+    manifest = {"case_id": case_id, "sealed_utc": sealed, "tool": tool, "capture_log_head": head, "seal_id": sid,
                 "capture_log_entries": n, "files": dict(sorted(manifest_files().items()))}
     with open(os.path.join(d, "manifest.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, indent=2)
@@ -238,7 +249,8 @@ def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="evide
             for fn in fs:
                 p = os.path.join(root, fn)
                 z.write(p, os.path.relpath(p, os.path.dirname(d)))
-    return {"dir": d, "zip": zpath, "manifest_sha256": msha, "zip_sha256": _sha(zpath)}
+    return {"dir": d, "zip": zpath, "manifest_sha256": msha, "zip_sha256": _sha(zpath), "seal_id": sid,
+            "pdf": None if pdf_note else os.path.join(d, "report.pdf"), "pdf_note": pdf_note}
 
 
 README = """ScamHunter case bundle {case_id}
@@ -250,7 +262,8 @@ To check this bundle (needs Python 3 only, no ScamHunter install):
     python verify.py --online   also re-reads every fact from public XRP Ledger servers
 
 What the files are:
-  report.md                  the human-readable report
+  report.pdf                 the sealed court report (every page stamped with case ID, Seal ID, page number)
+  report.md                  the same report as plain text
   findings.json              every finding, labelled FACT / DERIVED / INFERENCE
   methodology.md             how each inference was made and how it can be wrong
   capture_log.jsonl          every server response the tool read, in order, hash-chained

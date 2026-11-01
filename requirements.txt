@@ -2,3 +2,5 @@
 websockets>=12.0
 # TLS roots for the infrastructure-OSINT HTTPS lookups.
 certifi>=2024.2.2
+# Sealed court PDF reports.
+reportlab>=4.0

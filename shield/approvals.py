@@ -57,11 +57,26 @@ def _logs(chain, topic0, owner, address=None):
     return evm.logs(chain, topic0, evm.pad(owner), address=address)
 
 
+MAX_PAIRS = 300    # allowance checks per chain; very busy wallets (contracts, bots) are capped, newest first
+CAPPED = {}        # chain -> number of older token/spender pairs not checked
+
+
+def _newest_first(logs):
+    def key(lg):
+        try:
+            return int(str(lg.get("blockNumber") or "0"), 0)
+        except Exception:
+            return 0
+    return sorted(logs, key=key, reverse=True)
+
+
 def scan_chain(wallet, chain, pause=0.1):
     wallet = wallet.lower()
     out, seen = [], set()
     # ERC-20 + NFT single approvals share the Approval signature; ERC-721 has 4 topics.
-    for lg in _logs(chain, APPROVAL, wallet):
+    # Newest first, so if a busy wallet hits the cap it's the oldest approvals that go unchecked.
+    pairs = []
+    for lg in _newest_first(_logs(chain, APPROVAL, wallet)):
         t = [x for x in (lg.get("topics") or []) if x]   # Blockscout pads topics with nulls
         if len(t) < 3:
             continue
@@ -69,16 +84,25 @@ def scan_chain(wallet, chain, pause=0.1):
         if len(t) == 4 or (token, spender) in seen:
             continue   # ERC-721 single-token approvals: superseded on transfer; skip in draft
         seen.add((token, spender))
+        pairs.append((token, spender))
+    CAPPED[chain] = max(0, len(pairs) - MAX_PAIRS)
+    pairs = pairs[:MAX_PAIRS]
+
+    def allowance(pair):
+        token, spender = pair
         try:
             cur = int(evm.call(chain, token, "0xdd62ed3e" + evm.pad(wallet)[2:] + evm.pad(spender)[2:]) or "0x0", 16)
         except Exception:
-            continue
-        if cur == 0:
-            continue
-        sym, dec = evm.token_meta(chain, token)
-        out.append({"chain": chain, "kind": "erc20", "token": token, "symbol": sym, "spender": spender,
-                    "amount": None if cur >= UNLIMITED else cur / 10 ** dec, "unlimited": cur >= UNLIMITED})
+            return None
         time.sleep(pause)
+        if cur == 0:
+            return None
+        sym, dec = evm.token_meta(chain, token)
+        return {"chain": chain, "kind": "erc20", "token": token, "symbol": sym, "spender": spender,
+                "amount": None if cur >= UNLIMITED else cur / 10 ** dec, "unlimited": cur >= UNLIMITED}
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=4) as ex:      # allowances are independent reads
+        out += [r for r in ex.map(allowance, pairs) if r]
     nft_logs = _logs(chain, APPROVAL_FOR_ALL, wallet) if evm._explorer_ok(chain) else []
     for lg in nft_logs:
         t = [x for x in (lg.get("topics") or []) if x]   # Blockscout pads topics with nulls
@@ -213,6 +237,9 @@ def scan(wallet, chains=None, log=print):
                 note = evm.coverage_note(c)
                 if note:
                     res["notes"].append(note)
+                if CAPPED.get(c):
+                    res["notes"].append(f"{c}: this wallet has a very long approval history; the newest {MAX_PAIRS} "
+                                        f"token/spender pairs were checked, {CAPPED[c]} older ones were not.")
     elif fam in ("tron", "solana", "xrpl"):
         mod = __import__(f"shield.{fam}", fromlist=["x"])
         try:

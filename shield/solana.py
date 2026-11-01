@@ -16,6 +16,15 @@ SYMBOLS = {"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": "USDC", "Es9vMFrzaCER
 RPC = None   # test hook: f(method, params) -> result
 
 
+def _personal():
+    """A personal endpoint (Helius etc.) allows far more requests than the public RPC."""
+    try:
+        import scamconfig
+        return bool((scamconfig.get("solana_rpc") or "").strip())
+    except Exception:
+        return False
+
+
 def rpc(method, params):
     if RPC:
         return RPC(method, params)
@@ -76,7 +85,7 @@ def takeover(wallet):
 def _tx(sig):
     import time as _t
     if RPC is None:
-        _t.sleep(0.35)          # the free public RPC rate-limits hard; pace requests
+        _t.sleep(0.08 if _personal() else 0.35)   # the free public RPC rate-limits hard; pace requests
     try:
         return rpc("getTransaction", [sig, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
     except Exception:
@@ -107,7 +116,8 @@ def _deltas(tx, wallet):
     return wallet in signers, sol, tok
 
 
-def drains(wallet, limit=25):
+def drains(wallet, limit=None):
+    limit = limit or (100 if _personal() else 25)
     out = []
     sigs = rpc("getSignaturesForAddress", [wallet, {"limit": limit}]) or []
     for s in sigs:
@@ -137,7 +147,8 @@ def drains(wallet, limit=25):
     return out
 
 
-def history(addr, limit=30):
+def history(addr, limit=None):
+    limit = limit or (200 if _personal() else 30)
     acct = None
     try:
         acct = (rpc("getAccountInfo", [addr, {"encoding": "jsonParsed"}]) or {}).get("value")
@@ -166,5 +177,7 @@ def history(addr, limit=30):
     bal = ((acct or {}).get("lamports") or 0) / 1e9 if acct else 0.0
     return {"exists": bool(acct) or bool(sigs), "moves": moves, "balance": bal,
             "complete": len(sigs) < limit,
-            "coverage": None if len(sigs) < limit else f"Solana: last {limit} transactions reviewed (public RPC is rate-limited; "
-                                                       "set \"solana_rpc\" to a free Helius/QuickNode endpoint for more)."}
+            "coverage": None if len(sigs) < limit else (
+                f"Solana: last {limit} transactions reviewed; older activity wasn't checked." if _personal() else
+                f"Solana: last {limit} transactions reviewed (public RPC is rate-limited; set \"solana_rpc\" to a free "
+                "Helius/QuickNode endpoint for more).")}

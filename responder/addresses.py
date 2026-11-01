@@ -72,6 +72,7 @@ _RX = {
     "tron": re.compile(r"\bT[1-9A-HJ-NP-Za-km-z]{33}\b"),
     "bitcoin": re.compile(r"\b(?:[13][1-9A-HJ-NP-Za-km-z]{25,34}|bc1[02-9ac-hj-np-z]{11,71})\b"),
     "ethereum": re.compile(r"\b0x[0-9a-fA-F]{40}\b"),
+    "aptos": re.compile(r"\b0x[0-9a-fA-F]{62,64}\b"),   # Aptos accounts (EVM addresses are 40 hex)
     "solana": re.compile(r"\b[1-9A-HJ-NP-Za-km-z]{32,44}\b"),
 }
 
@@ -87,8 +88,8 @@ def extract(text):
             a = m.group(0)
             ok = {"xrpl": is_xrpl, "tron": is_tron,
                   "bitcoin": lambda x: x.startswith("bc1") or is_btc_legacy(x),
-                  "ethereum": lambda x: True, "solana": is_solana}[chain](a)
-            key = (chain, a.lower() if chain == "ethereum" else a)
+                  "ethereum": lambda x: True, "aptos": lambda x: True, "solana": is_solana}[chain](a)
+            key = (chain, a.lower() if chain in ("ethereum", "aptos") else a)
             if ok and key not in seen:
                 seen.add(key)
                 out.append((chain, a))

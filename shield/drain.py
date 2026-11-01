@@ -90,7 +90,7 @@ def analyze(wallet, chains=None, since_epoch=None, log=print):
                 n = evm.coverage_note(c)
                 if n:
                     notes.append(n)
-    elif fam in ("tron", "solana", "xrpl"):
+    elif fam in ("tron", "solana", "xrpl", "aptos"):
         chains = [fam]
         try:
             drains += __import__(f"shield.{fam}", fromlist=["x"]).drains(wallet)

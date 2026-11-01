@@ -97,7 +97,7 @@ def save(form):
     cfg = _j("config.json")
     topic = (form.get("ntfy_topic") or "").strip() or cfg.get("ntfy_topic") or f"scamhunter-{secrets.token_hex(5)}"
     cfg.update({"ntfy_topic": topic, "min_xrp": cfg.get("min_xrp", 25), "victim_file": "victim.json"})
-    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc", "opbnb_rpc", "ethereum_rpc", "ankr_key"):
+    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc", "opbnb_rpc", "ethereum_rpc", "ankr_key", "aptos_rpc", "aptos_indexer_key", "solana_rpc"):
         v = (form.get(k) or "").strip()
         if v and "•" not in v:
             cfg[k] = v
@@ -243,6 +243,13 @@ public services sometimes block home connections or only show recent activity; a
 <p class=hint style="margin-top:8px"><b>Ankr key</b>: full BNB Chain history (plus backup for the other chains). Free account at
 <a href="https://www.ankr.com/rpc/" target=_blank>ankr.com</a>; paste the key or the multichain URL.</p>
 <input name=ankr_key class=mono placeholder="ankr key (optional)" value="{e('••••••••' if cfg.get('ankr_key') else '')}">
+<p class=hint style="margin-top:8px"><b>Solana endpoint</b>: more Solana history than the public server allows. Free at
+<a href="https://helius.dev" target=_blank>helius.dev</a>; paste the RPC URL (<span class=mono>https://mainnet.helius-rpc.com/?api-key=...</span>).</p>
+<input name=solana_rpc class=mono placeholder="https://... (optional)" value="{e('••••••••' if cfg.get('solana_rpc') else '')}">
+<p class=hint style="margin-top:8px"><b>Aptos</b>: works without keys. A free NodeReal Aptos endpoint is faster; a free
+<a href="https://geomi.dev" target=_blank>Geomi</a> key adds payments the wallet received.</p>
+<input name=aptos_rpc class=mono placeholder="Aptos endpoint https://... (optional)" value="{e('••••••••' if cfg.get('aptos_rpc') else '')}">
+<input name=aptos_indexer_key class=mono placeholder="Geomi API key (optional)" value="{e('••••••••' if cfg.get('aptos_indexer_key') else '')}">
 <p class=hint style="margin-top:8px"><b>Routescan key</b>: Avalanche works without it; a free key raises the daily limit. <a href="https://routescan.io" target=_blank>routescan.io</a></p>
 <input name=routescan_key class=mono placeholder="paste key (optional)" value="{e('••••••••' if cfg.get('routescan_key') else '')}"></details>
 </div>

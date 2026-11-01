@@ -14,6 +14,9 @@ def get_adapter(chain_key):
     if info.key == "solana":
         from .adapters.solana import SolanaAdapter
         return SolanaAdapter(info)
+    if info.key == "aptos":
+        from .adapters.aptos import AptosAdapter
+        return AptosAdapter(info)
     if info.evm_chainid is not None:
         from .adapters.evm import EvmAdapter
         return EvmAdapter(info)

@@ -184,7 +184,8 @@ def lookup(text):
     text = (text or "").strip()
     m = re.search(r"\b0x[0-9a-fA-F]{64}\b", text)
     if m:
-        return evm(m.group(0)) or {"ok": False, "error": "Not found on Ethereum or the EVM chains we check."}
+        return (evm(m.group(0)) or aptos_tx(m.group(0))
+                or {"ok": False, "error": "Not found on Ethereum, the other EVM chains, or Aptos."})
     m = re.search(r"\b[1-9A-HJ-NP-Za-km-z]{80,90}\b", text)
     if m:
         return solana(m.group(0)) or {"ok": False, "error": "Solana signature not found (or no transfer in it)."}
@@ -218,3 +219,22 @@ def detect_address(a):
     if chain == "ethereum":
         return list(EVM_RPC)
     return [chain]
+
+
+def aptos_tx(h):
+    """Victim's payment on Aptos (hash from the explorer): who paid whom."""
+    from shield import aptos as ap
+    try:
+        tx = ap.get(f"/transactions/by_hash/{h}")
+    except Exception:
+        return None
+    if not tx or tx.get("type") != "user_transaction":
+        return None
+    sender = ap.norm(tx.get("sender"))
+    outs = [m for m in ap.moves_for(tx, sender) if m["dir"] == "out" and m.get("cp")]
+    if not outs:
+        return None
+    m = max(outs, key=lambda x: x["amount"])
+    ep = int(int(tx.get("timestamp") or 0) / 1_000_000)
+    return {"ok": True, "chain": "aptos", "hash": h, "from": sender, "to": m["cp"],
+            "amount": f"{_fmt(m['amount'])} {m['asset']}", "time": _iso(ep), "epoch": ep}

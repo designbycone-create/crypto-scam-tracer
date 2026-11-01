@@ -18,6 +18,8 @@
   "opbnb_rpc": "",
   "ethereum_rpc": "",
   "ankr_key": "",
+  "aptos_rpc": "",
+  "aptos_indexer_key": "",
   "telegram": {
     "bot_token": "",
     "chat_id": ""

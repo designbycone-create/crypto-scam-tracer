@@ -353,7 +353,7 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
     addr = (addr or "").strip()
     fams = detect_address(addr)
     if not fams:
-        return {"ok": False, "error": "That isn't a wallet address we recognize (XRP Ledger, EVM, Tron, Bitcoin, Solana)."}
+        return {"ok": False, "error": "That isn't a wallet address we recognize (XRP Ledger, EVM, Tron, Bitcoin, Solana, Aptos)."}
     chain_given = chain in fams
     if not chain_given:
         chain = fams[0]
@@ -376,6 +376,14 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
             h = solana.history(addr)
             if h.get("coverage"):
                 findings.append(("info", "Coverage", h["coverage"]))
+        elif chain == "aptos":
+            from . import aptos
+            h = aptos.history(addr)
+            if h.get("coverage"):
+                findings.append(("info", "Coverage", h["coverage"]))
+            if h.get("exists") is False:
+                findings.append(("caution", "Mistakes", "This Aptos address has never been used. Check every character; "
+                                 "Aptos addresses are long and easy to mistype."))
         else:
             pres = evm_presence(addr)
             if not chain_given and pres:
@@ -408,7 +416,9 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
             mfam = detect_address(me)
             mchain = chain if chain in mfam else (mfam[0] if mfam else None)
             myh = (history_xrpl(me) if mchain == "xrpl" else history_tron(me) if mchain == "tron"
-                   else history_btc(me) if mchain == "bitcoin" else history_evm(me, mchain) if mchain else None)
+                   else history_btc(me) if mchain == "bitcoin"
+                   else __import__("shield.aptos", fromlist=["x"]).history(me) if mchain == "aptos"
+                   else history_evm(me, mchain) if mchain else None)
         except Exception:
             myh = None
     for lvl, txt in mistakes(addr, chain, h, tag, me, myh):

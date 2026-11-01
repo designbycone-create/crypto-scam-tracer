@@ -240,7 +240,10 @@ def scan(wallet, chains=None, log=print):
                 if CAPPED.get(c):
                     res["notes"].append(f"{c}: this wallet has a very long approval history; the newest {MAX_PAIRS} "
                                         f"token/spender pairs were checked, {CAPPED[c]} older ones were not.")
-    elif fam in ("tron", "solana", "xrpl"):
+    elif fam in ("tron", "solana", "xrpl", "aptos"):
+        if fam == "aptos":
+            res["notes"].append("Aptos has no token approvals. ScamHunter checks what it does have: offers that let someone "
+                                "act as your account or replace its key, and whether the account's key was changed.")
         mod = __import__(f"shield.{fam}", fromlist=["x"])
         try:
             res["chains"][fam] = grade(mod.approvals(wallet))

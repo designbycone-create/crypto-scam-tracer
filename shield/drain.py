@@ -75,14 +75,21 @@ def analyze(wallet, chains=None, since_epoch=None, log=print):
     drains, notes = [], []
     if fam == "evm":
         chains = chains or fam_chains
-        for c in chains:
+        from concurrent.futures import ThreadPoolExecutor
+
+        def one(c):
             try:
-                drains += find_chain(wallet, c, since_epoch)
+                return c, find_chain(wallet, c, since_epoch), None
             except Exception as e:
-                log(f"drain: {c} failed ({e})")
-            n = evm.coverage_note(c)
-            if n:
-                notes.append(n)
+                return c, [], str(e)
+        with ThreadPoolExecutor(max_workers=7) as ex:
+            for c, found, err in ex.map(one, list(chains)):
+                drains += found
+                if err:
+                    log(f"drain: {c} failed ({err})")
+                n = evm.coverage_note(c)
+                if n:
+                    notes.append(n)
     elif fam in ("tron", "solana", "xrpl"):
         chains = [fam]
         try:

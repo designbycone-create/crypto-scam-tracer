@@ -186,23 +186,33 @@ def scan(wallet, chains=None, log=print):
         res["error"] = "Not a wallet address we recognize."
         return res
     if fam == "evm":
-        for c in chains or fam_chains:
+        from concurrent.futures import ThreadPoolExecutor
+
+        def one(c):     # chains are independent: scan them in parallel so slow ones don't add up
+            out = {"items": [], "err": None, "take": None}
             try:
-                res["chains"][c] = scan_chain(wallet, c)
+                out["items"] = scan_chain(wallet, c)
             except Exception as e:
-                log(f"approvals: {c} failed ({e})")
-                res["chains"][c] = []
-                res.setdefault("errors", {})[c] = str(e)[:120]
-            note = evm.coverage_note(c)
-            if note:
-                res["notes"].append(note)
+                out["err"] = str(e)[:120]
             try:   # EIP-7702: an EOA that delegated its code can be drained by that code
                 code = (evm.get_code(c, wallet) or "0x").lower()
                 if code.startswith("0xef0100"):
-                    res["takeover"].append(("high", f"{c}: your wallet delegates its code to 0x{code[8:48]} (EIP-7702). "
-                                                    "If you didn't set this up in a trusted wallet, it can move your funds."))
+                    out["take"] = ("high", f"{c}: your wallet delegates its code to 0x{code[8:48]} (EIP-7702). "
+                                           "If you didn't set this up in a trusted wallet, it can move your funds.")
             except Exception:
                 pass
+            return c, out
+        with ThreadPoolExecutor(max_workers=7) as ex:
+            for c, out in ex.map(one, list(chains or fam_chains)):
+                res["chains"][c] = out["items"]
+                if out["err"]:
+                    log(f"approvals: {c} failed ({out['err']})")
+                    res.setdefault("errors", {})[c] = out["err"]
+                if out["take"]:
+                    res["takeover"].append(out["take"])
+                note = evm.coverage_note(c)
+                if note:
+                    res["notes"].append(note)
     elif fam in ("tron", "solana", "xrpl"):
         mod = __import__(f"shield.{fam}", fromlist=["x"])
         try:

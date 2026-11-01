@@ -143,7 +143,7 @@ def _get(url):
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
-            if e.code == 429 and attempt < 3:      # free explorers rate-limit: back off and retry
+            if e.code == 429 and attempt < 2:      # free explorers rate-limit: back off and retry
                 time.sleep(2 * 2 ** attempt)
                 continue
             raise

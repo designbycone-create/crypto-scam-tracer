@@ -228,6 +228,11 @@ def scan(wallet, chains=None, log=print):
         res["chains"]["bitcoin"] = []
         res["notes"].append("Bitcoin has no token approvals. If funds left without you, the wallet's seed/private key was "
                             "exposed: move what's left to a NEW wallet created on a clean device.")
+    try:
+        from . import value
+        value.enrich(res, wallet)
+    except Exception as e:
+        res.setdefault("errors", {})["usd"] = str(e)[:120]
     allx = [a for v in res["chains"].values() for a in v]
     res["summary"] = {k: sum(1 for a in allx if a["risk"] == k) for k in ("danger", "high", "review", "ok")}
     res["summary"]["danger"] += sum(1 for l, _ in res["takeover"] if l == "danger")

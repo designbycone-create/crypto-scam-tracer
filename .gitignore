@@ -56,3 +56,4 @@ sitewatch.json
 prescreen_log.jsonl
 evidence_store/
 cases/
+capture_errors.log

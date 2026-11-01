@@ -64,37 +64,38 @@ class EvmAdapter(Adapter):
         return paid or self.info.evm_chainid in ETHERSCAN_FREE_CHAINIDS
 
     def _rpc_window(self):
-        return not self._use_etherscan() and self.key not in BLOCKSCOUT
+        from shield import evm as sevm
+        return not self._use_etherscan() and sevm.provider(self.key) in ("rpc_window", "none")
 
     def available(self):
         return True, ""     # every EVM chain works; BNB/Avalanche fall back to the recent RPC log window
 
     def _q(self, **params):
-        if self._rpc_window():
-            # key-less fallback (recent token transfers only): reuse shield's RPC log window
-            from shield import evm as sevm
-            if params.get("action") == "tokentx":
-                return sevm.token_transfers(self.key, params["address"])
-            return []    # native-coin history isn't available from logs
-        try:
-            if self._use_etherscan():
+        """Etherscan-shaped rows. Uses shield.evm's provider chain (Etherscan free chains -> free
+        Blockscout key -> public Blockscout -> Routescan -> recent RPC log window), so every EVM
+        chain works with no paid key and an explorer outage degrades instead of failing."""
+        from shield import evm as sevm
+        if self._use_etherscan():
+            try:
                 params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
                 data = http_json(V2, params=params)
-            else:
-                params.pop("startblock", None)
-                params.pop("endblock", None)
-                data = http_json(BLOCKSCOUT[self.key], params=params, retries=0)
-        except Exception:
-            # explorer refused (Blockscout's Cloudflare challenge, rate limit, 5xx): recent token history via RPC
-            from shield import evm as sevm
-            sevm._note_fallback(self.key, "explorer unavailable")
+                if not (isinstance(data, dict) and data.get("status") == "0" and "result" in data
+                        and not isinstance(data["result"], list)):
+                    return data.get("result", []) if isinstance(data, dict) else []
+                return []   # "No transactions found" etc.
+            except Exception as e:
+                sevm._note_fallback(self.key, e, "etherscan")
+        if self.key not in sevm.CHAINS:
+            return []
+        params.pop("startblock", None)
+        params.pop("endblock", None)
+        try:
+            return sevm.explorer(self.key, **params)
+        except LookupError:
+            # no explorer left for this chain: recent token history via RPC (native history unavailable)
             if params.get("action") == "tokentx":
                 return sevm.token_transfers(self.key, params["address"])
             return []
-        if isinstance(data, dict) and data.get("status") == "0" and "result" in data \
-                and not isinstance(data["result"], list):
-            return []   # "No transactions found" etc.
-        return data.get("result", []) if isinstance(data, dict) else []
 
     def outgoing(self, address, after_epoch=None, min_native=None, limit=200):
         floor = self.info.min_native if min_native is None else min_native

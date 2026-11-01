@@ -28,8 +28,11 @@ def _approval_rows(res):
         for a in items:
             col, lab = RISK[a["risk"]]
             amt = "Unlimited" if a["unlimited"] else f"{a['amount']:,.4f}"
+            if "usd_at_risk" in a:
+                amt += ("<br><b>${:,.2f} at risk now</b>".format(a["usd_at_risk"]) if a["usd_at_risk"] is not None
+                        else "<br><small class=mut>value unknown</small>")
             rows += (f"<tr><td><b style='color:{col}'>{lab}</b><br><small class=mut>{e(a['why'])}</small></td>"
-                     f"<td>{e(chain)}</td><td>{e(a['symbol'])}<br><small class=mut>{e(a['kind'])}</small></td><td>{e(amt)}</td>"
+                     f"<td>{e(chain)}</td><td>{e(a['symbol'])}<br><small class=mut>{e(a['kind'])}</small></td><td>{amt}</td>"
                      f"<td class=m>{e(a['spender'])}</td><td><a class=btn href='{e(a['revoke'])}' target=_blank>Revoke</a>"
                      + (f"<br><small class=mut>{e(a['revoke_hint'])}</small>" if a.get("revoke_hint") else "") + "</td></tr>")
     return rows
@@ -45,7 +48,7 @@ def shield_page(q=None, mode=None, result=None):
 <button class=btn name=mode value=check>Check my wallet</button>
 <button class='btn red' name=mode value=drain>I signed something</button></form>
 <small class=mut>Works on Ethereum, BNB Chain, Polygon, Arbitrum, Base, Optimism, Avalanche, Tron, Solana and the XRP Ledger
-(Bitcoin has no approvals). No keys needed; BNB Chain and Avalanche check the last 30 days unless you add a full-history key.</small></div>"""]
+(Bitcoin has no approvals). No keys needed. Without a free key, BNB Chain gets balance and contract checks only (add a free endpoint in setup).</small></div>"""]
     def _account(res):
         out = ""
         for lvl, txt in (res or {}).get("takeover") or []:
@@ -60,7 +63,9 @@ def shield_page(q=None, mode=None, result=None):
         body.append(_account(result))
         s = result.get("summary", {})
         body.append(f"<h2>Open approvals &mdash; {s.get('danger', 0)} revoke now · {s.get('high', 0)} high risk · "
-                    f"{s.get('review', 0)} to review · {s.get('ok', 0)} ok</h2>")
+                    f"{s.get('review', 0)} to review · {s.get('ok', 0)} ok</h2>"
+                    + (f"<p><b>About ${result['usd_at_risk']:,.2f}</b> of your tokens can be moved right now by the "
+                       "approvals marked revoke / high / review. Revoke the top rows first.</p>" if result.get("usd_at_risk") else ""))
         rows = _approval_rows(result)
         body.append(f"<table><tr><th>Risk</th><th>Chain</th><th>Token</th><th>Allowed</th><th>Spender</th><th></th></tr>{rows}</table>"
                     if rows else "<p class=ok>No open approvals found.</p>")

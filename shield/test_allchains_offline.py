@@ -42,9 +42,38 @@ def bsc_rpc(chain, method, p):
     if method == "eth_getBalance": return hex(10**17)
     return None
 evm.RPC_POST = bsc_rpc
+# Routescan (key-less) is Avalanche's first choice; simulate it being down so the RPC window is exercised
+def _http(url):
+    if "routescan" in url:
+        raise OSError("503 simulated outage")
+    return {"result": []}
+evm.HTTP_GET = _http
+results.append(ok(evm.provider("avalanche") == "routescan" and evm.provider("base") == "blockscout" and evm.provider("bsc") == "none",
+                  "Avalanche uses key-less Routescan, Base uses Blockscout, BNB flagged as needing an endpoint"))
+results.append(ok(evm.explorer("base", module="account", action="tokentx", address=V) == [], "explorer call works on Base"))
+try:
+    evm.explorer("avalanche", module="account", action="tokentx", address=V)
+    results.append(ok(False, "Routescan outage falls through"))
+except LookupError:
+    results.append(ok(evm.provider("avalanche") == "rpc_window" and "avalanche" in evm.FALLBACK,
+                      "Routescan outage falls through to the RPC window and is noted"))
+# free Blockscout PRO key is preferred over the public instance, and a 403 there falls back
+import scamconfig
+_orig_get = scamconfig.get
+scamconfig.get = lambda k, d=None: "proapi_test" if k == "blockscout_key" else _orig_get(k, d)
+seen = []
+def _http2(url):
+    seen.append(url)
+    if "api.blockscout.com" in url:
+        raise OSError("HTTP 403 simulated")
+    return {"status": "1", "result": [{"hash": "0xabc"}]}
+evm.HTTP_GET = _http2
+results.append(ok(evm.provider("ethereum") == "blockscout_pro", "free Blockscout key is used first when set"))
+rows = evm.explorer("ethereum", module="account", action="tokentx", address=V)
+results.append(ok(rows and "chainid=1" in seen[0] and "proapi_test" in seen[0] and "eth.blockscout.com" in seen[1],
+                  "Blockscout key request carries chainid+key; on 403 it falls back to the public instance"))
+scamconfig.get = _orig_get
 evm.HTTP_GET = lambda url: {"result": []}
-results.append(ok(evm.provider("avalanche") == "rpc_window" and evm.provider("base") == "blockscout" and evm.provider("bsc") == "none",
-                  "Avalanche uses RPC window, Base uses Blockscout, BNB flagged as needing an endpoint"))
 results.append(ok("bsc_rpc" in evm.coverage_note("bsc"), "BNB coverage note tells the user exactly what to add"))
 r = approvals.scan(V, ["avalanche"])
 results.append(ok(any(a["spender"] == BAD for a in r["chains"]["avalanche"]) and r["notes"], "Avalanche approvals found via filtered RPC window + coverage note"))

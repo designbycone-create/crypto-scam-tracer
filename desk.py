@@ -418,7 +418,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -437,6 +437,34 @@ small{{font-size:12px}}</style></head><body>
 <p class=mut style=margin-top:20px><small>Scam wallet: <span class=m>{e(root or ', '.join(c['address'] for c in mc_cases))}</span>{(' · your tx: <span class=m>'+e(stolen[:24])+'&hellip;</span>') if stolen else ''}<br>
 Nothing is ever sent without you. <a href='/setup'>Case setup</a>. Data is public and verifiable on each blockchain.</small></p>
 </body></html>"""
+
+
+# ---- background jobs for slow checks (shield / pre-screen): page shows "checking..." and refreshes ----
+_JOBS = {}
+
+
+def _bg(key, fn):
+    j = _JOBS.get(key)
+    if j and (j["running"] or time.time() - j["done"] < 300):
+        return j
+    j = _JOBS[key] = {"running": True, "result": None, "error": None, "done": 0}
+
+    def run():
+        try:
+            j["result"] = fn()
+        except Exception as ex:
+            j["error"] = str(ex)[:300]
+        finally:
+            j["running"], j["done"] = False, time.time()
+    threading.Thread(target=run, daemon=True).start()
+    return j
+
+
+def _checking(title):
+    return ("<!doctype html><meta charset=utf-8><meta http-equiv=refresh content=3>"
+            "<style>body{font:16px system-ui;background:#0b1020;color:#e6e9f2;padding:40px}</style>"
+            f"<h2>{title}</h2><p>Checking every chain in parallel; this usually takes 10 to 60 seconds. "
+            "The page refreshes on its own.</p>")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -479,6 +507,50 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/graph":
             from scam_investigator import graphview
             return self._send(graphview.render(), "text/html; charset=utf-8")
+        if path in ("/shield", "/prescreen", "/sitewatch", "/compromised", "/evidence"):
+            from urllib.parse import parse_qs
+            qs = {k: v[0] for k, v in parse_qs(query).items()}
+            if path == "/evidence":
+                from evidence import web as ew
+                return self._send(ew.page(), "text/html; charset=utf-8")
+            from shield import web as sw
+            if path == "/shield":
+                wallet, mode = qs.get("wallet", "").strip(), qs.get("mode")
+                if wallet and mode in ("check", "drain"):
+                    def work(w=wallet, m=mode):
+                        from shield import approvals, drain
+                        if m == "check":
+                            return approvals.scan(w)
+                        r = drain.analyze(w)
+                        try:
+                            drain.seed_tracer(r)
+                        except Exception:
+                            pass
+                        return r
+                    j = _bg(("shield", mode, wallet), work)
+                    if j["running"]:
+                        return self._send(_checking("Checking your wallet&hellip;"), "text/html; charset=utf-8")
+                    if j["error"]:
+                        return self._send(sw.shield_page(wallet, None, None).replace("</h1>", "</h1><p style='color:#f88'>Check failed: "
+                                          + j["error"].replace("<", "&lt;") + " &mdash; try again in a minute.</p>", 1), "text/html; charset=utf-8")
+                    return self._send(sw.shield_page(wallet, mode, j["result"]), "text/html; charset=utf-8")
+                return self._send(sw.shield_page(wallet or None, None, None), "text/html; charset=utf-8")
+            if path == "/prescreen":
+                if qs.get("address"):
+                    def work(f=dict(qs)):
+                        from shield import prescreen
+                        return prescreen.screen(f["address"].strip(), f.get("chain") or None, f.get("tag"), f.get("me"))
+                    j = _bg(("prescreen", tuple(sorted(qs.items()))), work)
+                    if j["running"]:
+                        return self._send(_checking("Running the background check&hellip;"), "text/html; charset=utf-8")
+                    if j["error"]:
+                        return self._send(sw.prescreen_page(qs, None).replace("</h1>", "</h1><p style='color:#f88'>Check failed: "
+                                          + j["error"].replace("<", "&lt;") + "</p>", 1), "text/html; charset=utf-8")
+                    return self._send(sw.prescreen_page(qs, j["result"]), "text/html; charset=utf-8")
+                return self._send(sw.prescreen_page(qs, None), "text/html; charset=utf-8")
+            if path == "/sitewatch":
+                return self._send(sw.sitewatch_page(), "text/html; charset=utf-8")
+            return self._send(sw.compromised_page(), "text/html; charset=utf-8")
         if web is not None:
             if path == "/submit":
                 return self._send(web.submission_center(), "text/html; charset=utf-8")
@@ -542,9 +614,26 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(web.incident_post(form), "text/html; charset=utf-8")
             if path == "/check":
                 return self._send(web.check_post(form), "text/html; charset=utf-8")
+            if path == "/sitewatch":
+                from shield import web as sw
+                return self._send(sw.sitewatch_post(form), "text/html; charset=utf-8")
+            if path == "/compromised":
+                from shield import web as sw
+                return self._send(sw.compromised_post(form), "text/html; charset=utf-8")
+            if path == "/evidence":
+                from evidence import web as ew
+                return self._send(ew.post(form), "text/html; charset=utf-8")
         except Exception as ex:
             return self._send(f"Error: {ex}", "text/plain", code=500)
         self._send("Not found", "text/plain", code=404)
+
+
+def _evidence_on():
+    try:
+        from evidence import hooks
+        hooks.install()
+    except Exception as ex:
+        print(f"(evidence capture not active: {ex})")
 
 
 def _free_port(preferred):
@@ -580,6 +669,7 @@ def ensure_deps():
 
 def main():
     ensure_deps()
+    _evidence_on()
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8787)
     ap.add_argument("--no-open", action="store_true")

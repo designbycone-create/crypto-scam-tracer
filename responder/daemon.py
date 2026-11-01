@@ -109,18 +109,27 @@ def job_risk():
     risk.scan(log=_log)
 
 
+def job_sitewatch(desk):
+    from shield import sitewatch
+    sitewatch.check(log=_log, alert=lambda dom, sig: _alert(
+        f"SITE CHANGED: {dom} - don't connect your wallet",
+        "; ".join(sig) + ". Wait for the team to confirm it's safe.",
+        key=f"site:{dom}:{sig[0][:40]}", critical=True, url=f"{desk}/sitewatch"))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8787)
     a = ap.parse_args()
     desk = DESK.format(port=a.port)
-    _log("Responder running: freeze kits, token freeze scan, incident feeds, radar, risk.")
+    _log("Responder running: freeze kits, token freeze scan, incident feeds, radar, risk, site watch.")
     sched = [(60, job_kits, (desk,)), (900, job_tokens, (desk, set())),
-             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ())]
+             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ()), (1800, job_sitewatch, (desk,))]
     last = {fn.__name__: 0 for _, fn, _ in sched}
     last["job_tokens"] = time.time() - 840       # first token scan ~1 min after start
     last["job_feeds_status_radar"] = time.time() - 1680
     last["job_risk"] = time.time() - 21300
+    last["job_sitewatch"] = time.time() - 1500
     last["job_attribution"] = time.time() - 3480     # first pass ~2 min after start
     while True:
         for every, fn, args in sched:

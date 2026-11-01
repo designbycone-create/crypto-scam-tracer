@@ -12,6 +12,9 @@
   ],
   "victim_file": "victim.json",
   "etherscan_key": "",
+  "blockscout_key": "",
+  "routescan_key": "",
+  "bsc_rpc": "",
   "telegram": {
     "bot_token": "",
     "chat_id": ""

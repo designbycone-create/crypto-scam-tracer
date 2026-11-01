@@ -1,7 +1,9 @@
-# Shield — integration guide (DRAFT, not wired in)
+# Shield — integration guide
 
-`shield/` is self-contained. Nothing in the Desk imports it yet, so this branch
-is safe to merge as-is; turning it on is the five small patches below.
+**Status (Nov 2026): wired into the Desk** — /shield, /prescreen, /sitewatch, /compromised and
+/evidence pages, nav links, background site watch (every 30 min), claim-checker hooks, and
+dollars-at-risk ranking (DefiLlama, free). Slow checks run in the background. The patches below are
+kept as a record of what was changed.
 
 ## What's in it
 
@@ -19,8 +21,9 @@ is safe to merge as-is; turning it on is the five small patches below.
 
 | Chain | Approvals / permissions | Takeover checks | Drain detection | Pre-screen | History source |
 |---|---|---|---|---|---|
-| Ethereum, Base, Optimism, Arbitrum, Polygon | ERC-20, NFT approve-all, Permit2 | EIP-7702 delegation | ✓ | ✓ | Blockscout (full history) |
-| BNB Chain, Avalanche | same | same | ✓ | ✓ (token activity) | public RPC log window, **last 30 days** (Etherscan's free tier dropped these chains in late 2025; a paid Etherscan or Routescan key restores full history) |
+| Ethereum, Base, Optimism, Arbitrum, Polygon | ERC-20, NFT approve-all, Permit2 | EIP-7702 delegation | ✓ | ✓ | free Blockscout key (`blockscout_key`) → public Blockscout → 30-day RPC window |
+| Avalanche | same | same | ✓ | ✓ | Routescan, no key (full history); RPC log window if Routescan is down |
+| BNB Chain | same | same | ✓ | ✓ (token activity) | needs a free personal endpoint (`bsc_rpc`, e.g. NodeReal free tier) for the 30-day log window; paid Etherscan for full history |
 | Tron | TRC-20 approvals | **permission-update hijack** | ✓ (transferFrom by others) | ✓ | TronGrid |
 | Solana | SPL token delegates | **account "Assign" hijack**, foreign close authority | ✓ (moves without your signature) | ✓ (last ~60 txs) | public RPC (`solana_rpc` for a faster free endpoint) |
 | XRP Ledger | RegularKey, SignerList, Checks, PayChannels, NFT sell offers | **master disabled + foreign regular key** | ✓ (payments after key change, checks cashed by others) | ✓ | public full-history servers |

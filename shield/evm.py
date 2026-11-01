@@ -1,19 +1,21 @@
 """Shared EVM access for shield, working on EVERY major EVM chain without paid keys.
 
-Provider order per chain (first that applies):
-  1. Etherscan V2 key   -- only for chains its FREE tier still covers
-                           (Ethereum, Polygon, Arbitrum ...). Since late 2025 BNB,
-                           Base, OP and Avalanche need a paid Etherscan plan.
-  2. Blockscout         -- key-less: Ethereum, Base, Optimism, Arbitrum, Polygon, Gnosis
-  3. Routescan          -- Avalanche, if "routescan_key" is set (free signup)
-  4. RPC log window     -- key-less fallback (Avalanche today): eth_getLogs over
-                           the recent block window, filtered to the chain's major
-                           tokens (public RPCs refuse unfiltered log queries).
-                           RECENT ONLY (~30 days), major tokens only, no native coin.
-  BNB Chain: no free public endpoint answers log queries reliably (tested Nov 2026),
-  so set "bsc_rpc" in config.json to a free personal endpoint (NodeReal, Ankr,
-  QuickNode free tiers) or use a paid Etherscan key. Without it, BNB gets
-  balance / contract / nonce checks only.
+Provider order per chain (first that applies; a failure falls through to the next):
+  1. Etherscan V2 key   -- only for chains its FREE tier still covers (Ethereum, Polygon,
+                           Arbitrum), or all chains if "etherscan_paid" = "yes".
+  2. Blockscout PRO key -- "blockscout_key" (proapi_..., FREE: 100K credits/day, 5 rps, no card,
+                           dev.blockscout.com). Full history on Ethereum, Base, OP, Arbitrum,
+                           Polygon, Gnosis... via api.blockscout.com. Not blocked by the Cloudflare
+                           challenge the public instances show some home IPs.
+  3. Blockscout public  -- key-less instances (same chains; may 403/429 from some IPs).
+  4. Routescan          -- Avalanche: works with NO key (2 rps, 10K/day); a free
+                           "routescan_key" raises it to 5 rps / 100K/day.
+  5. RPC log window     -- key-less last resort: eth_getLogs over the recent block window,
+                           filtered to the chain's major tokens. RECENT ONLY (~30 days).
+  BNB Chain: no free key-less history API. Set "bsc_rpc" to a free personal endpoint
+  (NodeReal MegaNode free tier: https://bsc-mainnet.nodereal.io/v1/<key>) for the log
+  window, or a paid Etherscan key for full history. Without it: balance/contract checks only.
+  Paid providers (Moralis, Alchemy paid, Etherscan paid) can be added to PROVIDERS later.
 Every result says which provider produced it, so the UI can be honest.
 """
 import json
@@ -40,6 +42,9 @@ BLOCKSCOUT = {
 ETHERSCAN = "https://api.etherscan.io/v2/api"
 ETHERSCAN_FREE = {1, 137, 42161}          # free-tier chain ids we use (per api.etherscan.io/v2/chainlist)
 ROUTESCAN = "https://api.routescan.io/v2/network/mainnet/evm/{cid}/etherscan/api"
+BLOCKSCOUT_PRO = "https://api.blockscout.com/v2/api"
+BLOCKSCOUT_PRO_CHAINS = {"ethereum", "base", "optimism", "arbitrum", "polygon"}
+ROUTESCAN_CHAINS = {"avalanche"}
 WINDOW_DAYS = 30
 # Major tokens per chain for filtered log queries (public RPCs require an address filter)
 MAJOR_TOKENS = {
@@ -89,28 +94,43 @@ def _etherscan_key():
         return _cfg("etherscan_key")
 
 
-def provider(chain):
+def providers(chain):
+    """Ordered explorer providers that apply to this chain right now (may be empty)."""
     cid = CHAINS[chain][0]
+    out = []
     if _etherscan_key() and (cid in ETHERSCAN_FREE or _cfg("etherscan_paid") == "yes"):
-        return "etherscan"
+        out.append("etherscan")
+    if chain in BLOCKSCOUT_PRO_CHAINS and _cfg("blockscout_key"):
+        out.append("blockscout_pro")
     if chain in BLOCKSCOUT:
-        return "blockscout"
-    if chain == "avalanche" and _cfg("routescan_key"):
-        return "routescan"
+        out.append("blockscout")
+    if chain in ROUTESCAN_CHAINS:
+        out.append("routescan")
+    return out
+
+
+def provider(chain):
+    """The provider currently in use for this chain (skipping ones that failed this run)."""
+    for p in providers(chain):
+        if (chain, p) not in FAILED:
+            return p
     if chain == "bsc" and not _cfg("bsc_rpc"):
         return "none"
     return "rpc_window"
 
 
-FALLBACK = {}   # chain -> why its explorer failed this run (Cloudflare challenge, 5xx, rate limit)
+FALLBACK = {}   # chain -> why its explorer(s) failed this run (Cloudflare challenge, 5xx, rate limit)
+FAILED = set()  # (chain, provider) pairs that failed this run
 
 
 def _explorer_ok(chain):
-    return provider(chain) not in ("rpc_window", "none") and chain not in FALLBACK
+    return provider(chain) not in ("rpc_window", "none")
 
 
-def _note_fallback(chain, err):
-    FALLBACK.setdefault(chain, str(err)[:100])
+def _note_fallback(chain, err, prov=None):
+    FAILED.add((chain, prov or provider(chain)))
+    if provider(chain) in ("rpc_window", "none"):
+        FALLBACK.setdefault(chain, str(err)[:100])
 
 
 def available(chain):
@@ -129,8 +149,9 @@ def coverage_note(chain):
         return (f"{chain}: only the last {COVERED[chain]} days of major-token activity could be checked in time "
                 "(slow free endpoint). Re-run later or add a free personal RPC endpoint for this chain.")
     if p == "rpc_window":
-            return (f"{chain}: last {WINDOW_DAYS} days of major-token activity checked (no free full-history API for this chain; "
-                "a Routescan key or paid Etherscan key gives full history).")
+        hint = ("a free Blockscout key (\"blockscout_key\", dev.blockscout.com) gives full history"
+                if chain in BLOCKSCOUT_PRO_CHAINS else "a paid Etherscan key gives full history")
+        return f"{chain}: last {WINDOW_DAYS} days of major-token activity checked ({hint})."
     return ""
 
 
@@ -149,23 +170,46 @@ def _get(url):
             raise
 
 
-def explorer(chain, **params):
-    """Etherscan-compatible explorer call; raises LookupError if this chain has no explorer provider."""
-    p = provider(chain)
+def _url(chain, p, params):
     cid = CHAINS[chain][0]
+    params = dict(params)
     if p == "etherscan":
         params.update({"chainid": cid, "apikey": _etherscan_key()})
-        url = ETHERSCAN + "?" + urllib.parse.urlencode(params)
-    elif p == "blockscout":
-        url = BLOCKSCOUT[chain] + "?" + urllib.parse.urlencode(params)
-    elif p == "routescan":
-        params["apikey"] = _cfg("routescan_key")
-        url = ROUTESCAN.format(cid=cid) + "?" + urllib.parse.urlencode(params)
-    else:
-        raise LookupError("no explorer")
-    d = _get(url)
-    res = d.get("result") if isinstance(d, dict) else None
-    return res if isinstance(res, list) else []
+        return ETHERSCAN + "?" + urllib.parse.urlencode(params)
+    if p == "blockscout_pro":
+        params.update({"chainid": cid, "apikey": _cfg("blockscout_key")})
+        return BLOCKSCOUT_PRO + "?" + urllib.parse.urlencode(params)
+    if p == "blockscout":
+        return BLOCKSCOUT[chain] + "?" + urllib.parse.urlencode(params)
+    if p == "routescan":
+        if _cfg("routescan_key"):
+            params["apikey"] = _cfg("routescan_key")
+        return ROUTESCAN.format(cid=cid) + "?" + urllib.parse.urlencode(params)
+    raise LookupError("no explorer")
+
+
+def explorer(chain, **params):
+    """Etherscan-compatible explorer call. Tries each provider in order; a provider that errors is
+    skipped for the rest of the run. Raises LookupError when no explorer is left for this chain."""
+    last = None
+    while True:
+        p = provider(chain)
+        if p in ("rpc_window", "none"):
+            raise LookupError(f"no explorer ({last})" if last else "no explorer")
+        try:
+            d = _get(_url(chain, p, params))
+        except Exception as e:
+            last = e
+            _note_fallback(chain, e, p)
+            continue
+        if isinstance(d, dict) and d.get("status") == "0" and not isinstance(d.get("result"), list):
+            msg = str(d.get("result") or d.get("message") or "")
+            if any(w in msg.lower() for w in ("invalid api", "rate limit", "max calls", "not supported", "unauthorized")):
+                last = msg
+                _note_fallback(chain, msg, p)
+                continue
+        res = d.get("result") if isinstance(d, dict) else None
+        return res if isinstance(res, list) else []
 
 
 def rpc_url(chain):

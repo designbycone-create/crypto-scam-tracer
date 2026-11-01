@@ -97,9 +97,10 @@ def save(form):
     cfg = _j("config.json")
     topic = (form.get("ntfy_topic") or "").strip() or cfg.get("ntfy_topic") or f"scamhunter-{secrets.token_hex(5)}"
     cfg.update({"ntfy_topic": topic, "min_xrp": cfg.get("min_xrp", 25), "victim_file": "victim.json"})
-    ek = (form.get("etherscan_key") or "").strip()
-    if ek and "•" not in ek:
-        cfg["etherscan_key"] = ek
+    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc"):
+        v = (form.get(k) or "").strip()
+        if v and "•" not in v:
+            cfg[k] = v
     cases = [c for c in (cfg.get("cases") or []) if not (c.get("chain") == chain and c.get("address") == scam)]
     cases.append({"chain": chain, "address": scam, "after": after,
                   "added": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
@@ -228,10 +229,19 @@ the scammer moves money &mdash; especially when it hits an exchange, which is wh
 <div class=topic><input name=ntfy_topic id=topic class=mono value="{e(topic)}">
 <a class="btn ghost" href="https://ntfy.sh/{e(topic)}" target=_blank id=tlink>Open</a></div>
 <p class=hint style="margin-top:10px">Want a second channel (recommended)? After setup, run <span class=mono>python telegram_setup.py</span> to connect Telegram in about 2 minutes.</p>
-<details style="margin-top:8px"><summary class=mut style="cursor:pointer">Optional: free Etherscan key (only for BNB Chain / Avalanche cases)</summary>
-<p class=hint style="margin-top:8px">Ethereum, Base, Optimism, Arbitrum and Polygon are traced with no key. BNB Chain and Avalanche need a free key from
-<a href="https://etherscan.io/apis" target=_blank>etherscan.io/apis</a> (one key covers all EVM chains).</p>
-<input name=etherscan_key class=mono placeholder="paste key (optional)" value="{e('••••••••' if cfg.get('etherscan_key') else '')}"></details>
+<details style="margin-top:8px"><summary class=mut style="cursor:pointer">Optional: free keys for deeper Ethereum-family history (all free, no card)</summary>
+<p class=hint style="margin-top:8px">Everything works without these. XRP, Bitcoin, Tron and Solana never need a key. For Ethereum-family chains the free
+public services sometimes block home connections or only show recent activity; a free key fixes that.</p>
+<p class=hint><b>Blockscout key</b> (recommended): full history on Ethereum, Base, Optimism, Arbitrum, Polygon. Sign up free at
+<a href="https://dev.blockscout.com" target=_blank>dev.blockscout.com</a>; the key starts with <span class=mono>proapi_</span>.</p>
+<input name=blockscout_key class=mono placeholder="proapi_... (optional)" value="{e('••••••••' if cfg.get('blockscout_key') else '')}">
+<p class=hint style="margin-top:8px"><b>Etherscan key</b>: free tier covers Ethereum, Polygon, Arbitrum. <a href="https://etherscan.io/apis" target=_blank>etherscan.io/apis</a></p>
+<input name=etherscan_key class=mono placeholder="paste key (optional)" value="{e('••••••••' if cfg.get('etherscan_key') else '')}">
+<p class=hint style="margin-top:8px"><b>BNB Chain endpoint</b>: BNB has no free history service. A free NodeReal account gives an address like
+<span class=mono>https://bsc-mainnet.nodereal.io/v1/&lt;key&gt;</span> (<a href="https://nodereal.io" target=_blank>nodereal.io</a>).</p>
+<input name=bsc_rpc class=mono placeholder="https://... (optional)" value="{e('••••••••' if cfg.get('bsc_rpc') else '')}">
+<p class=hint style="margin-top:8px"><b>Routescan key</b>: Avalanche works without it; a free key raises the daily limit. <a href="https://routescan.io" target=_blank>routescan.io</a></p>
+<input name=routescan_key class=mono placeholder="paste key (optional)" value="{e('••••••••' if cfg.get('routescan_key') else '')}"></details>
 </div>
 
 <button class="btn big">Start tracking</button>

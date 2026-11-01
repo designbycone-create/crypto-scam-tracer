@@ -51,3 +51,9 @@ attribution.json
 intel_index.json
 operators.json
 operators_cache.json
+compromised.json
+sitewatch.json
+prescreen_log.jsonl
+evidence_store/
+cases/
+capture_errors.log

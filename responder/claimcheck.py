@@ -61,6 +61,13 @@ def check(text, lookup_cert=True, _first_cert=None):
     known = _known()
     for chain, a in extract(text):
         key = a.lower() if chain == "ethereum" else a
+        try:
+            from shield import compromised as _cmp
+            _h = _cmp.check_address(a)
+            if _h:
+                hits.append(f"{chain} address {a}: {_h}.")
+        except Exception:
+            pass
         if key in known:
             hits.append(f"{chain} address {a} is {known[key]}.")
         else:
@@ -79,6 +86,13 @@ def check(text, lookup_cert=True, _first_cert=None):
         domains.append(dom)
     for dom in dict.fromkeys(domains):
         base = ".".join(dom.split(".")[-2:])
+        try:
+            from shield import compromised as _cmp
+            _h = _cmp.check_domain(dom)
+            if _h:
+                hits.append(f"Domain {dom}: {_h}.")
+        except Exception:
+            pass
         if dom in known or base in known:
             hits.append(f"Domain {dom} is {known.get(dom) or known.get(base)}.")
         try:

@@ -47,25 +47,55 @@ BLOCKSCOUT = {
 }
 
 
+# Etherscan's FREE tier stopped covering BNB, Base, OP and Avalanche (late 2025);
+# those use Blockscout (Base, OP) or the key-less RPC log window (BNB, Avalanche).
+ETHERSCAN_FREE_CHAINIDS = {1, 137, 42161}
+
+
 class EvmAdapter(Adapter):
+    def _use_etherscan(self):
+        if not api_key():
+            return False
+        try:
+            import scamconfig
+            paid = (scamconfig.get("etherscan_paid") or "") == "yes"
+        except Exception:
+            paid = False
+        return paid or self.info.evm_chainid in ETHERSCAN_FREE_CHAINIDS
+
+    def _rpc_window(self):
+        from shield import evm as sevm
+        return not self._use_etherscan() and sevm.provider(self.key) in ("rpc_window", "none")
+
     def available(self):
-        if api_key() or self.key in BLOCKSCOUT:
-            return True, ""
-        return False, (f"{self.info.name} needs a free Etherscan API key (etherscan_key in config.json); "
-                       "skipped until one is added")
+        return True, ""     # every EVM chain works; BNB/Avalanche fall back to the recent RPC log window
 
     def _q(self, **params):
-        if api_key():
-            params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
-            data = http_json(V2, params=params)
-        else:
-            params.pop("startblock", None)
-            params.pop("endblock", None)
-            data = http_json(BLOCKSCOUT[self.key], params=params)
-        if isinstance(data, dict) and data.get("status") == "0" and "result" in data \
-                and not isinstance(data["result"], list):
-            return []   # "No transactions found" etc.
-        return data.get("result", []) if isinstance(data, dict) else []
+        """Etherscan-shaped rows. Uses shield.evm's provider chain (Etherscan free chains -> free
+        Blockscout key -> public Blockscout -> Routescan -> recent RPC log window), so every EVM
+        chain works with no paid key and an explorer outage degrades instead of failing."""
+        from shield import evm as sevm
+        if self._use_etherscan():
+            try:
+                params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
+                data = http_json(V2, params=params)
+                if not (isinstance(data, dict) and data.get("status") == "0" and "result" in data
+                        and not isinstance(data["result"], list)):
+                    return data.get("result", []) if isinstance(data, dict) else []
+                return []   # "No transactions found" etc.
+            except Exception as e:
+                sevm._note_fallback(self.key, e, "etherscan")
+        if self.key not in sevm.CHAINS:
+            return []
+        params.pop("startblock", None)
+        params.pop("endblock", None)
+        try:
+            return sevm.explorer(self.key, **params)
+        except LookupError:
+            # no explorer left for this chain: recent token history via RPC (native history unavailable)
+            if params.get("action") == "tokentx":
+                return sevm.token_transfers(self.key, params["address"])
+            return []
 
     def outgoing(self, address, after_epoch=None, min_native=None, limit=200):
         floor = self.info.min_native if min_native is None else min_native

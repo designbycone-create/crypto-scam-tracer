@@ -79,7 +79,8 @@ def scan_chain(wallet, chain, pause=0.1):
         out.append({"chain": chain, "kind": "erc20", "token": token, "symbol": sym, "spender": spender,
                     "amount": None if cur >= UNLIMITED else cur / 10 ** dec, "unlimited": cur >= UNLIMITED})
         time.sleep(pause)
-    for lg in _logs(chain, APPROVAL_FOR_ALL, wallet):
+    nft_logs = _logs(chain, APPROVAL_FOR_ALL, wallet) if evm._explorer_ok(chain) else []
+    for lg in nft_logs:
         t = [x for x in (lg.get("topics") or []) if x]   # Blockscout pads topics with nulls
         if len(t) < 3:
             continue

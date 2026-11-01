@@ -120,11 +120,14 @@ def available(chain):
 def coverage_note(chain):
     p = provider(chain)
     if chain in FALLBACK and p != "none":
-        return (f"{chain}: the free history service didn't answer ({FALLBACK[chain]}); checked the last {WINDOW_DAYS} days "
-                "of major-token activity instead. Re-run later for full history.")
+        return (f"{chain}: the free history service didn't answer ({FALLBACK[chain]}); checked the last "
+                f"{COVERED.get(chain, WINDOW_DAYS)} days of major-token activity instead. Re-run later for full history.")
     if p == "none":
         return (f"{chain}: transaction history NOT checked -- no free public BNB Chain endpoint answers history queries. "
                 "Add a free personal endpoint as \"bsc_rpc\" in config.json (NodeReal / Ankr / QuickNode free tier).")
+    if p == "rpc_window" and COVERED.get(chain, WINDOW_DAYS) < WINDOW_DAYS - 0.5:
+        return (f"{chain}: only the last {COVERED[chain]} days of major-token activity could be checked in time "
+                "(slow free endpoint). Re-run later or add a free personal RPC endpoint for this chain.")
     if p == "rpc_window":
             return (f"{chain}: last {WINDOW_DAYS} days of major-token activity checked (no free full-history API for this chain; "
                 "a Routescan key or paid Etherscan key gives full history).")
@@ -169,11 +172,11 @@ def rpc_url(chain):
     return _cfg(f"{chain}_rpc") or CHAINS[chain][1]
 
 
-def rpc(chain, method, params):
+def rpc(chain, method, params, timeout=25):
     if RPC_POST:
         return RPC_POST(chain, method, params)
     body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
-    with urllib.request.urlopen(urllib.request.Request(rpc_url(chain), data=body, headers=UA), timeout=25) as r:
+    with urllib.request.urlopen(urllib.request.Request(rpc_url(chain), data=body, headers=UA), timeout=timeout) as r:
         d = json.loads(r.read())
     if "error" in d:
         raise RuntimeError(d["error"].get("message", "rpc error"))
@@ -199,32 +202,42 @@ def get_code(chain, addr):
         return None
 
 
-def rpc_window_logs(chain, topics, address=None, days=None, max_requests=160):
-    """eth_getLogs over the recent window, adaptively chunked (public RPCs cap the range)."""
+_STEP = {}       # chain -> block range the endpoint accepted last time
+COVERED = {}     # chain -> days of history actually covered by the last window scan
+WINDOW_BUDGET = 25   # seconds per window scan; a slow public endpoint must not hang the page
+
+
+def rpc_window_logs(chain, topics, address=None, days=None, max_requests=160, budget=None):
+    """eth_getLogs over the recent window, adaptively chunked (public RPCs cap the range).
+    Stops at the time budget and records how many days were really covered."""
     days = days or WINDOW_DAYS
+    budget = budget or WINDOW_BUDGET
     if not address and not _cfg(f"{chain}_rpc"):
         address = MAJOR_TOKENS.get(chain)       # public endpoints refuse unfiltered queries
     latest = int(rpc(chain, "eth_blockNumber", []), 16) - 20   # margin: load-balanced nodes lag
     start = max(0, latest - int(days * 86400 / CHAINS[chain][2]))
-    out, hi, step, n = [], latest, 50_000, 0
-    while hi > start and n < max_requests:
+    out, hi, n = [], latest, 0
+    step = _STEP.get(chain, 20_000)
+    t0 = time.time()
+    while hi > start and n < max_requests and (RPC_POST or time.time() - t0 < budget):
         lo = max(start, hi - step + 1)
         flt = {"fromBlock": hex(lo), "toBlock": hex(hi), "topics": topics}
         if address:
             flt["address"] = address
         try:
-            res = rpc(chain, "eth_getLogs", [flt]) or []
+            res = rpc(chain, "eth_getLogs", [flt], timeout=12) or []
             out += res
             hi = lo - 1
-            if len(res) < 500 and step < 200_000:
+            _STEP[chain] = step
+            if len(res) < 500 and step < 100_000:
                 step = int(step * 1.5)
         except Exception:
             if step <= 1000:
                 hi = lo - 1          # give up on this slice
             step = max(1000, step // 4)
         n += 1
-    for lg in out:
-        lg.setdefault("blockNumber", lg.get("blockNumber"))
+    covered = (latest - max(hi, start)) * CHAINS[chain][2] / 86400
+    COVERED[chain] = min(COVERED.get(chain, days), round(covered, 1))
     return out
 
 

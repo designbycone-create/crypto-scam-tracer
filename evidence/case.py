@@ -27,13 +27,18 @@ def _j(p, default):
 
 
 def cashouts():
+    """Cash-outs from the live watcher (cashouts.jsonl, 'your funds' path') and from the network map
+    (network_map.json endpoints: exchange deposits made by any wallet in the mapped scam network)."""
     out = {}
+    for ep in (_j("network_map.json", {}) or {}).get("endpoints", []) or []:
+        if ep.get("hash"):
+            out[ep["hash"]] = dict(ep, source="network map")
     try:
         with open("cashouts.jsonl", encoding="utf-8-sig") as f:
             for line in f:
                 try:
                     ep = json.loads(line)
-                    out.setdefault(ep["hash"], ep)
+                    out[ep["hash"]] = dict(ep, source="live watcher (your funds' path)")
                 except Exception:
                     pass
     except FileNotFoundError:
@@ -77,11 +82,12 @@ def seal(examiner_name="", examiner_role="", case_id=None, log=print):
             stmt = (f"{fct['fields'].get('Destination')} is an address of {what} {label!s}"
                     + (f"; destination tag {tag} identifies the receiving customer account at that service" if tag is not None else ""))
             f.inference(stmt, [fid], "exchange-label/1", "moderate",
-                        basis=f"published label '{label}' as recorded by the watcher on {ep.get('detected') or ep.get('time')}")
+                        basis=f"published label '{label}', recorded by the {ep.get('source', 'watcher')} ({ep.get('detected') or ep.get('time')})")
     if vid and hop_ids:
-        f.derived(f"The scam wallet received the victim's payment and later made {len(hop_ids)} payment(s) to exchange/bridge "
-                  "addresses, listed as facts. Whether those payments carried the victim's own funds is a tracing "
-                  "convention, not a ledger fact (see methodology).",
+        f.derived(f"After the victim's payment to the scam wallet, wallets in the mapped scam network made {len(hop_ids)} "
+                  "payment(s) to exchange/bridge addresses; each fact shows the sending account. The wallets' link to the "
+                  "scam wallet comes from the network map. Whether a given payment carried the victim's own funds is a "
+                  "tracing convention, not a ledger fact (see methodology).",
                   [vid] + hop_ids, "taint-follow/1", {"cashouts": len(hop_ids)})
     if not f.items:
         raise RuntimeError("Nothing to seal: no readable transactions. " + "; ".join(errors))

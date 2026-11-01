@@ -6,10 +6,14 @@ Provider order per chain (first that applies):
                            Base, OP and Avalanche need a paid Etherscan plan.
   2. Blockscout         -- key-less: Ethereum, Base, Optimism, Arbitrum, Polygon, Gnosis
   3. Routescan          -- Avalanche, if "routescan_key" is set (free signup)
-  4. RPC log window     -- key-less fallback for ANY chain (BNB, Avalanche...):
-                           scans the recent block window with eth_getLogs. Covers
-                           token movements/approvals; history is RECENT ONLY
-                           (default ~30 days) and native-coin transfers aren't in logs.
+  4. RPC log window     -- key-less fallback (Avalanche today): eth_getLogs over
+                           the recent block window, filtered to the chain's major
+                           tokens (public RPCs refuse unfiltered log queries).
+                           RECENT ONLY (~30 days), major tokens only, no native coin.
+  BNB Chain: no free public endpoint answers log queries reliably (tested Nov 2026),
+  so set "bsc_rpc" in config.json to a free personal endpoint (NodeReal, Ankr,
+  QuickNode free tiers) or use a paid Etherscan key. Without it, BNB gets
+  balance / contract / nonce checks only.
 Every result says which provider produced it, so the UI can be honest.
 """
 import json
@@ -37,6 +41,17 @@ ETHERSCAN = "https://api.etherscan.io/v2/api"
 ETHERSCAN_FREE = {1, 137, 42161}          # free-tier chain ids we use (per api.etherscan.io/v2/chainlist)
 ROUTESCAN = "https://api.routescan.io/v2/network/mainnet/evm/{cid}/etherscan/api"
 WINDOW_DAYS = 30
+# Major tokens per chain for filtered log queries (public RPCs require an address filter)
+MAJOR_TOKENS = {
+    "bsc": ["0x55d398326f99059ff775485246999027b3197955", "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+            "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c", "0xe9e7cea3dedca5984780bafc599bd69add087d56",
+            "0x2170ed0880ac9a755fd29b2688956bd959f933f8", "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+            "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82", "0xc5f0f7b66764f6ec8c8dff7ba683102295e16409"],
+    "avalanche": ["0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7", "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
+                  "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7", "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664",
+                  "0xc7198437980c041c805a1edcba50c1ce5db95118", "0x49d5c2bdffac6ce2bfdb6640f4f80f226bc10bab",
+                  "0x152b9d0fdc40c096757f570a51e494bd4b943e50"],
+}
 UA = {"User-Agent": "ScamHunter-Shield/0.2", "Content-Type": "application/json"}
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
@@ -69,6 +84,8 @@ def provider(chain):
         return "blockscout"
     if chain == "avalanche" and _cfg("routescan_key"):
         return "routescan"
+    if chain == "bsc" and not _cfg("bsc_rpc"):
+        return "none"
     return "rpc_window"
 
 
@@ -78,9 +95,12 @@ def available(chain):
 
 def coverage_note(chain):
     p = provider(chain)
+    if p == "none":
+        return (f"{chain}: transaction history NOT checked -- no free public BNB Chain endpoint answers history queries. "
+                "Add a free personal endpoint as \"bsc_rpc\" in config.json (NodeReal / Ankr / QuickNode free tier).")
     if p == "rpc_window":
-        return (f"{chain}: recent {WINDOW_DAYS} days of token activity checked (no free full-history API for this chain; "
-                "add a paid Etherscan key or Routescan key for full history).")
+            return (f"{chain}: last {WINDOW_DAYS} days of major-token activity checked (no free full-history API for this chain; "
+                "a Routescan key or paid Etherscan key gives full history).")
     return ""
 
 
@@ -110,11 +130,15 @@ def explorer(chain, **params):
     return res if isinstance(res, list) else []
 
 
+def rpc_url(chain):
+    return _cfg(f"{chain}_rpc") or CHAINS[chain][1]
+
+
 def rpc(chain, method, params):
     if RPC_POST:
         return RPC_POST(chain, method, params)
     body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
-    with urllib.request.urlopen(urllib.request.Request(CHAINS[chain][1], data=body, headers=UA), timeout=25) as r:
+    with urllib.request.urlopen(urllib.request.Request(rpc_url(chain), data=body, headers=UA), timeout=25) as r:
         d = json.loads(r.read())
     if "error" in d:
         raise RuntimeError(d["error"].get("message", "rpc error"))
@@ -143,7 +167,9 @@ def get_code(chain, addr):
 def rpc_window_logs(chain, topics, address=None, days=None, max_requests=160):
     """eth_getLogs over the recent window, adaptively chunked (public RPCs cap the range)."""
     days = days or WINDOW_DAYS
-    latest = int(rpc(chain, "eth_blockNumber", []), 16)
+    if not address and not _cfg(f"{chain}_rpc"):
+        address = MAJOR_TOKENS.get(chain)       # public endpoints refuse unfiltered queries
+    latest = int(rpc(chain, "eth_blockNumber", []), 16) - 20   # margin: load-balanced nodes lag
     start = max(0, latest - int(days * 86400 / CHAINS[chain][2]))
     out, hi, step, n = [], latest, 50_000, 0
     while hi > start and n < max_requests:
@@ -177,7 +203,20 @@ def logs(chain, topic0, topic1=None, topic2=None, address=None):
             p.update({"topic2": topic2, "topic0_2_opr": "and"})
         if address:
             p["address"] = address
-        return explorer(chain, **p)
+        out, seen = [], set()
+        for _ in range(20):                       # explorers cap a page at 1,000 logs
+            page = explorer(chain, **p)
+            for lg in page:
+                k = (lg.get("transactionHash"), lg.get("logIndex"))
+                if k not in seen:
+                    seen.add(k)
+                    out.append(lg)
+            if len(page) < 1000:
+                break
+            p["fromBlock"] = int(str(page[-1].get("blockNumber") or "0"), 0)
+        return out
+    if provider(chain) == "none":
+        return []
     return rpc_window_logs(chain, [topic0, topic1, topic2] if topic2 else ([topic0, topic1] if topic1 else [topic0]),
                            address)
 
@@ -195,7 +234,9 @@ def _block_time(chain, bn, _cache={}):
 def token_transfers(chain, addr):
     """Etherscan-'tokentx'-shaped rows for any chain (explorer or RPC window)."""
     a = addr.lower()
-    if provider(chain) != "rpc_window":
+    if provider(chain) == "none":
+        return []
+    if provider(chain) not in ("rpc_window",):
         return explorer(chain, module="account", action="tokentx", address=a, page=1, offset=1000, sort="desc")
     rows = []
     for direction, lg_list in (("out", logs(chain, TRANSFER, pad(a))), ("in", logs(chain, TRANSFER, None, pad(a)))):
@@ -213,7 +254,7 @@ def token_transfers(chain, addr):
 
 def native_txs(chain, addr):
     """Native-coin txs (explorer only; the RPC window can't list them)."""
-    if provider(chain) == "rpc_window":
+    if provider(chain) in ("rpc_window", "none"):
         return []
     return explorer(chain, module="account", action="txlist", address=addr.lower(), page=1, offset=1000, sort="desc")
 

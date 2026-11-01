@@ -10,11 +10,11 @@ ok = lambda c, msg: print(("PASS " if c else "FAIL ") + msg) or bool(c)
 results = []
 now = int(time.time())
 
-# ---------------- BNB Chain via the key-less RPC log window ----------------
+# ---------------- Avalanche via the key-less RPC log window (BNB has no free endpoint) ----------------
 V = "0x1111111111111111111111111111111111111111"; BAD = "0x5555555555555555555555555555555555555555"
 TOK = "0x55d398326f99059ff775485246999027b3197955"; RCV = "0x7777777777777777777777777777777777777777"
 def bsc_rpc(chain, method, p):
-    if chain != "bsc":
+    if chain != "avalanche":
         if method in ("eth_getTransactionCount", "eth_getBalance"): return "0x0"
         if method == "eth_blockNumber": return hex(10_000_000)
         if method == "eth_getLogs": return []
@@ -22,9 +22,9 @@ def bsc_rpc(chain, method, p):
     if method == "eth_blockNumber": return hex(60_000_000)
     if method == "eth_getLogs":
         t = p[0]["topics"]
-        if t[0] == approvals.APPROVAL and p[0]["toBlock"] == hex(60_000_000):
+        if t[0] == approvals.APPROVAL and p[0]["toBlock"] == hex(60_000_000 - 20) and p[0].get("address"):
             return [{"address": TOK, "topics": [approvals.APPROVAL, evm.pad(V), evm.pad(BAD)], "blockNumber": hex(59_999_000)}]
-        if t[0] == evm.TRANSFER and len(t) == 2 and p[0]["toBlock"] == hex(60_000_000):
+        if t[0] == evm.TRANSFER and len(t) == 2 and p[0]["toBlock"] == hex(60_000_000 - 20) and p[0].get("address"):
             return [{"address": TOK, "topics": [evm.TRANSFER, evm.pad(V), evm.pad(RCV)], "data": hex(500 * 10**18),
                      "transactionHash": "0xd1", "blockNumber": hex(59_999_500)}]
         return []
@@ -43,13 +43,15 @@ def bsc_rpc(chain, method, p):
     return None
 evm.RPC_POST = bsc_rpc
 evm.HTTP_GET = lambda url: {"result": []}
-results.append(ok(evm.provider("bsc") == "rpc_window" and evm.provider("base") == "blockscout", "BNB uses RPC window, Base uses Blockscout (no keys)"))
-r = approvals.scan(V, ["bsc"])
-results.append(ok(any(a["spender"] == BAD for a in r["chains"]["bsc"]) and r["notes"], "BNB approvals found via RPC window + coverage note shown"))
-d = drain.analyze(V, ["bsc"])
-results.append(ok(len(d["drains"]) == 1 and d["drains"][0]["tokens"][0]["symbol"] == "USDT", "BNB drain detected (tokens pulled by someone else's tx)"))
+results.append(ok(evm.provider("avalanche") == "rpc_window" and evm.provider("base") == "blockscout" and evm.provider("bsc") == "none",
+                  "Avalanche uses RPC window, Base uses Blockscout, BNB flagged as needing an endpoint"))
+results.append(ok("bsc_rpc" in evm.coverage_note("bsc"), "BNB coverage note tells the user exactly what to add"))
+r = approvals.scan(V, ["avalanche"])
+results.append(ok(any(a["spender"] == BAD for a in r["chains"]["avalanche"]) and r["notes"], "Avalanche approvals found via filtered RPC window + coverage note"))
+d = drain.analyze(V, ["avalanche"])
+results.append(ok(len(d["drains"]) == 1 and d["drains"][0]["tokens"][0]["symbol"] == "USDT", "Avalanche drain detected (tokens pulled by someone else's tx)"))
 p = prescreen.screen(RCV)
-results.append(ok(p["ok"] and p["chain"] == "bsc", f"pre-screen picks the EVM chain the address is active on ({p.get('chain')})"))
+results.append(ok(p["ok"] and p["chain"] == "avalanche", f"pre-screen picks the EVM chain the address is active on ({p.get('chain')})"))
 p2 = prescreen.screen(RCV, chain="ethereum")
 results.append(ok(any("IS active on" in f["text"] for f in p2["findings"]), "pre-screen warns about wrong network"))
 

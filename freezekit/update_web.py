@@ -71,9 +71,12 @@ def page(force=False):
         out.append(f"<div class=card><span class=bad>{e(JOB['err'])}</span></div>")
     if st.get("error") and not latest:
         out.append(f"<div class=card><span class=bad>Couldn't reach GitHub ({e(st['error'])}). Try again later.</span></div>")
+    key, _m = updater.trusted_key()
+    trust = (f"Updates must be signed by key <code>{e(_m.fingerprint(key))}</code>; anything else is refused."
+             if key else "This copy will start checking signatures from the first signed update.")
     out.append(f"<div class=card>Installed version: <code>{e((cur or 'unknown')[:7])}</code><br>"
                f"Newest version: <code>{e((latest or '?')[:7])}</code>"
-               f"{' &middot; ' + e((st.get('latest_date') or '')[:10]) if latest else ''}</div>")
+               f"{' &middot; ' + e((st.get('latest_date') or '')[:10]) if latest else ''}<br><span class=mut>{trust}</span></div>")
     if st.get("available"):
         ch = "".join(f"<li>{e(c)}</li>" for c in st.get("changes") or [])
         out.append(f"<div class=card><h3>What's new</h3><ul>{ch or '<li>Improvements and fixes</li>'}</ul>"
@@ -109,7 +112,8 @@ def post(form):
             JOB["running"] = True
             try:
                 r = updater.apply(sha)
-                JOB["msg"] = f"Updated to {r['version'][:7]} ({r['files']} files). Restarting the Desk&hellip;"
+                JOB["msg"] = (f"Updated to {r['version'][:7]} ({r['files']} files). {html.escape(r.get('signature') or '')}. "
+                              "Restarting the Desk&hellip;")
                 JOB["running"] = False
                 _restart_soon()
             except Exception as ex:

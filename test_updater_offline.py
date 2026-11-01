@@ -77,6 +77,42 @@ try:
 except RuntimeError:
     r.append(ok(rd("desk.py") == "v1", "download that doesn't match the requested version is refused; nothing changed"))
 
+# ---- signed releases ----
+import release_sig as rs
+SK = bytes(range(32)); PK = rs.public_key(SK).hex(); SK2 = bytes(range(1, 33))
+src_mod = open(os.path.join(ROOT, "release_sig.py")).read()
+open(os.path.join(home, "release_sig.py"), "w").write(src_mod.replace('RELEASE_PUBKEY = ""', f'RELEASE_PUBKEY = "{PK}"'))
+
+
+def signed_zip(sha, files, sk=SK, tamper=None):
+    d = tempfile.mkdtemp()
+    for f, t in files.items():
+        os.makedirs(os.path.dirname(os.path.join(d, f)) or d, exist_ok=True)
+        open(os.path.join(d, f), "w").write(t)
+    fh = rs.file_hashes(d); meta = {"signed_at": "t", "note": ""}
+    sig = rs.sign(sk, rs.canonical(fh) + rs.canonical(meta))
+    files = dict(files, **{"RELEASE.json": json.dumps({"pubkey": rs.public_key(sk).hex(), "files": fh, "meta": meta}),
+                           "RELEASE.sig": sig.hex()})
+    if tamper:
+        files.update(tamper)
+    return zipof(sha, files)
+
+
+base = {"desk.py": "v4", "requirements.txt": "", "shield/test_allchains_offline.py": "import sys; sys.exit(0)"}
+for code, (zipdata, expect_ok, msg) in {
+    "1" * 40: (signed_zip("1" * 40, base), True, "release signed by the trusted key installs"),
+    "2" * 40: (signed_zip("2" * 40, base, tamper={"desk.py": "v4-evil"}), False, "a file changed after signing is refused"),
+    "3" * 40: (signed_zip("3" * 40, base, sk=SK2), False, "a release signed by a different key is refused"),
+    "4" * 40: (zipof("4" * 40, base), False, "an unsigned release is refused once a key is trusted"),
+}.items():
+    ARCH[code] = zipdata
+    before = rd("desk.py")
+    try:
+        res2 = updater.apply(code)
+        r.append(ok(expect_ok and rd("desk.py") == "v4" and "verified" in res2["signature"], msg))
+    except RuntimeError as e:
+        r.append(ok((not expect_ok) and rd("desk.py") == before and "NOT installed" in str(e), msg + f" ({str(e)[:60]})"))
+
 shutil.rmtree(home, ignore_errors=True)
 print(f"{sum(r)}/{len(r)} passed")
 sys.exit(0 if all(r) else 1)

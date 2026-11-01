@@ -90,6 +90,41 @@ def check(force=False, max_age=6 * 3600):
     return s
 
 
+def trusted_key():
+    """The public key this installed copy trusts (from its own release_sig.py)."""
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("_installed_release_sig", os.path.join(HERE, "release_sig.py"))
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        return m.RELEASE_PUBKEY, m
+    except Exception:
+        return "", None
+
+
+def verify_release(src, shipped):
+    """(ok, message). A copy that trusts a key installs only releases signed by that key, with every
+    shipped file matching the signed manifest. A copy from before signing existed (no key yet) accepts
+    the release and, if it is signed, starts trusting its key from then on."""
+    key, mod = trusted_key()
+    if mod is None:
+        import release_sig as mod      # noqa: F401  (fallback: module bundled with this updater)
+    if key:
+        ok, why, _ = mod.check_folder(src, key, repo_files=shipped)
+        return ok, why
+    try:
+        import release_sig as new
+        man = json.load(open(os.path.join(src, new.MANIFEST))) if os.path.exists(os.path.join(src, new.MANIFEST)) else None
+    except Exception:
+        man = None
+    if man and man.get("pubkey"):
+        ok, why, _ = new.check_folder(src, man["pubkey"], repo_files=shipped)
+        if not ok:
+            return False, why
+        return True, f"{why} (first signed version: this copy now trusts that key)"
+    return True, "this version is not signed yet (installs made before signing existed accept it once)"
+
+
 def _run_tests(root):
     failed = []
     for t in TESTS:
@@ -143,6 +178,12 @@ def apply(sha=None, log=print):
     os.makedirs(stage, exist_ok=True)
     z.extractall(stage)
     src = os.path.join(stage, top)
+    shipped = {n[len(top) + 1:] for n in names if not n.endswith("/") and n.startswith(top + "/")}
+    sig_ok, sig_why = verify_release(src, shipped)
+    if not sig_ok:
+        shutil.rmtree(stage, ignore_errors=True)
+        raise RuntimeError("the update was NOT installed: " + sig_why)
+    log(sig_why)
     frm = (installed() or "unknown")[:7]
     bdir = os.path.join(BACKUPS, f"update_{frm}_{time.strftime('%Y%m%d_%H%M%S')}")
     os.makedirs(bdir, exist_ok=True)
@@ -166,9 +207,10 @@ def apply(sha=None, log=print):
     with open(VERSION_FILE, "w") as f:
         f.write(sha)
     st = _state()
-    st.update({"installed": sha, "available": False, "last_backup": bdir, "updated_at": time.time(), "changes": []})
+    st.update({"installed": sha, "available": False, "last_backup": bdir, "updated_at": time.time(), "changes": [],
+               "signature": sig_why})
     _save_state(st)
-    return {"ok": True, "version": sha, "files": n, "backup": bdir}
+    return {"ok": True, "version": sha, "files": n, "backup": bdir, "signature": sig_why}
 
 
 def _restore(bdir):

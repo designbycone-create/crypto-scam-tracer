@@ -76,13 +76,13 @@ def analyze(wallet, chains=None, since_epoch=None, log=print):
     if fam == "evm":
         chains = chains or fam_chains
         for c in chains:
-            n = evm.coverage_note(c)
-            if n:
-                notes.append(n)
             try:
                 drains += find_chain(wallet, c, since_epoch)
             except Exception as e:
                 log(f"drain: {c} failed ({e})")
+            n = evm.coverage_note(c)
+            if n:
+                notes.append(n)
     elif fam in ("tron", "solana", "xrpl"):
         chains = [fam]
         try:

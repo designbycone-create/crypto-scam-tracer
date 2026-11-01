@@ -89,12 +89,26 @@ def provider(chain):
     return "rpc_window"
 
 
+FALLBACK = {}   # chain -> why its explorer failed this run (Cloudflare challenge, 5xx, rate limit)
+
+
+def _explorer_ok(chain):
+    return provider(chain) not in ("rpc_window", "none") and chain not in FALLBACK
+
+
+def _note_fallback(chain, err):
+    FALLBACK.setdefault(chain, str(err)[:100])
+
+
 def available(chain):
     return chain in CHAINS
 
 
 def coverage_note(chain):
     p = provider(chain)
+    if chain in FALLBACK and p != "none":
+        return (f"{chain}: the free history service didn't answer ({FALLBACK[chain]}); checked the last {WINDOW_DAYS} days "
+                "of major-token activity instead. Re-run later for full history.")
     if p == "none":
         return (f"{chain}: transaction history NOT checked -- no free public BNB Chain endpoint answers history queries. "
                 "Add a free personal endpoint as \"bsc_rpc\" in config.json (NodeReal / Ankr / QuickNode free tier).")
@@ -194,8 +208,10 @@ def rpc_window_logs(chain, topics, address=None, days=None, max_requests=160):
 
 
 def logs(chain, topic0, topic1=None, topic2=None, address=None):
-    """Logs by topic, via the explorer when there is one, else the RPC window."""
-    if provider(chain) != "rpc_window":
+    """Logs by topic: the explorer when it answers, else the RPC window."""
+    if provider(chain) == "none":
+        return []
+    if _explorer_ok(chain):
         p = {"module": "logs", "action": "getLogs", "fromBlock": 0, "toBlock": "latest", "topic0": topic0}
         if topic1:
             p.update({"topic1": topic1, "topic0_1_opr": "and"})
@@ -204,19 +220,22 @@ def logs(chain, topic0, topic1=None, topic2=None, address=None):
         if address:
             p["address"] = address
         out, seen = [], set()
-        for _ in range(20):                       # explorers cap a page at 1,000 logs
-            page = explorer(chain, **p)
-            for lg in page:
-                k = (lg.get("transactionHash"), lg.get("logIndex"))
-                if k not in seen:
-                    seen.add(k)
-                    out.append(lg)
-            if len(page) < 1000:
-                break
-            p["fromBlock"] = int(str(page[-1].get("blockNumber") or "0"), 0)
-        return out
-    if provider(chain) == "none":
-        return []
+        try:
+            for _ in range(20):                       # explorers cap a page at 1,000 logs
+                page = explorer(chain, **p)
+                for lg in page:
+                    k = (lg.get("transactionHash"), lg.get("logIndex"))
+                    if k not in seen:
+                        seen.add(k)
+                        out.append(lg)
+                if len(page) < 1000:
+                    break
+                p["fromBlock"] = int(str(page[-1].get("blockNumber") or "0"), 0)
+            return out
+        except Exception as e:
+            if out:
+                return out        # partial is better than nothing
+            _note_fallback(chain, e)
     return rpc_window_logs(chain, [topic0, topic1, topic2] if topic2 else ([topic0, topic1] if topic1 else [topic0]),
                            address)
 
@@ -236,8 +255,11 @@ def token_transfers(chain, addr):
     a = addr.lower()
     if provider(chain) == "none":
         return []
-    if provider(chain) not in ("rpc_window",):
-        return explorer(chain, module="account", action="tokentx", address=a, page=1, offset=1000, sort="desc")
+    if _explorer_ok(chain):
+        try:
+            return explorer(chain, module="account", action="tokentx", address=a, page=1, offset=1000, sort="desc")
+        except Exception as e:
+            _note_fallback(chain, e)
     rows = []
     for direction, lg_list in (("out", logs(chain, TRANSFER, pad(a))), ("in", logs(chain, TRANSFER, None, pad(a)))):
         for lg in lg_list:
@@ -254,9 +276,13 @@ def token_transfers(chain, addr):
 
 def native_txs(chain, addr):
     """Native-coin txs (explorer only; the RPC window can't list them)."""
-    if provider(chain) in ("rpc_window", "none"):
+    if not _explorer_ok(chain):
         return []
-    return explorer(chain, module="account", action="txlist", address=addr.lower(), page=1, offset=1000, sort="desc")
+    try:
+        return explorer(chain, module="account", action="txlist", address=addr.lower(), page=1, offset=1000, sort="desc")
+    except Exception as e:
+        _note_fallback(chain, e)
+        return []
 
 
 def token_meta(chain, token, _cache={}):

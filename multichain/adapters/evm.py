@@ -76,13 +76,21 @@ class EvmAdapter(Adapter):
             if params.get("action") == "tokentx":
                 return sevm.token_transfers(self.key, params["address"])
             return []    # native-coin history isn't available from logs
-        if self._use_etherscan():
-            params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
-            data = http_json(V2, params=params)
-        else:
-            params.pop("startblock", None)
-            params.pop("endblock", None)
-            data = http_json(BLOCKSCOUT[self.key], params=params)
+        try:
+            if self._use_etherscan():
+                params.update({"chainid": self.info.evm_chainid, "apikey": api_key()})
+                data = http_json(V2, params=params)
+            else:
+                params.pop("startblock", None)
+                params.pop("endblock", None)
+                data = http_json(BLOCKSCOUT[self.key], params=params, retries=0)
+        except Exception:
+            # explorer refused (Blockscout's Cloudflare challenge, rate limit, 5xx): recent token history via RPC
+            from shield import evm as sevm
+            sevm._note_fallback(self.key, "explorer unavailable")
+            if params.get("action") == "tokentx":
+                return sevm.token_transfers(self.key, params["address"])
+            return []
         if isinstance(data, dict) and data.get("status") == "0" and "result" in data \
                 and not isinstance(data["result"], list):
             return []   # "No transactions found" etc.

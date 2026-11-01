@@ -186,15 +186,15 @@ def scan(wallet, chains=None, log=print):
         return res
     if fam == "evm":
         for c in chains or fam_chains:
-            note = evm.coverage_note(c)
-            if note:
-                res["notes"].append(note)
             try:
                 res["chains"][c] = scan_chain(wallet, c)
             except Exception as e:
                 log(f"approvals: {c} failed ({e})")
                 res["chains"][c] = []
                 res.setdefault("errors", {})[c] = str(e)[:120]
+            note = evm.coverage_note(c)
+            if note:
+                res["notes"].append(note)
             try:   # EIP-7702: an EOA that delegated its code can be drained by that code
                 code = (evm.get_code(c, wallet) or "0x").lower()
                 if code.startswith("0xef0100"):

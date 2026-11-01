@@ -59,7 +59,7 @@ def history_xrpl(addr, limit=400):
     info = (_xrpl("account_info", {"account": addr, "ledger_index": "validated"}) or {}).get("account_data")
     if not info:
         return {"exists": False, "moves": [], "balance": 0.0, "flags": 0, "domain": None}
-    moves, marker = [], None
+    moves, marker, created_accounts = [], None, 0
     for _ in range(3):
         p = {"account": addr, "ledger_index_min": -1, "ledger_index_max": -1, "limit": 200, "forward": False}
         if marker:
@@ -83,6 +83,8 @@ def history_xrpl(addr, limit=400):
                               "tag": tx.get("DestinationTag")})
             elif tx.get("Account") == addr:
                 moves.append({"dir": "out", "cp": tx.get("Destination"), "amount": v, "asset": asset, "t": ep})
+                if any((n.get("CreatedNode") or {}).get("LedgerEntryType") == "AccountRoot" for n in meta.get("AffectedNodes", [])):
+                    created_accounts += 1
         marker = r.get("marker")
         if not marker or len(moves) >= limit:
             break
@@ -102,7 +104,7 @@ def history_xrpl(addr, limit=400):
             dom = bytes.fromhex(info["Domain"]).decode("utf-8", "replace")
         except ValueError:
             pass
-    return {"exists": True, "moves": moves, "created": created, "complete": not marker, "balance": int(info.get("Balance", 0)) / 1e6,
+    return {"exists": True, "moves": moves, "created": created, "created_accounts": created_accounts, "complete": not marker, "balance": int(info.get("Balance", 0)) / 1e6,
             "flags": int(info.get("Flags") or 0), "domain": dom}
 
 
@@ -272,6 +274,13 @@ def behavior(h, now=None):
     if len(senders) >= 15 and receivers and paid_out and len(receivers) <= max(3, len(senders) // 8):
         out.append(("caution", f"Victim-collector pattern: received from {len(senders)} different wallets, "
                                f"but pays out to only {len(receivers)} -- how giveaway and investment-scam wallets look."))
+    if len(receivers) >= 15 and len(senders) <= 3:
+        out.append(("caution", f"Distributor pattern: pays out to {len(receivers)} different wallets but is funded by only "
+                               f"{len(senders)} -- how laundering splitters and wallet 'factories' look (payroll and airdrop "
+                               "wallets can look similar)."))
+    if h.get("created_accounts", 0) >= 5:
+        out.append(("caution", f"Created {h['created_accounts']} brand-new wallets by funding them -- scam operators spin up "
+                               "throwaway wallets this way (exchanges do too)."))
     vin, vout = sum(m["amount"] for m in ins), sum(m["amount"] for m in outs)
     if ins and outs and vin and vout / vin > 0.8:
         holds = []
@@ -388,7 +397,7 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
     is_service = bool(ident)
     if h.get("exists") is not None and chain != "solana":
         for lvl, txt in behavior(h):
-            if is_service and "collector" in txt:
+            if is_service and any(k in txt for k in ("collector", "Distributor", "brand-new wallets")):
                 continue   # exchanges receive from everyone; not a scam signal
             findings.append((lvl, "Behavior", txt))
     for txt in _network(h.get("moves", [])):

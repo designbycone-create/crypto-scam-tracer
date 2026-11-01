@@ -134,8 +134,16 @@ def coverage_note(chain):
 def _get(url):
     if HTTP_GET:
         return HTTP_GET(url)
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
-        return json.loads(r.read())
+    import urllib.error
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 3:      # free explorers rate-limit: back off and retry
+                time.sleep(2 * 2 ** attempt)
+                continue
+            raise
 
 
 def explorer(chain, **params):

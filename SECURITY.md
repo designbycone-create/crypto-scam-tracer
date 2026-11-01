@@ -14,7 +14,9 @@ for anything, including that an update really came from us.
   is wrong, a file was changed, or the release was signed by a different key, **nothing is installed**
   and the page says why.
 
-Maintainer public key fingerprint: **`PENDING_FIRST_SIGNED_RELEASE`**
+Maintainer public key: `c266c6598392a472899e7562045ddda9825d15d13a4d6584bcfd47bc4780c60e`
+
+Maintainer public key fingerprint: **`fa946f505ab1ef57`**
 
 ## Check a copy yourself
 

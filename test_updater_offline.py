@@ -81,7 +81,8 @@ except RuntimeError:
 import release_sig as rs
 SK = bytes(range(32)); PK = rs.public_key(SK).hex(); SK2 = bytes(range(1, 33))
 src_mod = open(os.path.join(ROOT, "release_sig.py")).read()
-open(os.path.join(home, "release_sig.py"), "w").write(src_mod.replace('RELEASE_PUBKEY = ""', f'RELEASE_PUBKEY = "{PK}"'))
+import re as _re
+open(os.path.join(home, "release_sig.py"), "w").write(_re.sub(r'RELEASE_PUBKEY = "[0-9a-f]*"', f'RELEASE_PUBKEY = "{PK}"', src_mod, count=1))
 
 
 def signed_zip(sha, files, sk=SK, tamper=None):

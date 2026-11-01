@@ -20,7 +20,7 @@ import time
 
 # Maintainer's public key (hex). Empty until the first signed release; then fixed. Installed copies trust
 # exactly this key; changing it requires an update signed by the old key.
-RELEASE_PUBKEY = ""
+RELEASE_PUBKEY = "c266c6598392a472899e7562045ddda9825d15d13a4d6584bcfd47bc4780c60e"
 
 SKIP_DIRS = {".git", "__pycache__", "backups", "entity_cache", "evidence_store", "evidence_bundles", "cases",
              "benchmark/data/results"}

@@ -12,7 +12,7 @@ mc_map.json
 mc_map.html
 mc_events.log
 netwatch_events.log
-cases/
+evidence_bundles/
 network_reports/
 mc_reports/
 cease_desist/
@@ -55,5 +55,5 @@ compromised.json
 sitewatch.json
 prescreen_log.jsonl
 evidence_store/
-cases/
+evidence_bundles/
 capture_errors.log

@@ -172,7 +172,7 @@ def report_md(findings: Findings, case_id, scope, examiner, sealed, tool):
     return "\n".join(out)
 
 
-def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="cases", actions_log=None):
+def build(findings: Findings, case_id, scope=None, examiner=None, out_dir="evidence_bundles", actions_log=None):
     examiner = examiner or {}
     sealed = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     commit, dirty = _git()

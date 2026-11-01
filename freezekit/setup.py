@@ -97,7 +97,7 @@ def save(form):
     cfg = _j("config.json")
     topic = (form.get("ntfy_topic") or "").strip() or cfg.get("ntfy_topic") or f"scamhunter-{secrets.token_hex(5)}"
     cfg.update({"ntfy_topic": topic, "min_xrp": cfg.get("min_xrp", 25), "victim_file": "victim.json"})
-    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc"):
+    for k in ("etherscan_key", "blockscout_key", "routescan_key", "bsc_rpc", "opbnb_rpc", "ethereum_rpc"):
         v = (form.get(k) or "").strip()
         if v and "•" not in v:
             cfg[k] = v

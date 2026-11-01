@@ -52,6 +52,9 @@ STABLECOINS = {
         "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9": ("USDT", "tether"),
         "0xaf88d065e77c8cc2239327c5edb3a432268e5831": ("USDC", "circle"),
     },
+    "opbnb": {
+        "0x9e5aac1ba1a2e6aed6b32689dfcf62a509ca96f3": ("USDT", "tether"),
+    },
     "avalanche": {
         "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7": ("USDT", "tether"),
         "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e": ("USDC", "circle"),

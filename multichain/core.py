@@ -87,6 +87,9 @@ CHAINS = {
     "avalanche":ChainInfo("avalanche", "Avalanche C-Chain", "AVAX", "account",
                           "https://snowtrace.io/tx/{txid}",
                           "https://snowtrace.io/address/{addr}", min_native=0.1, evm_chainid=43114),
+    "opbnb":    ChainInfo("opbnb", "opBNB", "BNB", "account",
+                          "https://opbnb.bscscan.com/tx/{txid}",
+                          "https://opbnb.bscscan.com/address/{addr}", min_native=0.02, evm_chainid=204),
 }
 
 

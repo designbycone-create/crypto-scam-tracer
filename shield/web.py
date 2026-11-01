@@ -176,7 +176,7 @@ def prescreen_page(form=None, result=None):
             f"""<div class=card><form method=get action='/prescreen'>
 <label>Address you're about to send to</label><input name=address class=m value='{e(f.get("address", ""))}' style='width:100%' placeholder='r... / 0x... / T... / bc1...'>
 <div style='display:grid;grid-template-columns:1fr 1fr 2fr;gap:8px;margin-top:8px'>
-<select name=chain><option value=''>Network: auto</option>{''.join(f"<option{' selected' if f.get('chain') == c else ''}>{c}</option>" for c in ['ethereum','bsc','polygon','arbitrum','base','optimism','avalanche'])}</select>
+<select name=chain><option value=''>Network: auto</option>{''.join(f"<option{' selected' if f.get('chain') == c else ''}>{c}</option>" for c in ['ethereum','bsc','polygon','arbitrum','base','optimism','avalanche','opbnb'])}</select>
 <input name=tag value='{e(f.get("tag", ""))}' placeholder='Destination tag / memo (if any)'>
 <input name=me class=m value='{e(f.get("me", ""))}' placeholder='Your own wallet (optional, catches poisoning)'></div>
 <button class=btn style='margin-top:10px'>Check this wallet</button></form></div>"""]

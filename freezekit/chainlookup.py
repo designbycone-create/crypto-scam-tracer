@@ -23,12 +23,13 @@ EVM_RPC = {
     "base": "https://base-rpc.publicnode.com",
     "optimism": "https://optimism-rpc.publicnode.com",
     "avalanche": "https://avalanche-c-chain-rpc.publicnode.com",
+    "opbnb": "https://opbnb-mainnet-rpc.bnbchain.org",
 }
 NATIVE = {"ethereum": "ETH", "bsc": "BNB", "polygon": "POL", "arbitrum": "ETH", "base": "ETH",
-          "optimism": "ETH", "avalanche": "AVAX"}
+          "optimism": "ETH", "avalanche": "AVAX", "opbnb": "BNB"}
 CHAIN_NAMES = {"xrpl": "XRP Ledger", "bitcoin": "Bitcoin", "tron": "Tron", "solana": "Solana",
                "ethereum": "Ethereum", "bsc": "BNB Smart Chain", "polygon": "Polygon", "arbitrum": "Arbitrum",
-               "base": "Base", "optimism": "Optimism", "avalanche": "Avalanche"}
+               "base": "Base", "optimism": "Optimism", "avalanche": "Avalanche", "opbnb": "opBNB"}
 _ERC20_DEC = {"USDT": 6, "USDC": 6}
 
 
@@ -88,8 +89,17 @@ def bitcoin(h):
     return r
 
 
+def _rpc_for(chain, default):
+    try:
+        import scamconfig
+        return (scamconfig.get(f"{chain}_rpc") or "").strip() or default
+    except Exception:
+        return default
+
+
 def evm(h):
     for chain, url in EVM_RPC.items():
+        url = _rpc_for(chain, url)
         try:
             tx = _post(url, {"jsonrpc": "2.0", "id": 1, "method": "eth_getTransactionByHash", "params": [h]}).get("result")
         except Exception:

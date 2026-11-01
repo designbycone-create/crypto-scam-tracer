@@ -11,7 +11,7 @@ import urllib.request
 
 LLAMA = "https://coins.llama.fi/prices/current/"
 SLUG = {"ethereum": "ethereum", "bsc": "bsc", "polygon": "polygon", "arbitrum": "arbitrum",
-        "base": "base", "optimism": "optimism", "avalanche": "avax", "tron": "tron", "solana": "solana"}
+        "base": "base", "optimism": "optimism", "avalanche": "avax", "opbnb": "op_bnb", "tron": "tron", "solana": "solana"}
 ORDER = {"danger": 0, "high": 1, "review": 2, "ok": 3}
 
 PRICE_GET = None   # test hook: f(keys) -> {key: price}

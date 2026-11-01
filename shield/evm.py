@@ -19,6 +19,7 @@ Provider order per chain (first that applies; a failure falls through to the nex
 Every result says which provider produced it, so the UI can be honest.
 """
 import json
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -31,6 +32,7 @@ CHAINS = {  # key: (chainid, rpc, avg block seconds)
     "base": (8453, "https://base-rpc.publicnode.com", 2),
     "optimism": (10, "https://optimism-rpc.publicnode.com", 2),
     "avalanche": (43114, "https://avalanche-c-chain-rpc.publicnode.com", 2),
+    "opbnb": (204, "https://opbnb-mainnet-rpc.bnbchain.org", 0.25),
 }
 BLOCKSCOUT = {
     "ethereum": "https://eth.blockscout.com/api",
@@ -69,6 +71,10 @@ MAJOR_TOKENS = {
                   "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7", "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664",
                   "0xc7198437980c041c805a1edcba50c1ce5db95118", "0x49d5c2bdffac6ce2bfdb6640f4f80f226bc10bab",
                   "0x152b9d0fdc40c096757f570a51e494bd4b943e50"],
+    # verified on-chain Nov 2026: USDT, WBNB, ETH, BTCB, FDUSD
+    "opbnb": ["0x9e5aac1ba1a2e6aed6b32689dfcf62a509ca96f3", "0x4200000000000000000000000000000000000006",
+              "0xe7798f023fc62146e8aa1b36da45fb70855a77ea", "0x7c6b91d9be155a6db01f749217d76ff02a7227f2",
+              "0x50c5725949a6f0c72e6c4a641f24049a917db0cb"],
 }
 UA = {"User-Agent": "ScamHunter-Shield/0.2", "Content-Type": "application/json"}
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
@@ -115,7 +121,7 @@ def provider(chain):
         if (chain, p) not in FAILED:
             return p
     if chain == "bsc" and not _cfg("bsc_rpc"):
-        return "none"
+        return "none"      # public BNB endpoints refuse log queries; opBNB's public RPC is tried
     return "rpc_window"
 
 
@@ -247,6 +253,7 @@ def get_code(chain, addr):
 
 
 _STEP = {}       # chain -> block range the endpoint accepted last time
+_CAP = {}        # chain -> max block range the endpoint announced ("exceed maximum block range: 50000")
 COVERED = {}     # chain -> days of history actually covered by the last window scan
 WINDOW_BUDGET = 25   # seconds per window scan; a slow public endpoint must not hang the page
 
@@ -255,13 +262,15 @@ def rpc_window_logs(chain, topics, address=None, days=None, max_requests=160, bu
     """eth_getLogs over the recent window, adaptively chunked (public RPCs cap the range).
     Stops at the time budget and records how many days were really covered."""
     days = days or WINDOW_DAYS
-    budget = budget or WINDOW_BUDGET
-    if not address and not _cfg(f"{chain}_rpc"):
+    personal = bool(_cfg(f"{chain}_rpc"))
+    budget = budget or (WINDOW_BUDGET * 3 if personal else WINDOW_BUDGET)   # personal endpoints are faster and allow more
+    max_requests = max_requests if not personal else max(max_requests, 400)
+    if not address and not personal:
         address = MAJOR_TOKENS.get(chain)       # public endpoints refuse unfiltered queries
     latest = int(rpc(chain, "eth_blockNumber", []), 16) - 20   # margin: load-balanced nodes lag
     start = max(0, latest - int(days * 86400 / CHAINS[chain][2]))
     out, hi, n = [], latest, 0
-    step = _STEP.get(chain, 20_000)
+    step = min(_STEP.get(chain, 20_000), _CAP.get(chain, 10**9))
     t0 = time.time()
     while hi > start and n < max_requests and (RPC_POST or time.time() - t0 < budget):
         lo = max(start, hi - step + 1)
@@ -274,8 +283,14 @@ def rpc_window_logs(chain, topics, address=None, days=None, max_requests=160, bu
             hi = lo - 1
             _STEP[chain] = step
             if len(res) < 500 and step < 100_000:
-                step = int(step * 1.5)
-        except Exception:
+                step = min(int(step * 1.5), _CAP.get(chain, 10**9))
+        except Exception as e:
+            m = re.search(r"maximum block range:?\s*(\d+)", str(e))
+            if m:
+                _CAP[chain] = int(m.group(1)) - 1
+                step = _CAP[chain]
+                n += 1
+                continue
             if step <= 1000:
                 hi = lo - 1          # give up on this slice
             step = max(1000, step // 4)

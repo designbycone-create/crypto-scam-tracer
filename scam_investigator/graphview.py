@@ -126,7 +126,7 @@ def build():
     cfg = _j("config.json")
     seeds = {(c["chain"], c["address"].lower()) for c in cfg.get("cases") or [] if c.get("chain") != "xrpl"}
     if mc.get("edges"):
-        evm = {"ethereum", "bsc", "polygon", "arbitrum", "base", "optimism", "avalanche"}
+        evm = {"ethereum", "bsc", "polygon", "arbitrum", "base", "optimism", "avalanche", "opbnb"}
         if any(c in evm for c, _ in seeds):
             seeds |= {(k, a) for c, a in list(seeds) if c in evm for k in evm}
         adj = {}

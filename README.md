@@ -144,7 +144,7 @@ adds Desktop / Start Menu shortcuts, starts it at sign-in, and opens the
 2. **About you** (optional) — name, email, IC3 number, other reports. Used only
    in the drafts *you* choose to send.
 3. **Alerts** — a private ntfy topic is generated; subscribe in the free ntfy
-   app. Telegram is one command (`python telegram_setup.py`).
+   app. Telegram connects from the Desk's **Phone alerts** page in about 2 minutes (no command line).
 
 Press **Start tracking**. The watchers start, and within minutes the Desk shows
 where your funds are, the network behind the scam, and freeze kits.
@@ -160,7 +160,7 @@ Critical alerts (your funds hitting an exchange) go to **every** channel you
 configure, so one channel being down or over quota never loses one. Test them
 with `python alerts.py test`.
 
-- **Telegram** — create a bot with @BotFather, then run `python telegram_setup.py` (it finds your chat id and saves it). Or manually: put `bot_token` and your
+- **Telegram** — open **Phone alerts** on the Desk: create a bot with @BotFather, paste its token, press START in your bot, done (it finds your chat id, saves it and sends a test). `python telegram_setup.py` does the same from a terminal. Or manually: put `bot_token` and your
   `chat_id` under `"telegram"` in `config.json`.
 - **Email** — a Gmail *app password* under `"alert_email"` (critical alerts only).
 - **ntfy** — below.

@@ -228,7 +228,7 @@ including USDT/USDC. We read it from the public blockchain and fill in the rest.
 the scammer moves money &mdash; especially when it hits an exchange, which is when a freeze is possible.</p>
 <div class=topic><input name=ntfy_topic id=topic class=mono value="{e(topic)}">
 <a class="btn ghost" href="https://ntfy.sh/{e(topic)}" target=_blank id=tlink>Open</a></div>
-<p class=hint style="margin-top:10px">Want a second channel (recommended)? After setup, run <span class=mono>python telegram_setup.py</span> to connect Telegram in about 2 minutes.</p>
+<p class=hint style="margin-top:10px">Want a second channel (recommended)? After setup, open <b>Phone alerts</b> on the Desk to connect Telegram in about 2 minutes. No command line needed.</p>
 <details style="margin-top:8px"><summary class=mut style="cursor:pointer">Optional: free keys for deeper Ethereum-family history (all free, no card)</summary>
 <p class=hint style="margin-top:8px">Everything works without these. XRP, Bitcoin, Tron and Solana never need a key. For Ethereum-family chains the free
 public services sometimes block home connections or only show recent activity; a free key fixes that.</p>

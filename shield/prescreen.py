@@ -272,15 +272,15 @@ def behavior(h, now=None):
     receivers = Counter(m["cp"] for m in outs)
     paid_out = sum(m["amount"] for m in outs) >= 0.5 * (sum(m["amount"] for m in ins) or 1)
     if len(senders) >= 15 and receivers and paid_out and len(receivers) <= max(3, len(senders) // 8):
-        out.append(("caution", f"Victim-collector pattern: received from {len(senders)} different wallets, "
-                               f"but pays out to only {len(receivers)} -- how giveaway and investment-scam wallets look."))
+        # benchmark (Nov 2026): fired on 12/87 exchange wallets vs 5/80 known-bad -> context, not a warning
+        out.append(("info", f"Collects from many: received from {len(senders)} different wallets and pays out to only "
+                            f"{len(receivers)}. Exchanges look like this too, so on its own it isn't a warning."))
     if len(receivers) >= 15 and len(senders) <= 3:
-        out.append(("caution", f"Distributor pattern: pays out to {len(receivers)} different wallets but is funded by only "
-                               f"{len(senders)} -- how laundering splitters and wallet 'factories' look (payroll and airdrop "
-                               "wallets can look similar)."))
+        out.append(("info", f"Pays out to many: {len(receivers)} different wallets, funded by only {len(senders)}. "
+                            "Laundering splitters look like this, but so do exchanges, payroll and airdrops."))
     if h.get("created_accounts", 0) >= 5:
-        out.append(("caution", f"Created {h['created_accounts']} brand-new wallets by funding them -- scam operators spin up "
-                               "throwaway wallets this way (exchanges do too)."))
+        out.append(("info", f"Created {h['created_accounts']} brand-new wallets by funding them. Scam operators do this, "
+                            "and so do exchanges."))
     vin, vout = sum(m["amount"] for m in ins), sum(m["amount"] for m in outs)
     if ins and outs and vin and vout / vin > 0.8:
         holds = []
@@ -322,8 +322,8 @@ def _lookalike(a, b):
 def mistakes(addr, chain, h, tag=None, me=None, my_history=None):
     out = []
     if chain == "xrpl" and h.get("flags", 0) & 0x00020000 and not tag:
-        out.append(("stop", "This XRP Ledger account REQUIRES a destination tag (it's an exchange-style account). "
-                            "Sending without one usually means the exchange can't credit you. Get the tag first."))
+        out.append(("check", "This XRP Ledger account REQUIRES a destination tag (it's an exchange-style account). "
+                             "Sending without one usually means the exchange can't credit you. Get the tag first."))
     if chain == "xrpl" and h.get("exists") is False:
         out.append(("info", "This XRP Ledger address isn't activated yet: you must send at least the reserve amount, "
                             "and it has no history to check."))
@@ -395,7 +395,7 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
                 findings.append(("caution", "Behavior", "EIP-7702 delegated wallet: its code is controlled by "
                                  f"0x{h['code'][8:48]}. Unusual for a normal recipient."))
             if chain_given and chain not in pres and pres:
-                findings.append(("caution", "Mistakes", f"No activity on {chain}, but this address IS active on "
+                findings.append(("check", "Mistakes", f"No activity on {chain}, but this address IS active on "
                                  f"{', '.join(pres)}. Make sure you're sending on the network the recipient expects."))
             elif pres:
                 findings.append(("info", "Identity", "Active on: " + ", ".join(pres)))
@@ -424,7 +424,9 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
     for lvl, txt in mistakes(addr, chain, h, tag, me, myh):
         findings.append((lvl, "Mistakes", txt))
     levels = {f[0] for f in findings}
-    verdict = "STOP" if "stop" in levels else ("CAUTION" if "caution" in levels else "NO RED FLAGS FOUND")
+    # "check" = a sending mistake to fix (missing tag, wrong network), not a sign the wallet is a scam
+    verdict = ("STOP" if "stop" in levels else "CAUTION" if "caution" in levels
+               else "CHECK BEFORE SENDING" if "check" in levels else "NO RED FLAGS FOUND")
     res = {"ok": True, "address": addr, "chain": chain, "verdict": verdict, "identity": ident,
            "findings": [{"level": l, "section": s, "text": t} for l, s, t in findings],
            "stats": {"movements": len(h.get("moves", [])), "balance": h.get("balance")},

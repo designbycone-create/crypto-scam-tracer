@@ -16,6 +16,9 @@ sys.path.insert(0, os.path.dirname(HERE))
 from responder.addresses import is_btc_legacy, is_tron, is_xrpl  # noqa: E402
 
 DATA = os.path.join(HERE, "data")
+ROUND = os.environ.get("BENCH_ROUND", "1")
+if ROUND != "1":                         # held-out rounds live beside round 1 and never reuse its addresses
+    DATA = os.path.join(HERE, "data", f"round{ROUND}")
 DL = "https://raw.githubusercontent.com/DefiLlama/DefiLlama-Adapters/main/projects/{}/index.js"
 # DefiLlama project file -> canonical exchange name (proof-of-reserves wallets published by the exchange)
 EXCHANGES = {"okex": "okx", "huobi": "htx", "gate-io": "gate", "bitget": "bitget", "bitstamp": "bitstamp",
@@ -62,14 +65,28 @@ def exchange_addresses(js):
     return out
 
 
-def _pick(items, n):
-    """Deterministic sample: the n items with the smallest SHA-256 of the address."""
-    return sorted(items, key=lambda x: hashlib.sha256(x[1].encode()).hexdigest())[:n]
+def _used_before():
+    """Addresses used in earlier rounds (a held-out round must not reuse them)."""
+    used, n = set(), int(ROUND)
+    for r in range(1, n):
+        p = os.path.join(HERE, "data", "truth.jsonl") if r == 1 else os.path.join(HERE, "data", f"round{r}", "truth.jsonl")
+        if os.path.exists(p):
+            with open(p, encoding="utf-8") as f:
+                used |= {json.loads(l)["address"] for l in f if l.strip()}
+    return used
+
+
+def _pick(items, n, exclude=frozenset()):
+    """Deterministic sample: the n unused items with the smallest SHA-256 of (round salt + address)."""
+    salt = "" if ROUND == "1" else f"round{ROUND}:"
+    pool = [x for x in items if x[1] not in exclude]
+    return sorted(pool, key=lambda x: hashlib.sha256((salt + x[1]).encode()).hexdigest())[:n]
 
 
 def build(per_exchange_chain=4, per_bad_source=20, log=print):
     os.makedirs(DATA, exist_ok=True)
     sources, cases, seen = {}, [], set()
+    used = _used_before()
     stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     for proj, name in EXCHANGES.items():
         url = DL.format(proj)
@@ -84,7 +101,7 @@ def build(per_exchange_chain=4, per_bad_source=20, log=print):
         for ch, a in exchange_addresses(raw.decode("utf-8", "replace")):
             by_chain.setdefault(ch, []).append((ch, a))
         for ch, items in by_chain.items():
-            for ch2, a in _pick(list(dict.fromkeys(items)), per_exchange_chain):
+            for ch2, a in _pick(list(dict.fromkeys(items)), per_exchange_chain, used):
                 if a in seen:
                     continue
                 seen.add(a)
@@ -100,7 +117,7 @@ def build(per_exchange_chain=4, per_bad_source=20, log=print):
         txt = raw.decode("utf-8", "replace")
         addrs = json.loads(txt) if txt.lstrip().startswith("[") else [l.strip() for l in txt.splitlines() if l.strip()]
         items = [(ch, a.lower() if ch == "ethereum" else a) for a in addrs if _chain_of(a.strip()) == ch]
-        for ch2, a in _pick(items, per_bad_source):
+        for ch2, a in _pick(items, per_bad_source, used):
             if a in seen:
                 continue
             seen.add(a)

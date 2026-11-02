@@ -163,8 +163,9 @@ def compromised_post(form):
 # ------------------------------------------------------------ prescreen ---
 
 VERDICT = {"STOP": ("#ff4d6d", "Don't send."), "CAUTION": ("#ffb020", "Think twice before sending."),
+           "CHECK BEFORE SENDING": ("#7cc4ff", "No scam signs found, but fix the items below before you send."),
            "NO RED FLAGS FOUND": ("#2ee6a8", "Nothing bad found -- that's not a guarantee.")}
-LVL = {"stop": ("#ff4d6d", "&#9940;"), "caution": ("#ffb020", "&#9888;&#65039;"), "info": ("#7cc4ff", "&#8505;&#65039;")}
+LVL = {"stop": ("#ff4d6d", "&#9940;"), "caution": ("#ffb020", "&#9888;&#65039;"), "check": ("#7cc4ff", "&#9997;&#65039;"), "info": ("#9aa1b2", "&#8505;&#65039;")}
 
 
 def prescreen_page(form=None, result=None):
@@ -188,7 +189,7 @@ def prescreen_page(form=None, result=None):
                     f"<div>{e(line)}</div><div class='m mut' style='margin-top:6px'>{e(result['address'])} &middot; {e(result['chain'])}"
                     f"{(' &middot; ' + e(result['identity'])) if result.get('identity') else ''}</div></div>")
         rows = ""
-        for x in sorted(result["findings"], key=lambda x: ["stop", "caution", "info"].index(x["level"])):
+        for x in sorted(result["findings"], key=lambda x: ["stop", "caution", "check", "info"].index(x["level"])):
             c, icon = LVL[x["level"]]
             rows += f"<tr><td style='color:{c};white-space:nowrap'>{icon} {e(x['section'])}</td><td>{e(x['text'])}</td></tr>"
         body.append(f"<table>{rows or '<tr><td class=mut>No findings.</td></tr>'}</table>")

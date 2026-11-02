@@ -76,14 +76,19 @@ def compute(cases=None, results=None):
     # 2. behaviour signals only
     def flagged(v):
         return bool(v) and v.get("verdict") in ("STOP", "CAUTION")
-    bad_b = [c for c in bad if val(c, "behaviour_only")]
-    ex_b = [c for c in ex if val(c, "behaviour_only")]
+    # Behaviour can only be judged on wallets with readable on-chain activity: an address that was never
+    # used has no behaviour. Those are counted separately (rule fixed before round 2 was drawn).
+    active = lambda c: (val(c, "behaviour_only").get("movements") or 0) > 0
+    bad_all = [c for c in bad if val(c, "behaviour_only")]
+    ex_all = [c for c in ex if val(c, "behaviour_only")]
+    bad_b, ex_b = [c for c in bad_all if active(c)], [c for c in ex_all if active(c)]
+    m["empty_addresses"] = {"known_bad": len(bad_all) - len(bad_b), "exchange": len(ex_all) - len(ex_b)}
     tp = sum(1 for c in bad_b if flagged(val(c, "behaviour_only")))
     fp = sum(1 for c in ex_b if flagged(val(c, "behaviour_only")))
     m["behaviour_only"] = {"recall_on_known_bad": rate(tp, len(bad_b)),
                            "false_flag_rate_on_exchanges": rate(fp, len(ex_b)),
                            "precision_on_this_mix": rate(tp, tp + fp),
-                           "no_history_bad": sum(1 for c in bad_b if (val(c, "behaviour_only").get("movements") or 0) == 0)}
+                           "no_history_bad": len(bad_all) - len(bad_b)}
     for ch in sorted({c["chain"] for c in bad_b + ex_b}):
         b = [c for c in bad_b if c["chain"] == ch]
         e = [c for c in ex_b if c["chain"] == ch]
@@ -91,7 +96,7 @@ def compute(cases=None, results=None):
             "behaviour_recall": rate(sum(1 for c in b if flagged(val(c, "behaviour_only"))), len(b)),
             "behaviour_false_flags": rate(sum(1 for c in e if flagged(val(c, "behaviour_only"))), len(e))})
     # 3. as deployed (what a user sees) on exchanges
-    ex_d = [c for c in ex if val(c, "as_deployed")]
+    ex_d = [c for c in ex if val(c, "as_deployed") and val(c, "behaviour_only") and active(c)]
     m["as_deployed_exchanges"] = {"false_flag_rate": rate(sum(1 for c in ex_d if flagged(val(c, "as_deployed"))), len(ex_d))}
     return m
 
@@ -104,7 +109,7 @@ def _fmt(r):
 
 def markdown(m, sources):
     i, b = m["identify"], m["behaviour_only"]
-    lines = [f"# ScamHunter error-rate benchmark", "",
+    lines = [f"# ScamHunter error-rate benchmark (round {m.get('round', '1')})", "",
              f"Run {time.strftime('%Y-%m-%d', time.gmtime())}. Every number below comes from running the released tool "
              "on public ground truth it does not itself use. Intervals are 95% Wilson score intervals; small samples give wide ones.", "",
              "## 1. Exchange identification (`exchange-label/1`)", "",
@@ -114,8 +119,9 @@ def markdown(m, sources):
              f"- Unlabelled (no name given; the tool says \"unidentified\"): {i['none']} of {i['cases']}.",
              f"- On known scam / sanctioned wallets, named an exchange: {_fmt(m['identify_on_bad']['named_an_exchange'])}.", "",
              "## 2. Pre-screen behaviour signals alone (`behavior-signal/1`), every list lookup switched off", "",
-             f"- Flagged known scam / sanctioned wallets: **{_fmt(b['recall_on_known_bad'])}** "
-             f"({b['no_history_bad']} of them had no readable history at all).",
+             f"- Flagged known scam / sanctioned wallets with on-chain activity: **{_fmt(b['recall_on_known_bad'])}**.",
+             f"- Never-used addresses, not judged (no behaviour exists): {m['empty_addresses']['known_bad']} known-bad, "
+             f"{m['empty_addresses']['exchange']} exchange-published.",
              f"- Wrongly flagged exchange wallets: **{_fmt(b['false_flag_rate_on_exchanges'])}**.",
              f"- As users actually run it (lists and identity on), exchange wallets flagged: {_fmt(m['as_deployed_exchanges']['false_flag_rate'])}.", "",
              "## By chain", "", "| Chain | Identification recall | Behaviour recall on bad | Behaviour false flags |", "|---|---|---|---|"]
@@ -135,12 +141,14 @@ def markdown(m, sources):
 
 def write():
     m = compute()
+    m["round"] = truth.ROUND
     with open(os.path.join(truth.DATA, "sources.json"), encoding="utf-8") as f:
         sources = json.load(f)
     with open(os.path.join(truth.DATA, "metrics.json"), "w", encoding="utf-8") as f:
         json.dump(m, f, indent=1)
     md = markdown(m, sources)
-    with open(os.path.join(HERE, "RESULTS.md"), "w", encoding="utf-8") as f:
+    out_md = os.path.join(HERE, "RESULTS.md" if truth.ROUND == "1" else f"RESULTS_round{truth.ROUND}.md")
+    with open(out_md, "w", encoding="utf-8") as f:
         f.write(md)
     print(md)
     return m

@@ -1,0 +1,220 @@
+{
+ "errors_or_timeouts": 0,
+ "by_chain": {
+  "bitcoin": {
+   "identify_recall": {
+    "k": 0,
+    "n": 9,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.299
+    ]
+   },
+   "behaviour_recall": {
+    "k": 5,
+    "n": 20,
+    "rate": 0.25,
+    "ci95": [
+     0.112,
+     0.469
+    ]
+   },
+   "behaviour_false_flags": {
+    "k": 7,
+    "n": 9,
+    "rate": 0.7777777777777778,
+    "ci95": [
+     0.453,
+     0.937
+    ]
+   }
+  },
+  "ethereum": {
+   "identify_recall": {
+    "k": 5,
+    "n": 32,
+    "rate": 0.15625,
+    "ci95": [
+     0.069,
+     0.318
+    ]
+   },
+   "behaviour_recall": {
+    "k": 21,
+    "n": 40,
+    "rate": 0.525,
+    "ci95": [
+     0.375,
+     0.671
+    ]
+   },
+   "behaviour_false_flags": {
+    "k": 12,
+    "n": 32,
+    "rate": 0.375,
+    "ci95": [
+     0.229,
+     0.547
+    ]
+   }
+  },
+  "tron": {
+   "identify_recall": {
+    "k": 0,
+    "n": 22,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.149
+    ]
+   },
+   "behaviour_recall": {
+    "k": 12,
+    "n": 20,
+    "rate": 0.6,
+    "ci95": [
+     0.387,
+     0.781
+    ]
+   },
+   "behaviour_false_flags": {
+    "k": 7,
+    "n": 22,
+    "rate": 0.3181818181818182,
+    "ci95": [
+     0.164,
+     0.527
+    ]
+   }
+  },
+  "xrpl": {
+   "identify_recall": {
+    "k": 8,
+    "n": 24,
+    "rate": 0.3333333333333333,
+    "ci95": [
+     0.18,
+     0.533
+    ]
+   },
+   "behaviour_recall": {
+    "k": 0,
+    "n": 0,
+    "rate": null,
+    "ci95": [
+     0.0,
+     1.0
+    ]
+   },
+   "behaviour_false_flags": {
+    "k": 14,
+    "n": 24,
+    "rate": 0.5833333333333334,
+    "ci95": [
+     0.388,
+     0.755
+    ]
+   }
+  }
+ },
+ "identify": {
+  "cases": 87,
+  "correct": 13,
+  "wrong_exchange": 0,
+  "other_label": 2,
+  "none": 72,
+  "recall": {
+   "k": 13,
+   "n": 87,
+   "rate": 0.14942528735632185,
+   "ci95": [
+    0.089,
+    0.239
+   ]
+  },
+  "precision_strict": {
+   "k": 13,
+   "n": 15,
+   "rate": 0.8666666666666667,
+   "ci95": [
+    0.621,
+    0.963
+   ]
+  },
+  "wrong_exchange_rate": {
+   "k": 0,
+   "n": 15,
+   "rate": 0.0,
+   "ci95": [
+    0.0,
+    0.204
+   ]
+  },
+  "examples_wrong": [
+   [
+    "0xe733455faddf4999176e99a0ec084e978f5552ed",
+    "bitfinex",
+    "Fee Recipient: 0xE7...2eD (service)"
+   ],
+   [
+    "0x42a93a9f5cfda54716c414b6eaf07cf512f46ead",
+    "binance",
+    "Fee Recipient: 0x42A...eAD (service)"
+   ]
+  ]
+ },
+ "identify_on_bad": {
+  "cases": 80,
+  "named_an_exchange": {
+   "k": 0,
+   "n": 80,
+   "rate": 0.0,
+   "ci95": [
+    0.0,
+    0.046
+   ]
+  }
+ },
+ "behaviour_only": {
+  "recall_on_known_bad": {
+   "k": 38,
+   "n": 80,
+   "rate": 0.475,
+   "ci95": [
+    0.369,
+    0.583
+   ]
+  },
+  "false_flag_rate_on_exchanges": {
+   "k": 40,
+   "n": 87,
+   "rate": 0.45977011494252873,
+   "ci95": [
+    0.359,
+    0.564
+   ]
+  },
+  "precision_on_this_mix": {
+   "k": 38,
+   "n": 78,
+   "rate": 0.48717948717948717,
+   "ci95": [
+    0.379,
+    0.596
+   ]
+  },
+  "no_history_bad": 10
+ },
+ "as_deployed_exchanges": {
+  "false_flag_rate": {
+   "k": 42,
+   "n": 87,
+   "rate": 0.4827586206896552,
+   "ci95": [
+    0.381,
+    0.586
+   ]
+  }
+ }
+}

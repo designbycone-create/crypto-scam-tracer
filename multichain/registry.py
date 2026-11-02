@@ -5,7 +5,7 @@ from .core import chain
 
 def get_adapter(chain_key):
     info = chain(chain_key)
-    if info.key == "bitcoin":
+    if info.key in ("bitcoin", "litecoin"):
         from .adapters.btc import BitcoinAdapter
         return BitcoinAdapter(info)
     if info.key == "tron":

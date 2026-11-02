@@ -34,6 +34,12 @@ def is_tron(a):
     return bool(b) and len(b) == 21 and b[0] == 0x41
 
 
+def is_ltc_legacy(a):
+    """Litecoin P2PKH (L...) / P2SH (M...): version bytes 0x30 / 0x32."""
+    b = _b58check(a, _BTC_ALPHA) if a[:1] in ("L", "M") else None
+    return bool(b) and len(b) == 21 and b[0] in (0x30, 0x32)
+
+
 def is_btc_legacy(a):
     b = _b58check(a, _BTC_ALPHA) if a[:1] in ("1", "3") else None
     return bool(b) and len(b) == 21 and b[0] in (0x00, 0x05)
@@ -71,6 +77,7 @@ _RX = {
     "xrpl": re.compile(r"\br[1-9A-HJ-NP-Za-km-z]{24,34}\b"),
     "tron": re.compile(r"\bT[1-9A-HJ-NP-Za-km-z]{33}\b"),
     "bitcoin": re.compile(r"\b(?:[13][1-9A-HJ-NP-Za-km-z]{25,34}|bc1[02-9ac-hj-np-z]{11,71})\b"),
+    "litecoin": re.compile(r"\b(?:[LM][1-9A-HJ-NP-Za-km-z]{25,34}|ltc1[02-9ac-hj-np-z]{11,71})\b"),
     "ethereum": re.compile(r"\b0x[0-9a-fA-F]{40}\b"),
     "aptos": re.compile(r"\b0x[0-9a-fA-F]{62,64}\b"),   # Aptos accounts (EVM addresses are 40 hex)
     "solana": re.compile(r"\b[1-9A-HJ-NP-Za-km-z]{32,44}\b"),
@@ -88,6 +95,7 @@ def extract(text):
             a = m.group(0)
             ok = {"xrpl": is_xrpl, "tron": is_tron,
                   "bitcoin": lambda x: x.startswith("bc1") or is_btc_legacy(x),
+                  "litecoin": lambda x: x.startswith("ltc1") or is_ltc_legacy(x),
                   "ethereum": lambda x: True, "aptos": lambda x: True, "solana": is_solana}[chain](a)
             key = (chain, a.lower() if chain in ("ethereum", "aptos") else a)
             if ok and key not in seen:

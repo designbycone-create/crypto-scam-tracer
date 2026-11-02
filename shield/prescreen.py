@@ -174,26 +174,30 @@ def history_tron(addr):
     return {"exists": bool(moves), "moves": moves, "balance": None, "complete": len(moves) < 150}
 
 
-def history_btc(addr):
+ESPLORA = {"bitcoin": ("https://mempool.space/api", "BTC"), "litecoin": ("https://litecoinspace.org/api", "LTC")}
+
+
+def history_btc(addr, chain="bitcoin"):
+    base, sym = ESPLORA.get(chain, ESPLORA["bitcoin"])
     moves = []
     total = None
     try:
-        st = _get(f"https://mempool.space/api/address/{addr}") or {}
+        st = _get(f"{base}/address/{addr}") or {}
         total = (st.get("chain_stats") or {}).get("tx_count")
     except Exception:
         pass
     try:
-        for tx in _get(f"https://mempool.space/api/address/{addr}/txs") or []:
+        for tx in _get(f"{base}/address/{addr}/txs") or []:
             ins = [(v.get("prevout") or {}).get("scriptpubkey_address") for v in tx.get("vin", [])]
             ep = (tx.get("status") or {}).get("block_time") or int(time.time())
             if addr in ins:
                 for o in tx.get("vout", []):
                     if o.get("scriptpubkey_address") not in (addr, None):
-                        moves.append({"dir": "out", "cp": o["scriptpubkey_address"], "amount": o.get("value", 0) / 1e8, "asset": "BTC", "t": ep})
+                        moves.append({"dir": "out", "cp": o["scriptpubkey_address"], "amount": o.get("value", 0) / 1e8, "asset": sym, "t": ep})
             else:
                 got = sum(o.get("value", 0) for o in tx.get("vout", []) if o.get("scriptpubkey_address") == addr)
                 if got:
-                    moves.append({"dir": "in", "cp": next((i for i in ins if i), None), "amount": got / 1e8, "asset": "BTC", "t": ep})
+                    moves.append({"dir": "in", "cp": next((i for i in ins if i), None), "amount": got / 1e8, "asset": sym, "t": ep})
     except Exception:
         pass
     return {"exists": bool(moves), "moves": moves, "balance": None,
@@ -353,7 +357,7 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
     addr = (addr or "").strip()
     fams = detect_address(addr)
     if not fams:
-        return {"ok": False, "error": "That isn't a wallet address we recognize (XRP Ledger, EVM, Tron, Bitcoin, Solana, Aptos)."}
+        return {"ok": False, "error": "That isn't a wallet address we recognize (XRP Ledger, EVM, Tron, Bitcoin, Litecoin, Solana, Aptos)."}
     chain_given = chain in fams
     if not chain_given:
         chain = fams[0]
@@ -369,8 +373,8 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
             h = history_xrpl(addr)
         elif chain in ("tron",):
             h = history_tron(addr)
-        elif chain == "bitcoin":
-            h = history_btc(addr)
+        elif chain in ("bitcoin", "litecoin"):
+            h = history_btc(addr, chain)
         elif chain == "solana":
             from . import solana
             h = solana.history(addr)
@@ -416,7 +420,7 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
             mfam = detect_address(me)
             mchain = chain if chain in mfam else (mfam[0] if mfam else None)
             myh = (history_xrpl(me) if mchain == "xrpl" else history_tron(me) if mchain == "tron"
-                   else history_btc(me) if mchain == "bitcoin"
+                   else history_btc(me, mchain) if mchain in ("bitcoin", "litecoin")
                    else __import__("shield.aptos", fromlist=["x"]).history(me) if mchain == "aptos"
                    else history_evm(me, mchain) if mchain else None)
         except Exception:

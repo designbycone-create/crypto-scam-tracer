@@ -254,8 +254,8 @@ def scan(wallet, chains=None, log=print):
             res["takeover"] += mod.takeover(wallet)
         except Exception as e:
             res.setdefault("errors", {})[f"{fam}-takeover"] = str(e)[:120]
-    elif fam == "bitcoin":
-        res["chains"]["bitcoin"] = []
+    elif fam in ("bitcoin", "litecoin"):
+        res["chains"][fam] = []
         res["notes"].append("Bitcoin has no token approvals. If funds left without you, the wallet's seed/private key was "
                             "exposed: move what's left to a NEW wallet created on a clean device.")
     try:

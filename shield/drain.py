@@ -96,8 +96,8 @@ def analyze(wallet, chains=None, since_epoch=None, log=print):
             drains += __import__(f"shield.{fam}", fromlist=["x"]).drains(wallet)
         except Exception as e:
             log(f"drain: {fam} failed ({e})")
-    elif fam == "bitcoin":
-        chains = ["bitcoin"]
+    elif fam in ("bitcoin", "litecoin"):
+        chains = [fam]
         notes.append("Bitcoin has no approvals: if coins left without you, the seed/private key was exposed. Every outgoing "
                      "transaction is signed by your key, so we can't separate yours from the thief's -- check your outgoing "
                      "history and start a case with the thief's address.")

@@ -10,6 +10,8 @@ from ..core import Adapter, Transfer, iso_from_epoch
 from ..util import http_json
 
 API = "https://mempool.space/api"
+# Esplora-compatible public servers (same API as mempool.space), free, no key
+ESPLORA = {"bitcoin": "https://mempool.space/api", "litecoin": "https://litecoinspace.org/api"}
 
 
 class BitcoinAdapter(Adapter):
@@ -17,7 +19,7 @@ class BitcoinAdapter(Adapter):
         floor = self.info.min_native if min_native is None else min_native
         out = []
         # mempool.space returns up to ~50 confirmed txs per page (+ mempool).
-        txs = http_json(f"{API}/address/{address}/txs")
+        txs = http_json(f"{ESPLORA.get(self.key, API)}/address/{address}/txs")
         for tx in txs:
             inputs = {vin.get("prevout", {}).get("scriptpubkey_address") for vin in tx.get("vin", [])}
             if address not in inputs:
@@ -34,8 +36,8 @@ class BitcoinAdapter(Adapter):
                 if amt < floor:
                     continue
                 out.append(Transfer(
-                    chain="bitcoin", txid=tx.get("txid"), time=iso_from_epoch(ep), epoch=ep,
-                    frm=address, to=dest, asset="BTC", amount=amt))
+                    chain=self.key, txid=tx.get("txid"), time=iso_from_epoch(ep), epoch=ep,
+                    frm=address, to=dest, asset=self.info.native, amount=amt))
                 if len(out) >= limit:
                     return out
         return out

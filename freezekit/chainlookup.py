@@ -70,22 +70,27 @@ def _epoch_from_iso(s):
         return None
 
 
-def bitcoin(h):
+def litecoin(h):
+    r = bitcoin(h, base="https://litecoinspace.org/api", chain="litecoin", sym="LTC")
+    return r
+
+
+def bitcoin(h, base="https://mempool.space/api", chain="bitcoin", sym="BTC"):
     try:
-        tx = _get(f"https://mempool.space/api/tx/{h.lower()}")
+        tx = _get(f"{base}/tx/{h.lower()}")
     except Exception:
         return None
     ins = [v.get("prevout", {}).get("scriptpubkey_address") for v in tx.get("vin", [])]
     outs = [(o.get("scriptpubkey_address"), (o.get("value") or 0) / 1e8) for o in tx.get("vout", [])
             if o.get("scriptpubkey_address") and o.get("scriptpubkey_address") not in ins]
     ep = (tx.get("status") or {}).get("block_time")
-    r = {"ok": True, "chain": "bitcoin", "hash": tx.get("txid"), "from": ins[0] if ins else None,
+    r = {"ok": True, "chain": chain, "hash": tx.get("txid"), "from": ins[0] if ins else None,
          "time": _iso(ep), "epoch": ep}
     if len(outs) == 1:
-        r.update({"to": outs[0][0], "amount": f"{_fmt(outs[0][1])} BTC"})
+        r.update({"to": outs[0][0], "amount": f"{_fmt(outs[0][1])} {sym}"})
     else:
-        r.update({"to": None, "candidates": [{"to": a, "amount": f"{_fmt(v)} BTC"} for a, v in outs],
-                  "warning": "This Bitcoin transaction paid several addresses. Pick the scammer's address below."})
+        r.update({"to": None, "candidates": [{"to": a, "amount": f"{_fmt(v)} {sym}"} for a, v in outs],
+                  "warning": f"This {chain.title()} transaction paid several addresses. Pick the scammer's address below."})
     return r
 
 
@@ -194,11 +199,13 @@ def lookup(text):
         return {"ok": False, "error": "No transaction hash found. Paste the hash/signature or the explorer link."}
     h = m.group(0)
     low = text.lower()
-    order = [xrpl, bitcoin, tron]
+    order = [xrpl, bitcoin, tron, litecoin]
     if "mempool" in low or "blockstream" in low or "btc" in low or "bitcoin" in low:
-        order = [bitcoin, xrpl, tron]
+        order = [bitcoin, xrpl, tron, litecoin]
     elif "tron" in low:
-        order = [tron, xrpl, bitcoin]
+        order = [tron, xrpl, bitcoin, litecoin]
+    if "litecoin" in low or "ltc" in low:
+        order = [litecoin, bitcoin, xrpl, tron]
     for fn in order:
         try:
             r = fn(h)
@@ -206,7 +213,7 @@ def lookup(text):
             r = None
         if r and r.get("ok"):
             return r
-    return {"ok": False, "error": "Couldn't find that transaction on the XRP Ledger, Bitcoin or Tron."}
+    return {"ok": False, "error": "Couldn't find that transaction on the XRP Ledger, Bitcoin, Tron or Litecoin."}
 
 
 def detect_address(a):

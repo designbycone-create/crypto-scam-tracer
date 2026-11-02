@@ -1,11 +1,11 @@
 # ScamHunter Desk - one-line Windows installer (free for victims).
-#   irm https://raw.githubusercontent.com/designbycone-create/crypto-scam-tracer/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/designbycone-create/crypto-scam-tracer/stable/install.ps1 | iex
 # Installs to %USERPROFILE%\ScamHunter, adds Start Menu / Desktop / startup shortcuts,
 # then opens the setup page in your browser. No admin rights needed.
 $ErrorActionPreference = 'Stop'
 $Dir  = Join-Path $env:USERPROFILE 'ScamHunter'
 $Zip  = Join-Path $env:TEMP 'scamhunter.zip'
-$Repo = 'https://github.com/designbycone-create/crypto-scam-tracer/archive/refs/heads/main.zip'
+$Repo = 'https://github.com/designbycone-create/crypto-scam-tracer/archive/refs/heads/stable.zip'   # signed releases only
 Write-Host "`nScamHunter Desk installer" -ForegroundColor Cyan
 Write-Host "Free for victims. It will never ask for money or a seed phrase.`n"
 
@@ -31,7 +31,7 @@ Write-Host "Python OK ($py)"
 
 # 2. Download / update (keeps your case files). Pin the exact version so the Desk's Updates page knows what's installed.
 $sha = $null
-try { $sha = (Invoke-RestMethod 'https://api.github.com/repos/designbycone-create/crypto-scam-tracer/commits/main' -TimeoutSec 20).sha } catch {}
+try { $sha = (Invoke-RestMethod 'https://api.github.com/repos/designbycone-create/crypto-scam-tracer/commits/stable' -TimeoutSec 20).sha } catch {}
 if ($sha) { $Repo = "https://github.com/designbycone-create/crypto-scam-tracer/archive/$sha.zip" }
 Invoke-WebRequest $Repo -OutFile $Zip -UseBasicParsing
 $tmp = Join-Path $env:TEMP 'scamhunter_x'; Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue

@@ -18,6 +18,17 @@ Maintainer public key: `c266c6598392a472899e7562045ddda9825d15d13a4d6584bcfd47bc
 
 Maintainer public key fingerprint: **`fa946f505ab1ef57`**
 
+## How a release is made
+
+1. Changes land on the `main` branch. Nobody's Desk installs from `main`.
+2. The maintainer signs one exact version on their own computer:
+   `powershell -ExecutionPolicy Bypass -File tools\sign_release.ps1 -Sha <commit>`
+   The script downloads that version from GitHub, checks it, and writes `RELEASE.json` and `RELEASE.sig`.
+   The private key never leaves that computer.
+3. Those two files are committed, the signature is verified again from a clean download, and only then
+   does the `stable` branch move to that commit.
+4. Installs and the Desk's Updates page use `stable`. An unsigned or altered version can't reach users.
+
 ## Check a copy yourself
 
 You need only Python, nothing from ScamHunter. In the folder you downloaded:

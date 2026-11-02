@@ -32,7 +32,7 @@ HEAD = {"sha": NEW}
 
 
 def http(url):
-    if url.endswith("/commits/main"):
+    if url.endswith("/commits/" + updater.BRANCH):
         return json.dumps({"sha": HEAD["sha"], "commit": {"message": "Add Aptos\n\nbody", "committer": {"date": "2026-11-01T20:00:00Z"}}}).encode()
     if "/compare/" in url:
         return json.dumps({"commits": [{"commit": {"message": "Add Aptos"}}, {"commit": {"message": "Telegram page"}}]}).encode()

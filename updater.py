@@ -23,7 +23,7 @@ import urllib.request
 import zipfile
 
 REPO = "designbycone-create/crypto-scam-tracer"
-BRANCH = "main"
+BRANCH = "stable"      # only signed releases are ever placed on this branch
 HERE = os.path.dirname(os.path.abspath(__file__))
 VERSION_FILE = os.path.join(HERE, "VERSION")
 STATE = os.path.join(HERE, "update_state.json")

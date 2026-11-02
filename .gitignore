@@ -61,3 +61,4 @@ VERSION
 update_state.json
 backups/
 benchmark/data/results.jsonl
+signed/

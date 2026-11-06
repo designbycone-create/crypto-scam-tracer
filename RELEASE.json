@@ -25,7 +25,7 @@
   "benchmark/run.py": "dbbf23359c8be26d84d87d3c0fdb9bf4e8e2c070e6acb7051327b3f6d1f86e8b",
   "benchmark/truth.py": "a86763e4c779d2439390bc7bc75227d5668e8a76b893d3f7fb60dd77b5ca8ee5",
   "config.example.json": "1bf807c13743d39d1cd84248795f9666b77238029ac6e922b946b09880116acc",
-  "desk.py": "70f403236ce13203ce4b0c6452f92da1ab9d3f9a0d1c42b87152119c61472468",
+  "desk.py": "f8f28252ac4e13c7998db5d75dc44c8b4391271b60de5f8b19323e7a2b8ba37d",
   "evidence/COURT_READINESS.md": "f681082d08894747387fff573555d6debf34d7aa428c24aae330b0bb0cb73944",
   "evidence/__init__.py": "dc913ce5aa656f78546212740d60fbc62314595971236da3cdd4ac578ed2c552",
   "evidence/capture.py": "4eaadc029c87b67b5df296ea5c88b36bd4743e79574f4fe32b4ef41bcccdc07b",
@@ -57,7 +57,7 @@
   "freezekit/update_web.py": "23c277791a788c74de409e0563f0a30cf23da1e0b2f7519d3fd863d97bcd8560",
   "freezekit/web.py": "419ab052bacb0f0e22bf97adda8d7ced33a591863954f2a89f4ca2d21e95a138",
   "freezekit/xrpl_tokens.py": "9fd24159a094466d2382a99a0e2ce223528c11b25cf6012ab8bbaa7ea39ae7d0",
-  "install.ps1": "7f208c0d4c9dd7448e684e0d54955feee5dce8265fd0416f37ae32d010aef133",
+  "install.ps1": "dd4abbdcd68456e448d71cbc48c0da29770c5c86feb8346b9ad7a9e1136fdfd7",
   "multichain/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "multichain/__main__.py": "284e7c04915b44aa72c53d6a66f960be0df385aad466502a3c203252b0c6c7d1",
   "multichain/adapters/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -73,6 +73,7 @@
   "multichain/registry.py": "9ff2b2f0c46fddc596ecd722d2f09292c110330fd7a6bc76cb94ae20f9dd9ead",
   "multichain/report.py": "bcb41c0004464c242d78fe1a67c4dc8f3f626788ebbad3a25771444089504351",
   "multichain/util.py": "8cf2f3719e933694d191a2fab4d50c6ccb55ce781001a2acab58aa89cd85e0f7",
+  "open_desk.vbs": "41344a158cb27a07fbbbb19594db5b920ecd180a4a606c1fa4dc038eed826314",
   "release_sig.py": "b97a009d1763403297723b86b69ac570cf0e6fd1b21cba7f2d2b065f8204326c",
   "requirements.txt": "ef78c2b03c7d4c147395287328e0d858c78b7dc2b3c6906fe9d1256d04c0fd29",
   "responder/__init__.py": "73f92d2e12034cc1ba1bfc78ab5407dc996f4b46f732c82b9cb97fddd91297ba",
@@ -129,6 +130,7 @@
   "shield/web.py": "3e8cb457d648c988d69a0c77a714e08e4529e4d7862002edd5c96de6db241d11",
   "shield/xrpl.py": "b5cf6aaa6c56044566423bd105f5eda3da20a6247e9b24a8b2c7556adf723ba1",
   "telegram_setup.py": "f7f263a26bd1b7c7fad0cf48e4dc080280559b483b4141606f8db3074e4a8cf6",
+  "test_desk_launch_offline.py": "68657da2abb10ed9a6311795e8bdbc7442d3ca0749eae9a33ee94cca3389ee81",
   "test_updater_offline.py": "002f51d1e700d9c6599379e98ff5e716cf2dddedf361e1fb1369ec4b2dbf16d6",
   "tools/sign_release.ps1": "37ab8b824ea1cb07d2c299341776ba9e5359518046a2dc76b5f9bd1632893780",
   "updater.py": "799b31ef65d3f30b36ae6df445c742bc9c6dd0a311f4a0cf3dfcb37a76bff1bb",
@@ -136,7 +138,7 @@
   "xrpl_watcher.py": "e93d9cf02a0621fbfca75a197a604e79fe4d3635a74d2e1f763d05fddeebedca"
  },
  "meta": {
-  "signed_at": "2026-11-02T15:16:40Z",
-  "note": "Litecoin, chain sources, benchmark results"
+  "signed_at": "2026-11-06T02:57:23Z",
+  "note": "Desk icons start the Desk if needed; leftover watchers stopped"
  }
 }

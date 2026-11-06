@@ -695,6 +695,65 @@ def ensure_deps():
             print("  pip attempt failed:", e, flush=True)
 
 
+def _already_running(port):
+    """True if a ScamHunter Desk already answers on this port (so a second copy must not start)."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=2) as r:
+            return b"ScamHunter" in r.read(4096)
+    except Exception:
+        return False
+
+
+def _stop_orphans(log=print):
+    """Windows: stop watchers left running by a Desk that died (their parent is gone), so they
+    don't run twice once this Desk starts its own. Only exact matches of our own service commands."""
+    if os.name != "nt":
+        return 0
+    tails = [" ".join(" ".join(argv[1:]).replace('"', "").split()) for _, argv, _ in SERVICES]
+    ps = ("$p=Get-CimInstance Win32_Process -Filter \"Name like 'python%'\"; $ids=@{}; "
+          "Get-Process | ForEach-Object { $ids[$_.Id]=1 }; "
+          "$p | Where-Object { -not $ids.ContainsKey([int]$_.ParentProcessId) } | "
+          "ForEach-Object { \"$($_.ProcessId)`t$($_.CommandLine)\" }")
+    try:
+        out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
+                             timeout=30, creationflags=0x08000000).stdout
+    except Exception:
+        return 0
+    n = 0
+    for line in out.splitlines():
+        pid, _, cmd = line.partition("\t")
+        cmd = " ".join(cmd.replace('"', "").split())
+        if pid.strip().isdigit() and any(cmd.endswith(" " + t) for t in tails):
+            subprocess.run(["taskkill", "/PID", pid.strip(), "/F"], capture_output=True, creationflags=0x08000000)
+            log(f"stopped a watcher left over from an earlier Desk (pid {pid.strip()})")
+            n += 1
+    return n
+
+
+def _repair_shortcuts(log=print):
+    """Windows: older installs made Desktop / Start Menu icons that only opened the web page, so they
+    did nothing once the Desk had stopped. Replace them with icons that start the Desk if needed."""
+    opener = os.path.join(HERE, "open_desk.vbs")
+    if os.name != "nt" or not os.path.exists(opener):
+        return
+    q = lambda t: t.replace("'", "''")          # PowerShell single-quote escaping
+    ps = ("$ws=New-Object -ComObject WScript.Shell; "
+          "foreach ($p in @([Environment]::GetFolderPath('Programs'),[Environment]::GetFolderPath('Desktop'))) { "
+          "$u=Join-Path $p 'ScamHunter Desk.url'; if ((Test-Path $u) -and ((Get-Content $u -Raw) -match '127\\.0\\.0\\.1:8787')) { "
+          "$s=$ws.CreateShortcut((Join-Path $p 'ScamHunter Desk.lnk')); "
+          "$s.TargetPath=\"$env:WINDIR\\System32\\wscript.exe\"; $s.Arguments='\"" + q(opener) + "\"'; "
+          "$s.WorkingDirectory='" + q(HERE) + "'; $s.IconLocation=\"$env:WINDIR\\System32\\shell32.dll,47\"; "
+          "$s.Description='Open ScamHunter Desk (starts it if needed)'; $s.Save(); Remove-Item $u; 'fixed ' + $p } }")
+    try:
+        out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
+                             timeout=30, creationflags=0x08000000).stdout.strip()
+        if out:
+            log("shortcuts updated: icons now start the Desk if it isn't running")
+    except Exception:
+        pass
+
+
 def main():
     ensure_deps()
     _evidence_on()
@@ -703,6 +762,13 @@ def main():
     ap.add_argument("--no-open", action="store_true")
     a = ap.parse_args()
     os.chdir(HERE)
+    if _already_running(a.port):
+        print(f"ScamHunter Desk is already running at http://127.0.0.1:{a.port}/")
+        if not a.no_open:
+            webbrowser.open(f"http://127.0.0.1:{a.port}/")
+        return
+    _stop_orphans()
+    _repair_shortcuts()
 
     stop_evt = threading.Event()
     try:   # one-click updates: background check (never installs by itself) + a way to stop watchers before restart

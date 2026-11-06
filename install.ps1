@@ -51,9 +51,13 @@ $cmd = Join-Path $Dir 'run_desk.cmd'
 $startup = Join-Path ([Environment]::GetFolderPath('Startup')) 'ScamHunter Desk.lnk'
 $vbs = Join-Path $Dir 'run_desk_hidden.vbs'
 $l = $ws.CreateShortcut($startup); $l.TargetPath = "$env:WINDIR\System32\wscript.exe"; $l.Arguments = "`"$vbs`""; $l.WorkingDirectory = $Dir; $l.Save()
+$open = Join-Path $Dir 'open_desk.vbs'      # starts the Desk if it's down, then opens the dashboard
 foreach ($p in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFolderPath('Desktop'))) {
-  $u = Join-Path $p 'ScamHunter Desk.url'
-  "[InternetShortcut]`r`nURL=http://127.0.0.1:8787/" | Set-Content $u -Encoding ASCII
+  Remove-Item (Join-Path $p 'ScamHunter Desk.url') -ErrorAction SilentlyContinue   # older installs: link that only opened the page
+  $s = $ws.CreateShortcut((Join-Path $p 'ScamHunter Desk.lnk'))
+  $s.TargetPath = "$env:WINDIR\System32\wscript.exe"; $s.Arguments = "`"$open`""; $s.WorkingDirectory = $Dir
+  $s.IconLocation = "$env:WINDIR\System32\shell32.dll,47"; $s.Description = 'Open ScamHunter Desk (starts it if needed)'
+  $s.Save()
 }
 Write-Host "Shortcuts created (Desktop + Start Menu; starts automatically when you sign in)"
 

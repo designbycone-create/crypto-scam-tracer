@@ -19,6 +19,12 @@ one channel being down or over quota never loses a cash-out alert):
                   "username": "you@gmail.com", "app_password": "16-char app password",
                   "to": "you@gmail.com"}                        (critical only)
 
+Each channel can be paused without losing its settings (Desk page /alerts, or
+`python alerts.py ntfy off|on`, `python alerts.py telegram off|on`). The switch is
+stored in config.json as "alerts_enabled": {"ntfy": true, "telegram": true} and is
+read fresh on every alert, so running watchers obey it without a restart. A paused
+channel is also dropped from queued alerts, so the outbox stops retrying it.
+
 Standard-library only. Safe to call from several processes (simple file
 locking via atomic replace; worst case an alert is sent twice, never lost).
 """
@@ -36,6 +42,50 @@ try:
     import scamconfig
 except Exception:
     scamconfig = None
+
+
+SWITCHABLE = ("ntfy", "telegram")
+_flags_cache = {"mtime": None, "flags": {}}
+
+
+def _config_path():
+    return "config.json"
+
+
+def enabled_flags():
+    """{"ntfy": bool, "telegram": bool} from config.json (re-read whenever the file changes)."""
+    path = _config_path()
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return {ch: True for ch in SWITCHABLE}
+    if mtime != _flags_cache["mtime"]:
+        raw = (_load(path, {}) or {}).get("alerts_enabled") or {}
+        _flags_cache.update(mtime=mtime, flags={ch: raw.get(ch, True) is not False for ch in SWITCHABLE})
+    return dict(_flags_cache["flags"])
+
+
+def is_enabled(channel):
+    return enabled_flags().get(channel, True)
+
+
+def set_enabled(channel, on):
+    """Turn one channel on or off in config.json, keeping every other setting."""
+    if channel not in SWITCHABLE:
+        raise ValueError(f"unknown channel {channel!r} (use one of {', '.join(SWITCHABLE)})")
+    path = _config_path()
+    cfg = _load(path, {}) or {}
+    flags = dict(cfg.get("alerts_enabled") or {})
+    flags[channel] = bool(on)
+    cfg["alerts_enabled"] = flags
+    tmp = f"{path}.{os.getpid()}.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
+    os.replace(tmp, path)
+    _flags_cache["mtime"] = None
+    if scamconfig is not None:
+        scamconfig._cache = None
+    return enabled_flags()
 
 
 def _topic():
@@ -75,10 +125,10 @@ def _cfg(key):
 def channels(critical):
     """Configured channels for an alert of this priority."""
     out = []
-    if _topic():
+    if _topic() and is_enabled("ntfy"):
         out.append("ntfy")
     tg = _cfg("telegram")
-    if tg.get("bot_token") and tg.get("chat_id"):
+    if tg.get("bot_token") and tg.get("chat_id") and is_enabled("telegram"):
         out.append("telegram")
     em = _cfg("alert_email")
     if critical and em.get("smtp_host") and em.get("username") and em.get("app_password"):
@@ -139,11 +189,21 @@ _SENDERS = {"ntfy": _post_ntfy, "telegram": _post_telegram, "email": _post_email
 
 def _post(item):
     """Try every channel still pending for this item. Returns (all_done, error)."""
+    avail = channels(item.get("critical"))
     pend = item.get("pending_channels")
     if pend is None:
-        pend = channels(item.get("critical"))
+        pend = avail
+    else:
+        # a channel paused (or removed) since this alert was queued is no longer retried
+        dropped = [ch for ch in pend if ch not in avail]
+        if dropped:
+            item.setdefault("skipped_channels", []).extend(dropped)
+        pend = [ch for ch in pend if ch in avail]
+        if not pend and item.get("delivered_via"):
+            item["pending_channels"] = []
+            return True, ""
     if not pend:
-        return False, "no alert channel configured (set ntfy_topic / telegram / alert_email)"
+        return False, "no alert channel on (set up or turn on ntfy / telegram / alert_email)"
     left, errs = [], []
     for ch in pend:
         try:
@@ -259,9 +319,30 @@ def test():
             print(f"  {ch:9} FAILED: {e}")
 
 
+def status():
+    flags = enabled_flags()
+    tg = _cfg("telegram")
+    rows = [("ntfy", bool(_topic())), ("telegram", bool(tg.get("bot_token") and tg.get("chat_id")))]
+    for ch, configured in rows:
+        state = ("ON" if flags[ch] else "OFF (paused)") if configured else "not set up"
+        print(f"  {ch:9} {state}")
+    if not channels(True):
+        print("  WARNING: no channel is on. Alerts will only show on the Desk.")
+
+
+USAGE = "usage: python alerts.py test | status | ntfy on|off | telegram on|off"
+
 if __name__ == "__main__":
     import sys
-    if sys.argv[1:] == ["test"]:
+    args = sys.argv[1:]
+    if args == ["test"]:
         test()
+    elif args == ["status"]:
+        status()
+    elif len(args) == 2 and args[0] in SWITCHABLE and args[1] in ("on", "off"):
+        set_enabled(args[0], args[1] == "on")
+        print(f"{args[0]} turned {args[1]}.")
+        status()
     else:
-        print("usage: python alerts.py test")
+        print(USAGE)
+        sys.exit(2)

@@ -29,6 +29,32 @@ r.append(ok(cfg["telegram"] == {"bot_token": "123:GOOD", "chat_id": "555"} and c
             "saves token + chat id, keeps other settings"))
 r.append(ok("Telegram connected" in h and calls.count("sendMessage") == 1, "sends a confirmation message"))
 r.append(ok("connected" in aw.page() and "123:GOOD" not in aw.page(), "page shows connected and never displays the token"))
+# --- on/off switches (ntfy + Telegram), pause without losing settings
+import alerts
+h = aw.page()
+r.append(ok("Turn ntfy off" in h and "Turn Telegram off" in h, "page offers an off switch for each channel"))
+r.append(ok(alerts.channels(True) == ["ntfy", "telegram"], "both channels on by default (no alerts_enabled key)"))
+h = aw.post({"do": "switch", "channel": "ntfy", "to": "off"})
+cfg = json.load(open("config.json"))
+r.append(ok(cfg["alerts_enabled"]["ntfy"] is False and cfg["ntfy_topic"] == "scamhunter-test"
+            and cfg["telegram"]["chat_id"] == "555", "ntfy off: saved, topic and Telegram kept"))
+r.append(ok("ntfy turned off" in h and "paused" in h and "Turn ntfy on" in h, "page shows ntfy paused + an on switch"))
+r.append(ok(alerts.channels(True) == ["telegram"], "paused ntfy is not used for new alerts"))
+queued = {"title": "t", "message": "m", "critical": True, "pending_channels": ["ntfy"], "delivered_via": ["telegram"]}
+done, err = alerts._post(queued)
+r.append(ok(done and queued["pending_channels"] == [] and queued["skipped_channels"] == ["ntfy"],
+            "queued alert stops retrying a paused channel"))
+stuck = {"title": "t", "message": "m", "critical": False, "pending_channels": ["ntfy"]}
+r.append(ok(alerts._post(stuck)[0] is False, "never-delivered alert stays queued (not silently dropped)"))
+h = aw.post({"do": "switch", "channel": "telegram", "to": "off"})
+r.append(ok(alerts.channels(True) == [] and "Every phone channel is turned off" in h, "both off: warning shown"))
+aw.post({"do": "switch", "channel": "ntfy", "to": "on"})
+aw.post({"do": "switch", "channel": "telegram", "to": "on"})
+r.append(ok(alerts.channels(True) == ["ntfy", "telegram"], "switches turn both back on"))
+r.append(ok("Unknown switch" in aw.post({"do": "switch", "channel": "email", "to": "off"}), "rejects unknown channel"))
+alerts.set_enabled("ntfy", False)
+r.append(ok(aw._flags(json.load(open("config.json")))["ntfy"] is False, "command-line switch writes the same setting"))
+alerts.set_enabled("ntfy", True)
 aw.post({"do": "tg_off"})
 r.append(ok("telegram" not in json.load(open("config.json")), "disconnect removes it"))
 print(f"{sum(r)}/{len(r)} passed")

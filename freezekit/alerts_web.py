@@ -6,6 +6,9 @@ Telegram, in the browser:
   3. "I pressed Start": we read the bot's updates, take the user's chat id, save both to
      config.json, send a test message, and restart the watchers so they pick it up.
 The token stays in this computer's config.json and is only ever sent to api.telegram.org.
+
+Each channel also has an on/off switch (pause without losing its settings). The switch is
+config.json "alerts_enabled"; alerts.py reads it on every alert, so no restart is needed.
 """
 import html
 import json
@@ -84,9 +87,29 @@ def _shell(body):
             f"<title>Alerts</title>{CSS}<div class=w><p><a href='/'>&larr; Desk</a></p>{body}</div>")
 
 
+def _flags(c):
+    raw = c.get("alerts_enabled") or {}
+    return {ch: raw.get(ch, True) is not False for ch in ("ntfy", "telegram")}
+
+
+def _switch(channel, on):
+    """A one-button form that turns `channel` the other way."""
+    label = f"Turn {'ntfy' if channel == 'ntfy' else 'Telegram'} {'off' if on else 'on'}"
+    return (f"<form method=post action='/alerts' style='display:inline'><input type=hidden name=do value=switch>"
+            f"<input type=hidden name=channel value={channel}><input type=hidden name=to value={'off' if on else 'on'}>"
+            f"<button class='btn{' ghost' if on else ''}'>{label}</button></form>")
+
+
+def _badge(configured, on, yes="&#10003; on"):
+    if not configured:
+        return "<span class=bad>off</span>"
+    return f"<span class=ok>{yes}</span>" if on else "<span class=bad>paused</span>"
+
+
 def page(msg="", err=""):
     e = html.escape
     c = _cfg()
+    flags = _flags(c)
     tg = c.get("telegram") or {}
     topic = c.get("ntfy_topic") or ""
     connected = bool(tg.get("bot_token") and tg.get("chat_id"))
@@ -97,14 +120,23 @@ def page(msg="", err=""):
         out.append(f"<div class=card>{msg}</div>")
     if err:
         out.append(f"<div class=card><span class=bad>{e(err)}</span></div>")
+    if (topic or connected) and not any(flags[ch] for ch, ok in (("ntfy", topic), ("telegram", connected)) if ok):
+        out.append("<div class=card><span class=bad><b>Every phone channel is turned off.</b> Alerts will only show "
+                   "on the Desk until you turn one back on.</span></div>")
     # ntfy
-    out.append(f"<div class=card><h3>ntfy {'<span class=ok>&#10003; on</span>' if topic else '<span class=bad>off</span>'}</h3>"
+    out.append(f"<div class=card><h3>ntfy {_badge(bool(topic), flags['ntfy'])}</h3>"
                + (f"<p>Your private topic: <b>{e(topic)}</b>. In the free ntfy app, subscribe to it. "
-                  f"<a href='https://ntfy.sh/{e(topic)}' target=_blank>Open in browser</a></p>" if topic
+                  f"<a href='https://ntfy.sh/{e(topic)}' target=_blank>Open in browser</a></p>"
+                  + ("" if flags["ntfy"] else "<p class=mut>Paused: nothing is sent to ntfy (it does not use the "
+                     "free daily ntfy allowance). Your topic is kept.</p>")
+                  + _switch("ntfy", flags["ntfy"]) if topic
                   else "<p>Set up during first-run setup.</p>") + "</div>")
     # telegram
     if connected:
-        out.append("<div class=card><h3>Telegram <span class=ok>&#10003; connected</span></h3>"
+        out.append(f"<div class=card><h3>Telegram {_badge(True, flags['telegram'], '&#10003; connected')}</h3>"
+                   + ("" if flags["telegram"] else "<p class=mut>Paused: nothing is sent to Telegram. "
+                      "Your bot stays connected.</p>")
+                   + _switch("telegram", flags["telegram"]) + " "
                    "<form method=post action='/alerts' style='display:inline'><input type=hidden name=do value=test>"
                    "<button class=btn>Send a test alert</button></form> "
                    "<form method=post action='/alerts' style='display:inline'><input type=hidden name=do value=tg_off>"
@@ -160,6 +192,16 @@ def post(form):
             _restart_later()
             return page(msg="<b>Telegram connected.</b> A test message was sent to your bot chat. "
                             "The watchers are restarting to pick it up (about 10 seconds).")
+        if do == "switch":
+            ch, to = form.get("channel"), form.get("to")
+            if ch not in ("ntfy", "telegram") or to not in ("on", "off"):
+                return page(err="Unknown switch.")
+            import alerts
+            alerts.set_enabled(ch, to == "on")
+            name = "ntfy" if ch == "ntfy" else "Telegram"
+            return page(msg=f"<b>{name} turned {to}.</b> " + (
+                "Alerts will go there again from the next one." if to == "on"
+                else "Nothing more will be sent there until you turn it back on."))
         if do == "tg_off":
             cfg = _cfg()
             cfg.pop("telegram", None)

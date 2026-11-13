@@ -9,7 +9,7 @@
   "ROADMAP.md": "a3c9ced41f9d4bf5c60a9dfcf8421f3cf3bcfdc1bd66d0ac17ddf800dd9ece45",
   "SECURITY.md": "4289403929bf46a774fbc6b94f651d2dbe44d4d9744cd2a93f30ab131e2e1df6",
   "TRUST.md": "108b161c12f5cb1139909cfb17cd281adc40ea622ade2ffe4377d6a2e940d8fe",
-  "alerts.py": "db380d759ee3812bd29f9bd03b042aac7a5eed9b11075bf142e99efb79d4f2c5",
+  "alerts.py": "402d7943d3ad9bd9116fbeff7651384874e33e7674cbd42fd5b8834e5e7de8fc",
   "benchmark/RESULTS.md": "c3f2ff8bed2d1b4db350f27c27af207b2fe14e22d91be19eac7e3eedd3676c55",
   "benchmark/RESULTS_round1_before_fixes.md": "3851fd6f59b1b2ad4031945d44cc28958124fcd2e510ec88e8abb7003c2585f0",
   "benchmark/RESULTS_round2.md": "d0d2e98adfabd1b7660368476b6e9b6b55ac4190f7ec4f8b61fd8ea14fbd34ea",
@@ -42,7 +42,7 @@
   "evidence/web.py": "ea6f0efdfb73af6326c30ba92e05913b118680cbe7332b2196025d329f5af679",
   "freezekit/__init__.py": "564cee6f03092c1f5c7bfb63426fbde66f9c246eb0034b8e070c4427e4c73ff6",
   "freezekit/__main__.py": "e734b11119d94b1787ec6c22d83466922f95f7d745c242d04aa3d5cb0777c409",
-  "freezekit/alerts_web.py": "8680c778868f47d1ade16eaadf0eb15c04fdde8fdbde6dfe61596882b3be7023",
+  "freezekit/alerts_web.py": "022c7136dd71d58145d2e0f7f4eed29d3fe7ab96feaa2cf9fd9355dd64011288",
   "freezekit/chainlookup.py": "e12925130df210d100732726688a1b59d3febfcaf6e7633aef455ae10ff2c990",
   "freezekit/channels.json": "33e70fa1131f6bebcb4fe0627f5fd83de6183aa1abb124cf647a5f2be2f162ae",
   "freezekit/channels.py": "78f2dc5db659a09e06a96c495e61a92f207a4f98d1418737b09066dd6491b87c",
@@ -51,7 +51,7 @@
   "freezekit/requests.py": "648c09177b71e4da20748220ce2ca154b9706948d109f80078689d424b6425a3",
   "freezekit/requests_web.py": "bb52c69c1a9d415c56e3eed0c0625975e009a92174b0df6e70fd58ba87e1b3ed",
   "freezekit/setup.py": "5383c8e1e4c1cc47a76f12cfdc0311026585b2e37d00e19836fa1b633131c311",
-  "freezekit/test_alerts_web_offline.py": "ac47afc8343254f9d2987e2bef5eca64792bd315cf2988ca06137303e30bbbc4",
+  "freezekit/test_alerts_web_offline.py": "65d7483ab0b41a1d26dc763a2baabf3a3bc518f8d591361d2452c1fc74305eed",
   "freezekit/test_requests_offline.py": "fa5289e99f8fd748ad984d76aabcfd8c5aaf21c98379668e673dd39f97d8307e",
   "freezekit/tracker.py": "81cc399c1e8a600b5750b3fcf417cedd2ef33c6cd81fc4d6225f5bdd9131d744",
   "freezekit/update_web.py": "23c277791a788c74de409e0563f0a30cf23da1e0b2f7519d3fd863d97bcd8560",
@@ -138,7 +138,7 @@
   "xrpl_watcher.py": "e93d9cf02a0621fbfca75a197a604e79fe4d3635a74d2e1f763d05fddeebedca"
  },
  "meta": {
-  "signed_at": "2026-11-06T02:57:23Z",
-  "note": "Desk icons start the Desk if needed; leftover watchers stopped"
+  "signed_at": "2026-11-13T12:50:50Z",
+  "note": "Alerts: on/off switch for ntfy and Telegram"
  }
 }

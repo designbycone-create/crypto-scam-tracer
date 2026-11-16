@@ -42,9 +42,22 @@ SERVICES = [
     ("Multi-chain tracer", [sys.executable, "-u", "-m", "multichain", "watch", "--interval", "300"], "mc_desk.log"),
     # freeze kits, issued-token freeze scan, incident feeds, exchange status, scam radar, risk signals
     ("Responder", [sys.executable, "-u", "-m", "responder.daemon"], "responder_desk.log"),
+    # optional: checks every copied crypto address (turned on from /clipguard)
+    ("Copy-paste guard", [sys.executable, "-u", "-m", "shield.clipguard"], "clipguard_desk.log"),
 ]
 
 XRPL_ONLY = {"Wallet watcher", "Network watcher", "Network mapper"}
+
+
+def _clipguard_on():
+    try:
+        with open("config.json", encoding="utf-8-sig") as f:
+            return bool(json.load(f).get("clipguard"))
+    except Exception:
+        return False
+
+
+OPTIONAL = {"Copy-paste guard": _clipguard_on}   # label -> is it switched on?
 
 
 def _xrpl_case():
@@ -88,7 +101,7 @@ def supervise(label, argv, logfile, stop_evt):
     """Keep one child process alive. Restart with backoff if it exits."""
     restarts = -1
     while not stop_evt.is_set():
-        if label in XRPL_ONLY and not _xrpl_case():
+        if (label in XRPL_ONLY and not _xrpl_case()) or (label in OPTIONAL and not OPTIONAL[label]()):
             # this case has no XRP Ledger wallet -> the XRPL watchers aren't needed
             with _state_lock:
                 _state[label] = {"pid": None, "alive": False, "skipped": True, "restarts": max(restarts, 0)}
@@ -110,6 +123,9 @@ def supervise(label, argv, logfile, stop_evt):
             _write_status()
             while not stop_evt.is_set():
                 if proc.poll() is not None:
+                    break
+                if label in OPTIONAL and not OPTIONAL[label]():   # switched off from its page
+                    proc.terminate()
                     break
                 time.sleep(2)
         except Exception as e:
@@ -323,9 +339,11 @@ def render():
         s = svc.get(label, {})
         alive = s.get("alive")
         dot = "#16a34a" if alive else ("#6b7280" if s.get("skipped") else "#dc2626")
-        txt = "running" if alive else ("not needed for this case" if s.get("skipped") else "down (restarting)")
+        off = label in OPTIONAL
+        txt = "running" if alive else (("off" if off else "not needed for this case") if s.get("skipped") else "down (restarting)")
         extra = (f"up since {s.get('started','')[11:16]}" if alive else
-                 ("no XRP Ledger wallet in this case" if s.get("skipped") else f"restarts: {s.get('restarts', 0)}"))
+                 (("<a href='/clipguard'>turn on</a>" if off else "no XRP Ledger wallet in this case") if s.get("skipped")
+                  else f"restarts: {s.get('restarts', 0)}"))
         if label == "Network watcher" and alive:
             extra += f" · ledger {_fmt_ago(hb_age)}"
         if label == "Network mapper" and alive:
@@ -426,7 +444,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/clipguard'>Copy-paste guard</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -519,6 +537,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/alerts":
             from freezekit import alerts_web
             return self._send(alerts_web.page(), "text/html; charset=utf-8")
+        if path == "/clipguard":
+            from shield import clipguard
+            return self._send(clipguard.page(), "text/html; charset=utf-8")
         if path == "/update":
             from freezekit import update_web
             return self._send(update_web.page(), "text/html; charset=utf-8")
@@ -644,6 +665,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/alerts":
                 from freezekit import alerts_web
                 return self._send(alerts_web.post(form), "text/html; charset=utf-8")
+            if path == "/clipguard":
+                from shield import clipguard
+                return self._send(clipguard.post(form), "text/html; charset=utf-8")
             if path == "/update":
                 from freezekit import update_web
                 return self._send(update_web.post(form), "text/html; charset=utf-8")
@@ -768,6 +792,11 @@ def main():
             webbrowser.open(f"http://127.0.0.1:{a.port}/")
         return
     _stop_orphans()
+    try:   # known attack campaigns shipped with this release: trace their addresses for cash-outs
+        import threatfeed
+        threatfeed.seed_tracer()
+    except Exception as ex:
+        print(f"(campaign feed not loaded: {ex})")
     _repair_shortcuts()
 
     stop_evt = threading.Event()

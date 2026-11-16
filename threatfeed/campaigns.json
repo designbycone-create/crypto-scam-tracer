@@ -1,0 +1,44 @@
+{
+ "_about": "Known attack campaigns, shipped inside every signed ScamHunter release so they reach every user under the same signature check as the code. Addresses are the attacker's; domains and IPs are attacker infrastructure, not the websites that were hit. Each entry names its public sources.",
+ "campaigns": [
+  {
+   "id": "optimjack-2026-11",
+   "name": "OPTIMJACK",
+   "first_seen": "2026-11-16",
+   "kind": "address-swapping script on trusted websites (crypto clipper + card skimmer)",
+   "summary": "Scripts served from Optimizely's CDN (cdn.optimizely.com) to 186+ large websites were altered to load malware from 1688360.cc. On pages with words like 'wallet', 'deposit' or 'send', it swapped crypto addresses for the attacker's (in page text, form fields, copy-paste and the clipboard), stole card numbers and cookies, and sent older iPhones to an exploit stage.",
+   "victim_note": "Your payment went to an address that was swapped on a website you trusted. You did nothing wrong: the address you copied was replaced before you pasted it. Every swapped address passes its checksum, so wallets accept it.",
+   "user_advice": [
+    "Before sending crypto, check the address on your hardware wallet's screen (or read it back) against the address the site shows, not what you pasted.",
+    "If you entered a card number on an affected site on Nov 16-17, 2026, ask your card issuer for a new card.",
+    "On an iPhone or iPad running iOS 18.6 or earlier that visited affected sites, update iOS."
+   ],
+   "addresses": [
+    {"chain": "ethereum", "address": "0xC4026b06D82b0F0B363eda0642D61CfbDc17884e", "note": "also active before the campaign"},
+    {"chain": "bitcoin", "address": "19g9rZcPeiz8rUvyWpTRyXXhPnjsWrc3kW"},
+    {"chain": "litecoin", "address": "ltc1q3wp7g6ds0ggg6fl6kncpa4sepn0q3qfacgred5"},
+    {"chain": "tron", "address": "THvs6p56XkUiMkJeSc51cAP64u2RsTYqxa", "note": "holds USDT (freezable by Tether); account created March 2026"},
+    {"chain": "ton", "address": "UQAgM1VqSZQiJLSG5w-ovurq5CZdxLEK3_7CMmwALTA5e09p"},
+    {"chain": "solana", "address": "FVtL8NMYS9PA1v3HE67XUGCtGA9JaZUvqav2fU2LrV5n"},
+    {"chain": "bitcoin-cash", "address": "qzkaaf8n6grmpr0d9lx8xutn3r9lk722f566hhpe58"},
+    {"chain": "dogecoin", "address": "DBEGrxRF7KMSuhTS4c1MFviStU6efdMnu5"}
+   ],
+   "domains": ["1688360.cc", "eil786npto9u5bq.icu", "1y69gy2mdzaltz1.icu", "gm38duxoihbmy5o.icu",
+               "5vobauua3ojpklx.icu", "p55abnw2pnsz0bo.icu", "l7bcsnwc7nzr3uo.icu", "q1ls1ho9x7wsxlu.icu"],
+   "ips": ["136.113.106.136", "34.87.36.58", "34.96.213.201"],
+   "script_markers": ["1688360.cc", "/JIUJIU888/", "02111110"],
+   "script_sha256": ["617df364120adc47fb4f55dcc0c69a9b6c9e108a92c60bc2b64a266254ab02f3",
+                     "f7b84b9a94f749f8ced3f0112d0a66894e8bbc3b4aa5592021d1b8976a9bad40"],
+   "verified": {
+    "date": "2026-11-16",
+    "checksums": "all 8 addresses pass their chain's checksum (as the attack requires)",
+    "on_chain": "BTC 0.0853 received in 5 txs, unspent; LTC 17.02 in 3 txs, unspent; Tron 178.8 TRX + 116.09 USDT; ETH 0.074; SOL and TON no activity; DOGE and BCH not checked (explorer refused)"
+   },
+   "sources": [
+    {"title": "OPTIMJACK: Optimizely-hosted scripts loaded a crypto clipper and card skimmer on 186 confirmed sites (StepSecurity)",
+     "url": "https://www.stepsecurity.io/blog/optimjack-optimizely-hosted-scripts-crypto-clipper-card-skimmer"},
+    {"title": "Scott Helme on X, Nov 16, 2026", "url": "https://x.com/Scott_Helme/status/2122422157959471456"}
+   ]
+  }
+ ]
+}

@@ -69,6 +69,13 @@ def mark_clean(domain, note="team confirmed clean"):
 
 def check_domain(q):
     dom = (q or "").lower().replace("https://", "").replace("http://", "").split("/")[0].strip(".")
+    try:
+        import threatfeed
+        c = threatfeed.campaign_for_host(dom)
+        if c:
+            return f"{dom} is attacker infrastructure in the {threatfeed.describe(c)}"
+    except Exception:
+        pass
     d = load()["domains"]
     parts = dom.split(".")
     for i in range(len(parts) - 1):
@@ -80,6 +87,13 @@ def check_domain(q):
 
 
 def check_address(a):
+    try:
+        import threatfeed
+        c = threatfeed.campaign_for_address(a)
+        if c:
+            return f"attacker address in the {threatfeed.describe(c)}"
+    except Exception:
+        pass
     v = load()["addresses"].get(a.lower() if a.startswith("0x") else a)
     return f"listed in incident '{v.get('label') or 'incident'}' ({v.get('added')})" if v else None
 

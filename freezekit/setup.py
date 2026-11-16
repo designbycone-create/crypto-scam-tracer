@@ -81,8 +81,13 @@ def _valid_xrpl(a):
 def save(form):
     from .chainlookup import detect_address, CHAIN_NAMES
     scam = (form.get("scam_wallet") or "").strip()
+    camp = _campaign(scam)
     chains = detect_address(scam)
     if not chains:
+        if camp:
+            return False, (f"This address belongs to the {camp['name']} attack: {camp.get('victim_note', '')} "
+                           "ScamHunter can't follow money on this chain yet, but report the theft to IC3 (ic3.gov) "
+                           "and to the exchange or wallet you sent from, and name the campaign.")
         return False, ("That doesn't look like a valid wallet address on a supported chain "
                        "(XRP Ledger, Bitcoin, Ethereum/EVM, Tron, Solana).")
     chain = (form.get("chain") or "").strip()
@@ -117,6 +122,13 @@ def save(form):
             victim[k] = v
     victim["scam_wallet"] = scam
     victim["scam_chain"] = CHAIN_NAMES.get(chain, chain)
+    if camp:     # a known campaign: name it in the case so every report and freeze request carries it
+        victim["campaign"] = {"id": camp["id"], "name": camp["name"], "kind": camp.get("kind", ""),
+                              "sources": [x["url"] for x in camp.get("sources", [])]}
+        if not (form.get("scam_type") or "").strip():
+            victim["scam_type"] = f"the {camp['name']} address-swapping attack ({camp.get('kind', '')})"
+    else:
+        victim.pop("campaign", None)
     victim.setdefault("country", "US")
     victim.setdefault("scam_type", "a cryptocurrency scam")
     reps = [r.strip() for r in (form.get("reports") or "").splitlines() if r.strip()]
@@ -282,11 +294,37 @@ detect();
 </script></body></html>"""
 
 
+def _campaign(addr):
+    try:
+        import threatfeed
+        return threatfeed.campaign_for_address(addr)
+    except Exception:
+        return None
+
+
+def _campaign_block():
+    """Notice for a victim whose scammer address belongs to a known campaign."""
+    v = _j("victim.json")
+    c = _campaign(v.get("scam_wallet", "")) if v.get("campaign") else None
+    if not c:
+        return ""
+    tron = "" if v.get("scam_chain") != "Tron" else (
+        "<p><b>Tron:</b> this attacker wallet holds USDT, which Tether can freeze. Your Tether freeze request is in the Desk "
+        "&mdash; send it today.</p>")
+    src = "".join(f'<li><a href="{e(x["url"])}" target=_blank rel=noopener>{e(x["title"])}</a></li>' for x in c.get("sources", []))
+    adv = "".join(f"<li>{e(x)}</li>" for x in c.get("user_advice", []))
+    return (f'<div class=step style="border-left:6px solid #c0392b"><h2><span class=num>!</span>This was the {e(c["name"])} attack</h2>'
+            f'<p style="font-size:1.15em">{e(c.get("victim_note", ""))}</p>{tron}<ul>{adv}</ul>'
+            f'<p class=hint>Your case now names this campaign, so every report and freeze request carries it. Sources:</p><ul>{src}</ul></div>')
+
+
 def done_page(topic):
+    camp = _campaign_block()
+    refresh = "" if camp else '<meta http-equiv=refresh content="8;url=/">'   # stay put when there's a notice to read
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<meta http-equiv=refresh content="8;url=/"><title>Tracking started</title><style>{CSS}</style></head><body><div class=wrap>
+{refresh}<title>Tracking started</title><style>{CSS}</style></head><body><div class=wrap>
 <div class=brand><div class=logo></div>ScamHunter Desk</div><h1>&#10003; Tracking started</h1>
 <p class=lead>The watchers are restarting with your case. In a few minutes the Desk will show where your funds are, the network behind the scam,
 and freeze kits for any exchange the money reaches.</p>
-<div class=step><h2><span class=num>!</span>Do this now on your phone</h2><p>Open the ntfy app &rarr; <b>Subscribe to topic</b> &rarr; <span class=mono>{e(topic)}</span></p></div>
+{camp}<div class=step><h2><span class=num>!</span>Do this now on your phone</h2><p>Open the ntfy app &rarr; <b>Subscribe to topic</b> &rarr; <span class=mono>{e(topic)}</span></p></div>
 <p><a class=btn href="/">Open the Desk</a></p></div></body></html>"""

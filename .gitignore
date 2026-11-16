@@ -62,3 +62,7 @@ update_state.json
 backups/
 benchmark/data/results.jsonl
 signed/
+
+# copy-paste guard: private address book
+address_book.json
+clipguard_desk.log

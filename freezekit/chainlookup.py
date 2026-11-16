@@ -223,6 +223,9 @@ def detect_address(a):
     if not found:
         return []
     chain = found[0][0]
+    from responder.addresses import TRACEABLE
+    if chain not in TRACEABLE:      # recognised (for warnings) but not followable yet
+        return []
     if chain == "ethereum":
         return list(EVM_RPC)
     return [chain]

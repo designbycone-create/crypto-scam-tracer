@@ -10,7 +10,11 @@ and compare on every check:
   ip        A records moved to entirely new addresses   (medium)
   cert      new certificate from an issuer never used before (medium)
   thirdparty scripts now loaded from a NEW outside host       (medium: how drainer kits get injected)
-  scripts   first-party JavaScript files changed         (weak: normal deploys do this)
+  thirdref  a trusted OUTSIDE script now points to a new host (medium: how OPTIMJACK worked -- the
+            site kept loading the same Optimizely file, and that file started loading malware)
+  ioc       a script or the page contains a known attack marker from the campaign feed
+            (strong: e.g. the OPTIMJACK payload host)
+  scripts   JavaScript files changed                     (weak: normal deploys do this)
 
 Alert rule: any strong signal, or two or more signals together. One weak
 signal is logged, not alerted (sites deploy all the time).
@@ -31,7 +35,7 @@ from datetime import datetime
 
 FILE = "sitewatch.json"
 UA = {"User-Agent": "Mozilla/5.0 ScamHunter-Sitewatch/0.1", "Accept": "application/dns-json, application/json, */*"}
-STRONG = {"ns", "registrar", "lock"}
+STRONG = {"ns", "registrar", "lock", "ioc"}
 DEFAULT_WATCH = ["app.uniswap.org", "app.aave.com", "curve.fi", "pancakeswap.finance", "jup.ag", "raydium.io",
                  "lido.fi", "app.1inch.io", "xrpl.org", "xaman.app"]
 
@@ -87,29 +91,58 @@ def certs(domain):
     return {"issuers": issuers, "newest": newest[:19]}
 
 
-def scripts(domain):
+_HOST_RX = re.compile(r"(?:https?:)?//([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*\.[a-z]{2,24})(?=[/:\"'`\s?#]|$)", re.I)
+
+
+def _ioc(text, where):
+    """Known attack markers (campaign feed) in a piece of page or script text."""
     try:
-        html = _get(f"https://{domain}/")
+        import threatfeed
+        return [f"{name}: '{m}' found in {where}" for name, m in threatfeed.scan_text(text)]
+    except Exception:
+        return []
+
+
+def _refs(text, own_hosts):
+    """Outside hosts a script points to (where it could load more code from)."""
+    hosts = {h.lower() for h in _HOST_RX.findall(text or "")}
+    return sorted(h for h in hosts if h not in own_hosts and not any(h.endswith("." + o) for o in own_hosts))[:200]
+
+
+def scripts(domain, out_refs=None, out_ioc=None):
+    """{script url: content fingerprint}. Third-party scripts are fetched too: a trusted outside
+    file can be altered at its host (OPTIMJACK), which only its content shows."""
+    try:
+        page = _get(f"https://{domain}/")
     except Exception:
         return None
-    srcs = re.findall(r"<script[^>]+src=[\"']([^\"']+)", html, re.I)
+    if out_ioc is not None:
+        out_ioc += _ioc(page, f"the page {domain}")
+    srcs = re.findall(r"<script[^>]+src=[\"']([^\"']+)", page, re.I)
     out = {}
     for s in srcs[:15]:
         u = urllib.parse.urljoin(f"https://{domain}/", s)
-        host = urllib.parse.urlparse(u).hostname or ""
-        if not (host == domain or host.endswith("." + _apex(domain))):
-            out[u] = "third-party"        # record third-party script hosts too (a new one is a signal)
-            continue
+        host = (urllib.parse.urlparse(u).hostname or "").lower()
+        first = host == domain or host.endswith("." + _apex(domain))
         try:
-            out[u] = hashlib.sha256(_get(u, 8_000_000).encode()).hexdigest()[:16]
+            body = _get(u, 8_000_000)
         except Exception:
             out[u] = "unreachable"
+            continue
+        out[u] = hashlib.sha256(body.encode()).hexdigest()[:16]
+        if out_ioc is not None:
+            out_ioc += _ioc(body, u)
+        if not first and out_refs is not None:
+            out_refs[u] = _refs(body, {host, domain, _apex(domain), _apex(host)})
     return out
 
 
 def snapshot(domain):
-    return {"time": datetime.now().strftime("%Y-%m-%d %H:%M"), "ns": dns(_apex(domain), "NS"),
-            "a": dns(domain, "A"), "rdap": rdap(domain), "certs": certs(domain), "scripts": scripts(domain)}
+    refs, ioc = {}, []
+    snap = {"time": datetime.now().strftime("%Y-%m-%d %H:%M"), "ns": dns(_apex(domain), "NS"),
+            "a": dns(domain, "A"), "rdap": rdap(domain), "certs": certs(domain), "scripts": scripts(domain, refs, ioc)}
+    snap["script_refs"], snap["ioc"] = refs, ioc
+    return snap
 
 
 def compare(base, cur):
@@ -127,9 +160,13 @@ def compare(base, cur):
     new_iss = set(cc.get("issuers") or []) - set(bc.get("issuers") or [])
     if bc.get("issuers") and new_iss:
         sig.append(("cert", f"certificate from a new issuer: {', '.join(sorted(new_iss))}"))
+    if cur.get("ioc"):
+        sig.append(("ioc", "known attack code: " + "; ".join(cur["ioc"][:3])))
     bs, cs = base.get("scripts") or {}, cur.get("scripts") or {}
     if bs and cs:
-        changed = [u for u in cs if u in bs and cs[u] != bs[u]]
+        # "third-party" = a baseline from before outside scripts were fingerprinted: no comparison yet
+        changed = [u for u in cs if u in bs and cs[u] != bs[u] and bs[u] not in ("third-party", "unreachable")
+                   and cs[u] != "unreachable"]
         added_3p = [u for u in cs if u not in bs and cs[u] == "third-party"]
         if changed or set(cs) - set(bs):
             sig.append(("scripts", f"{len(changed)} script(s) changed, {len(set(cs) - set(bs))} new"))
@@ -138,9 +175,19 @@ def compare(base, cur):
         if new_hosts:
             # drainer kits are usually loaded from an outside host -- a medium signal on its own
             sig.append(("thirdparty", f"loads scripts from a new outside host: {', '.join(sorted(new_hosts))}"))
+    br_, cr_ = base.get("script_refs") or {}, cur.get("script_refs") or {}
+    new_refs = {}
+    for u, hosts in cr_.items():
+        if u in br_:                       # only scripts we have a baseline for
+            fresh = set(hosts) - set(br_[u])
+            if fresh:
+                new_refs[urllib.parse.urlparse(u).hostname] = sorted(fresh)
+    if new_refs:
+        sig.append(("thirdref", "a trusted outside script now points to a new host: " +
+                    "; ".join(f"{h} -> {', '.join(v[:4])}" for h, v in new_refs.items())))
     kinds = {k for k, _ in sig}
     level = "alert" if (kinds & STRONG or len(kinds) >= 2) else ("notice" if sig else "ok")
-    if kinds == {"thirdparty"} or kinds == {"ip"} or kinds == {"cert"}:
+    if kinds in ({"thirdparty"}, {"ip"}, {"cert"}, {"thirdref"}):
         level = "watch"   # one medium signal: shown in amber, re-checked, alert if anything else moves
     return level, sig
 
@@ -190,6 +237,16 @@ def accept(domain):
         save(d)
 
 
+def _upgrade_baseline(base, cur):
+    """Baselines saved before outside scripts were fingerprinted get those fingerprints from a clean check."""
+    if "script_refs" not in base:
+        base["script_refs"] = cur.get("script_refs") or {}
+    bs, cs = base.get("scripts") or {}, cur.get("scripts") or {}
+    for u, v in list(bs.items()):
+        if v == "third-party" and u in cs:
+            bs[u] = cs[u]
+
+
 def check(log=print, alert=None):
     """Check every site. alert(domain, signals) is called for new alerts."""
     d = load()
@@ -202,8 +259,14 @@ def check(log=print, alert=None):
         s["last"] = cur
         if not s.get("baseline"):
             s["baseline"], s["level"] = cur, "ok"
+            if cur.get("ioc"):          # infected already on the first look: no baseline needed to say so
+                s["level"], s["signals"] = "alert", ["known attack code: " + "; ".join(cur["ioc"][:3])]
+                if alert:
+                    alert(dom, s["signals"])
             continue
         level, sig = compare(s["baseline"], cur)
+        if level in ("ok", "notice"):
+            _upgrade_baseline(s["baseline"], cur)
         was, was_sig = s.get("level"), set(s.get("signals") or [])
         s["level"], s["signals"] = level, [m for _, m in sig]
         if level not in ("ok",):
@@ -213,6 +276,7 @@ def check(log=print, alert=None):
         if level == "notice":
             # weak change only (e.g. a normal deploy): roll the baseline forward for scripts
             s["baseline"]["scripts"] = cur.get("scripts")
+            s["baseline"]["script_refs"] = cur.get("script_refs")
     d["checked"] = datetime.now().strftime("%Y-%m-%d %H:%M")
     save(d)
     return d

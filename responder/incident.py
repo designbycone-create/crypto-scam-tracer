@@ -23,7 +23,7 @@ import time
 import urllib.request
 from datetime import datetime
 
-from .addresses import extract
+from .addresses import TRACEABLE, extract
 
 FILE = "incident.json"
 MC_MAP = "mc_map.json"
@@ -83,7 +83,7 @@ def add(text, label="", source="pasted", since_hours=72):
         rec = {"chain": chain, "address": addr, "label": label, "source": source,
                "added": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "active": True}
         d["addresses"].append(rec)
-        if chain != "xrpl":
+        if chain != "xrpl" and chain in TRACEABLE:
             rec["seeded_multichain"] = _seed_multichain(chain, addr, after)
         new.append((chain, addr))
     if label and label not in [i["label"] for i in d["incidents"]]:

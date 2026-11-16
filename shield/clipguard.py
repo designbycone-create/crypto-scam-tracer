@@ -158,6 +158,9 @@ def run():
     cfg = _load(CFG, {})
     root = tk.Tk()
     root.withdraw()
+    # Windows applies the "start hidden" flag (the Desk runs in the background) to a program's
+    # FIRST shown window. Spend it here on the invisible root, or the first STOP warning stays hidden.
+    root.deiconify(); root.update(); root.withdraw()
     state = {"last": None, "cfg_at": 0, "cfg": cfg}
     colors = {"stop": ("#b00020", "#ffffff"), "saved": ("#1e7d32", "#ffffff"), "unknown": ("#f2b01e", "#111111")}
 

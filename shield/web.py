@@ -195,5 +195,9 @@ def prescreen_page(form=None, result=None):
         body.append(f"<table>{rows or '<tr><td class=mut>No findings.</td></tr>'}</table>")
         body.append(f"<p class=mut><small>{e(result['note'])} Checked {e(result['checked'])} &middot; "
                     f"{result['stats']['movements']} movements reviewed. Also see "
-                    f"<a href='https://www.chainabuse.com/address/{e(result['address'])}' target=_blank>Chainabuse reports</a>.</small></p>")
+                    f"<a href='https://www.chainabuse.com/address/{e(result['address'])}' target=_blank>Chainabuse reports</a>"
+                    + (f" and <a href='https://freezeradar.com/explorer?address={e(result['address'])}' target=_blank rel=noopener>FreezeRadar "
+                       "freeze history</a>" if result["chain"] in ("ethereum", "bsc", "polygon", "tron", "solana", "arbitrum", "base",
+                                                                    "optimism", "avalanche") else "")
+                    + ".</small></p>")
     return _shell("Check before you send", "".join(body))

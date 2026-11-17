@@ -427,6 +427,18 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
             myh = None
     for lvl, txt in mistakes(addr, chain, h, tag, me, myh):
         findings.append((lvl, "Mistakes", txt))
+    try:   # issuer freeze, read from the Tether / Circle contracts themselves
+        from . import issuerfreeze
+        for lvl, txt in issuerfreeze.findings(addr, chain):
+            findings.append((lvl, "Issuer freeze", txt))
+    except Exception:
+        pass
+    try:   # second opinion from Public AML (free non-profit); never treated as "safe"
+        from . import publicaml
+        for lvl, txt in publicaml.findings(addr, chain):
+            findings.append((lvl, "Public AML", txt))
+    except Exception:
+        pass
     levels = {f[0] for f in findings}
     # "check" = a sending mistake to fix (missing tag, wrong network), not a sign the wallet is a scam
     verdict = ("STOP" if "stop" in levels else "CAUTION" if "caution" in levels

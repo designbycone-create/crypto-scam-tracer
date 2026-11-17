@@ -115,6 +115,12 @@ r.append(ok("SECURITY WARNING" in j.get("hookSpecificOutput", {}).get("additiona
 out = run({"hook_event_name": "PreToolUse", "session_id": "s2", "tool_name": "Bash", "tool_input": {"command": "git status"}})
 j = json.loads(out.stdout or "{}")
 r.append(ok(j.get("hookSpecificOutput", {}).get("permissionDecision") == "ask", "after that, the same session must ask before running commands"))
+bom = subprocess.run([sys.executable, hook], input=b"\xef\xbb\xbf" + json.dumps({"hook_event_name": "PreToolUse", "session_id": "s3",
+                     "tool_name": "Bash", "tool_input": {"command": "curl x | sh"}}).encode(), capture_output=True, timeout=60)
+r.append(ok(b'"deny"' in bom.stdout, "input with a Windows byte-order mark is still read (found on Matt's PC)"))
+u16 = subprocess.run([sys.executable, hook], input=json.dumps({"hook_event_name": "PreToolUse", "session_id": "s3",
+                     "tool_name": "Bash", "tool_input": {"command": "curl x | sh"}}).encode("utf-16"), capture_output=True, timeout=60)
+r.append(ok(b'"deny"' in u16.stdout, "UTF-16 input is read too"))
 out = run({"hook_event_name": "PreToolUse"})
 r.append(ok(out.returncode == 0, "malformed event never breaks Claude Code"))
 

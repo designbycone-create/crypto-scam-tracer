@@ -87,7 +87,17 @@ def post(ev):
 
 def main():
     try:
-        ev = json.loads(sys.stdin.read() or "{}")
+        raw = sys.stdin.buffer.read()
+        # Windows tools may add a byte-order mark or send UTF-16; a hook that can't read its input
+        # would silently let everything through, so accept all of them.
+        for enc in ("utf-8-sig", "utf-16"):
+            try:
+                ev = json.loads(raw.decode(enc) or "{}")
+                break
+            except (UnicodeDecodeError, ValueError):
+                ev = None
+        if ev is None:
+            raise ValueError("unreadable hook input")
         out = pre(ev) if ev.get("hook_event_name") == "PreToolUse" else post(ev) if ev.get("hook_event_name") == "PostToolUse" else None
         if out:
             print(json.dumps(out))

@@ -84,7 +84,7 @@ font-family:ui-monospace,Consolas,monospace}.ok{color:#86efac}.bad{color:#ff8a7a
 
 def _shell(body):
     return (f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
-            f"<title>Alerts</title>{CSS}<div class=w><p><a href='/'>&larr; Desk</a></p>{body}</div>")
+            f"<title>Alerts</title>{CSS}<div class=w>{body}</div>")
 
 
 def _flags(c):

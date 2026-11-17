@@ -172,10 +172,23 @@ adds Desktop / Start Menu shortcuts, starts it at sign-in, and opens the
 2. **About you** (optional) — name, email, IC3 number, other reports. Used only
    in the drafts *you* choose to send.
 3. **Alerts** — a private ntfy topic is generated; subscribe in the free ntfy
-   app. Updates install from the Desk's **Updates** page (one click, backed up, self-tested, undoable). Telegram connects from the Desk's **Phone alerts** page in about 2 minutes (no command line).
+   app. Updates install from the Desk's **Updates** page (one click, backed up, self-tested, undoable). Telegram connects from **Settings → Alerts to your phone** in about 2 minutes (no command line).
 
 Press **Start tracking**. The watchers start, and within minutes the Desk shows
 where your funds are, the network behind the scam, and freeze kits.
+
+**Finding your way around the Desk.** Every page has the same tabs across the top:
+
+| Tab | What's in it |
+|---|---|
+| **Overview** | Everything at a glance: live status, a map of scam-call reports by state, the most-reported scam types and numbers, the latest warning, and one live feed of what every part of the Desk is seeing (filter by section, warnings only, or search). It refreshes itself every 20 seconds. |
+| **Crypto & Wallets** | *Protect*: check before you send, wallet shield, copy-paste guard, claim checker, wallet compromised. *My case*: where your funds are, freeze requests, officer packets, court evidence. *Investigate*: network graph and table, scam radar, threat intel, incident mode. |
+| **Phone & Messages** | Check a phone number, check a message, the scam-call map, and the Android app. |
+| **Online Defense** | Browser extension, sites you use, exposure check, agent firewall. |
+| **Settings** | Alerts to your phone, updates, case setup. |
+
+The Desk keeps a small log of the checks you make on it (`desk_activity.jsonl`): only the kind
+of check and its result, never the message you pasted or the number you looked up.
 
 **Mac / Linux / manual:** `git clone` this repo, `pip install -r requirements.txt`,
 `python desk.py` — the same setup page opens.
@@ -188,7 +201,7 @@ Critical alerts (your funds hitting an exchange) go to **every** channel you
 configure, so one channel being down or over quota never loses one. Test them
 with `python alerts.py test`.
 
-- **Telegram** — open **Phone alerts** on the Desk: create a bot with @BotFather, paste its token, press START in your bot, done (it finds your chat id, saves it and sends a test). `python telegram_setup.py` does the same from a terminal. Or manually: put `bot_token` and your
+- **Telegram** — open **Settings → Alerts to your phone** on the Desk: create a bot with @BotFather, paste its token, press START in your bot, done (it finds your chat id, saves it and sends a test). `python telegram_setup.py` does the same from a terminal. Or manually: put `bot_token` and your
   `chat_id` under `"telegram"` in `config.json`.
 - **Email** — a Gmail *app password* under `"alert_email"` (critical alerts only).
 - **ntfy** — below.

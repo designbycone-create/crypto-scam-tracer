@@ -15,7 +15,7 @@ text-decoration:none;margin:4px 6px 4px 0}.mut{color:#9aa1b2}.ok{color:#86efac}.
 def _shell(body, refresh=False):
     r = "<meta http-equiv=refresh content=4>" if refresh else ""
     return (f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>{r}"
-            f"<title>Officer packets</title>{CSS}<div class=w><p><a href='/'>&larr; Desk</a></p>{body}</div>")
+            f"<title>Officer packets</title>{CSS}<div class=w>{body}</div>")
 
 
 def _targets():

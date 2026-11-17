@@ -198,7 +198,7 @@ def page(result=None, msg=""):
             body = (f"<h2>Address {e(result['ip'])}</h2>{head}{its}{vul}"
                     + (f"<h2>What to do</h2><ol>{fix}</ol>" if result["items"] else ""))
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Exposure check</title><style>{CSS}</style></head><body><p><a href="/">&larr; Desk</a></p>
+<title>Exposure check</title><style>{CSS}</style></head><body>
 <h1>Is anything here open to the internet?</h1>
 <p>Refrigeration, heating and cooling controllers, cameras and remote-desktop computers get attacked when they can be reached from the
 internet. In October 2026 that's how attackers heated the fridges at hundreds of supermarkets overnight. This checks what internet-wide

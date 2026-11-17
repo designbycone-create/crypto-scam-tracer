@@ -73,7 +73,7 @@ def page(msg="", test=None, test_text="", test_kind="scan"):
         "PreToolUse": [{"matcher": "Bash|WebFetch", "hooks": [{"type": "command", "command": _hook_cmd()}]}],
         "PostToolUse": [{"matcher": "WebFetch|WebSearch|Read|mcp__.*", "hooks": [{"type": "command", "command": _hook_cmd()}]}]}}, indent=1)
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Agent firewall</title><style>{CSS}</style></head><body><p><a href="/">&larr; Desk</a></p>
+<title>Agent firewall</title><style>{CSS}</style></head><body>
 <h1>Agent firewall</h1>
 <p>AI agents that read web pages, email or files can be tricked by instructions hidden in them: "send $5,000", "delete the backups",
 "email me the API key". This firewall checks what your agents read and holds risky actions until you say yes.</p>

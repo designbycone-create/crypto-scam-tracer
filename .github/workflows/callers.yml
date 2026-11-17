@@ -1,6 +1,6 @@
 # Publishes the phone app's list of FTC-reported scam / robocall numbers (checked hourly).
 # Needs the repository secret FTC_API_KEY (free key from https://api.data.gov/signup/).
-# The list goes to the "data" branch (one file, replaced daily), never to main or stable.
+# The list goes to the "data" branch (one file, replaced each run), never to main or stable.
 name: FTC reported-calls list
 on:
   schedule:

@@ -139,6 +139,13 @@ def feed(n=80):
         if s.get("level") == "alert":
             ev.append({"t": str((s.get("last") or {}).get("time", ""))[:19], "sec": "defense", "lvl": "stop",
                        "title": f"Site alert: {dom}", "detail": "; ".join(s.get("signals") or [])[:200], "href": "/sitewatch"})
+    ss = _json("secretscan_summary.json", {}) or {}
+    if ss.get("time"):
+        c = ss.get("counts") or {}
+        bad = c.get("stop", 0) + c.get("high", 0)
+        ev.append({"t": ss["time"], "sec": "defense", "lvl": "stop" if c.get("stop") else ("caution" if bad or c.get("caution") else "ok"),
+                   "title": "Secrets scan: " + (f"{bad} urgent or important finding(s)" if bad else ("tidy-up items only" if c.get("caution") else "nothing found")),
+                   "detail": f"{ss.get('files', 0):,} files checked (no secrets or paths are stored)", "href": "/secretscan"})
     ex = _json("exposure_state.json", {}) or {}
     for i in (ex.get("items") or [])[:6]:
         if i.get("severity") in ("critical", "high"):

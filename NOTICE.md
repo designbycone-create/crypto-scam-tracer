@@ -18,3 +18,10 @@ packets, signed evidence bundles) is developed privately by FPH LLC. See
 `ROADMAP.md`.
 
 Contact: open an issue at https://github.com/designbycone-create/crypto-scam-tracer/issues
+
+## Third-party material included
+
+| What | Where | Source | License |
+|---|---|---|---|
+| BIP-39 English word list (2048 words), used to recognise seed phrases saved in files | `shield/bip39_english.txt` | [python-mnemonic 0.21](https://github.com/trezor/python-mnemonic) by Trezor, copyright (c) 2013-2016 Pavol Rusnak; the word list is the one defined in [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt) (SHA-256 `2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda`) | MIT, see `third_party/python-mnemonic-LICENSE.txt` |
+| US state outlines for the Desk's scam-call map (simplified and pre-drawn) | `deskui/us_states.json` | [us-atlas 3.0.1](https://github.com/topojson/us-atlas), copyright 2013-2019 Michael Bostock, built from US Census Bureau cartographic boundary files (public domain) | ISC, see `third_party/us-atlas-LICENSE.txt` |

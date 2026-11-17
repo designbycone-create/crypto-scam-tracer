@@ -42,6 +42,7 @@ SECTIONS = [
             ("/extension", "Browser extension", "Blocks address swaps, drainer pages and known attack scripts."),
             ("/sitewatch", "Sites I use", "Watches the websites you use for injected attack code."),
             ("/exposure", "Exposure check", "Is anything on your home network open to the internet?"),
+            ("/secretscan", "Secrets left in the open", "Find seed phrases, private keys and passwords saved in files on this computer."),
             ("/agentguard", "Agent firewall", "Stops AI agents from doing risky things without your OK."),
         ]),
     ]),

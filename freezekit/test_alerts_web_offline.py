@@ -24,9 +24,13 @@ r.append(ok("Unauthorized" in aw.post({"do": "tg_token", "token": "123:BAD"}), "
 h = aw.post({"do": "tg_token", "token": "123:GOOD"})
 r.append(ok("t.me/my_alerts_bot" in h and "I pressed Start" in h, "good token: shows the bot link and last step"))
 h = aw.post({"do": "tg_link"})
-cfg = json.load(open("config.json"))
+import securestore
+raw = open("config.json").read()
+cfg = securestore.reveal_config(json.loads(raw))       # keys are stored encrypted where Windows protection exists
 r.append(ok(cfg["telegram"] == {"bot_token": "123:GOOD", "chat_id": "555"} and cfg["ntfy_topic"] == "scamhunter-test",
             "saves token + chat id, keeps other settings"))
+r.append(ok(not securestore.available() or ("123:GOOD" not in raw and "scamhunter-test" not in raw),
+            "the bot token and topic are encrypted on disk (Windows)"))
 r.append(ok("Telegram connected" in h and calls.count("sendMessage") == 1, "sends a confirmation message"))
 r.append(ok("connected" in aw.page() and "123:GOOD" not in aw.page(), "page shows connected and never displays the token"))
 # --- on/off switches (ntfy + Telegram), pause without losing settings
@@ -35,7 +39,7 @@ h = aw.page()
 r.append(ok("Turn ntfy off" in h and "Turn Telegram off" in h, "page offers an off switch for each channel"))
 r.append(ok(alerts.channels(True) == ["ntfy", "telegram"], "both channels on by default (no alerts_enabled key)"))
 h = aw.post({"do": "switch", "channel": "ntfy", "to": "off"})
-cfg = json.load(open("config.json"))
+cfg = securestore.reveal_config(json.load(open("config.json")))
 r.append(ok(cfg["alerts_enabled"]["ntfy"] is False and cfg["ntfy_topic"] == "scamhunter-test"
             and cfg["telegram"]["chat_id"] == "555", "ntfy off: saved, topic and Telegram kept"))
 r.append(ok("ntfy turned off" in h and "paused" in h and "Turn ntfy on" in h, "page shows ntfy paused + an on switch"))

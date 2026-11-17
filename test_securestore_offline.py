@@ -109,6 +109,21 @@ try:
 except RuntimeError:
     r.append(ok(json.load(open("c2.json"))["ftc_api_key"] == "PLAIN", "if a value wouldn't come back exactly, nothing is changed"))
 
+# the release signing key can be sealed the same way
+S.BACKEND = (fake_protect, fake_unprotect)
+import release_sig as R
+kp = os.path.join(WORK, "signing.key")
+sk = os.urandom(32); open(kp, "w").write(sk.hex())
+real_pub, R.RELEASE_PUBKEY = R.RELEASE_PUBKEY, R.public_key(sk).hex()
+done = R.protect_key(kp)
+r.append(ok(done and sk.hex() not in open(kp).read() and R._load_private(kp) == sk, "signing key sealed, and it still signs (reads back exactly)"))
+open(kp, "w").write(os.urandom(32).hex())
+try:
+    R.protect_key(kp); r.append(ok(False, "a key that doesn't match the trusted public key is refused"))
+except SystemExit:
+    r.append(ok(not open(kp).read().startswith("dpapi:"), "a key that doesn't match the trusted public key is refused, file untouched"))
+R.RELEASE_PUBKEY = real_pub
+
 os.chdir(ROOT)
 shutil.rmtree(WORK, ignore_errors=True)
 print(f"{sum(r)}/{len(r)} passed"); sys.exit(0 if all(r) else 1)

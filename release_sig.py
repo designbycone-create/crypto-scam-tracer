@@ -7,6 +7,7 @@ The Desk's updater refuses to install a version whose signature or any file hash
 Anyone can verify a downloaded copy:   python release_sig.py verify <folder>
 Maintainer (on the machine that holds the private key):
     python release_sig.py keygen                 -> creates the private key outside the repo, prints the public key
+    python release_sig.py protect-key            -> seals that key file to this Windows account (back it up offline first)
     python release_sig.py sign <folder>          -> writes RELEASE.json + RELEASE.sig into <folder>
 
 Ed25519 here is the RFC 8032 reference algorithm in pure Python: slow (fractions of a second per
@@ -194,10 +195,49 @@ def keyfile():
     return os.path.join(os.path.expanduser("~"), ".scamhunter_signing", "ed25519_private.key")
 
 
+def _load_private(path=None):
+    """The private key bytes. The file holds either hex, or "dpapi:..." sealed to this Windows account."""
+    raw = open(path or keyfile()).read().strip()
+    if raw.startswith("dpapi:"):
+        import securestore
+        raw = securestore.reveal(raw)
+        if not raw:
+            raise SystemExit("The signing key is sealed to another Windows account or computer and can't be unlocked here. "
+                             "Restore it from your offline backup.")
+    return bytes.fromhex(raw)
+
+
+def protect_key(path=None):
+    """Seal the private key file to this Windows account (one time). Refuses unless the key matches the
+    public key every install trusts, and unless it reads back exactly."""
+    import securestore
+    path = path or keyfile()
+    raw = open(path).read().strip()
+    if raw.startswith("dpapi:"):
+        print("Signing key is already sealed.")
+        return False
+    if not securestore.available():
+        raise SystemExit("No Windows account protection on this system; key left as it is.")
+    sk = bytes.fromhex(raw)
+    if RELEASE_PUBKEY and public_key(sk).hex() != RELEASE_PUBKEY:
+        raise SystemExit("This key doesn't match the public key the app trusts; nothing changed.")
+    sealed = securestore.protect(raw)
+    if securestore.reveal(sealed) != raw:
+        raise SystemExit("Seal round trip failed; nothing changed.")
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(sealed)
+    os.replace(tmp, path)
+    if _load_private(path) != sk:
+        raise SystemExit("Sealed key didn't read back; restore your backup.")
+    print(f"Signing key sealed to this Windows account (key {fingerprint(public_key(sk).hex())}).")
+    return True
+
+
 def keygen():
     path = keyfile()
     if os.path.exists(path):
-        sk = bytes.fromhex(open(path).read().strip())
+        sk = _load_private(path)
         print("Key already exists.")
     else:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -215,7 +255,7 @@ def keygen():
 
 
 def sign_folder(root, note=""):
-    sk = bytes.fromhex(open(keyfile()).read().strip())
+    sk = _load_private()
     pk = public_key(sk).hex()
     files = file_hashes(root)
     meta = {"signed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "note": note}
@@ -231,6 +271,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1:2]
     if cmd == ["keygen"]:
         keygen()
+    elif cmd == ["protect-key"]:
+        protect_key()
     elif cmd == ["sign"]:
         sign_folder(sys.argv[2], " ".join(sys.argv[3:]))
     elif cmd == ["verify"]:

@@ -28,6 +28,23 @@ act on their own case.
 - [x] XRPL issuer-freeze / clawback detection (RLUSD and any issued token)
 - [x] Incident mode, risk signals, exchange status, scam radar, claim checker
 - [x] SHA-256 custody log + per-kit manifests
-- [ ] PDF export of the Officer Packet (print-to-PDF works today)
+- [x] Sealed court evidence bundle with PDF report and standalone verifier
+- [x] Signed releases (Ed25519) and one-click updates with automatic rollback
+- [x] Published error-rate benchmark on independent ground truth
+- [x] More chains: Litecoin, Aptos, opBNB; checksum recognition for TON, Dogecoin, Bitcoin Cash
+- [x] PDF export of the Officer Packet
 - [ ] More verified channels (contributions welcome — include the source)
 - [ ] Case workspaces (`cases/<id>/`) as the foundation for the institutional edition
+
+## Protection (before the scam)
+- [x] Message checker: any scam text, email, DM or call script, local only
+- [x] Copy-paste guard with a private address book
+- [x] Browser extension (Chrome / Edge): address swaps, attack code, scam addresses
+- [x] Agent firewall: hidden-instruction scanning, approval gate, Claude Code hook, local API
+- [x] Exposure check for equipment and remote access open to the internet
+- [x] Signed campaign feed (first entry: OPTIMJACK, Nov 2026)
+- [ ] Telegram bot: forward a suspicious message, get a verdict
+- [ ] Voice-clone defense kit: family code word and call-back checklist, large print
+- [ ] Wallet-signing gate: the agent firewall in front of wallet signatures
+- [ ] Extension in the Chrome and Edge stores (after the trademark filing)
+- [ ] Monthly exposure re-check with alerts

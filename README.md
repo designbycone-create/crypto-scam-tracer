@@ -1,9 +1,11 @@
 # crypto-scam-tracer — ScamHunter Desk™
 
-**A free, open-source toolkit for victims of cryptocurrency fraud.** Watch the
-scammer's wallet in real time, follow the stolen money across blockchains, and
-automatically draft the freeze and evidence-preservation requests that give you
-a real shot at getting funds frozen — before they vanish.
+**A free, open-source toolkit that protects people from scams and helps victims
+after one.** Before a scam: check messages, addresses, websites, your AI agents
+and your own network for the warning signs. After a scam: watch the scammer's
+wallet in real time, follow the stolen money across blockchains, and draft the
+freeze and evidence requests that give you a real shot at getting funds frozen.
+Everything runs on your own computer.
 
 Built by a scam victim who got tired of feeling powerless. If it helps you,
 star it and pass it on.
@@ -31,10 +33,34 @@ star it and pass it on.
 | BNB Chain, Avalanche | every 5 min | yes | yes | free Etherscan key needed for tracing |
 | Tron | every 5 min | yes (+ USDT-TRC20) | yes | TronGrid, no key |
 | Solana | every 5 min | yes (+ USDC/USDT SPL) | yes | public RPC, no key (set `solana_rpc` for heavy use) |
+| Litecoin | every 5 min | yes | yes | litecoinspace.org, no key |
+| Aptos | every 5 min | yes (+ fungible assets, takeover checks) | yes | public node; free indexer key for full history |
+| opBNB | every 5 min | yes | yes | free personal RPC recommended |
+| TON, Dogecoin, Bitcoin Cash | — | — | — | recognised with checksums for warnings (pre-screen, copy-paste guard, extension, message checker) |
 
 Any asset on these chains works — native coins and tokens (USDT, USDC, …).
-Other chains: paste the scammer's address into Incident mode and the threat-intel
-lookup; full tracing needs an adapter (contributions welcome — one file per chain).
+Every address is checksum-validated (EIP-55, Bech32/Bech32m, CashAddr, TON CRC16,
+Base58Check), so a one-character typo is caught. Other chains: paste the scammer's
+address into Incident mode and the threat-intel lookup; full tracing needs an
+adapter (contributions welcome — one file per chain; see [CHAIN_SOURCES.md](CHAIN_SOURCES.md)).
+
+---
+
+## Protection before the scam
+
+Every tool below runs on your computer; nothing you paste or copy is sent anywhere
+unless the page says so. Open them from the Desk's menu.
+
+| Tool | Desk page | What it does |
+|---|---|---|
+| **Is this message a scam?** | `/msgcheck` | Paste a text, email, DM or what a caller said. Plain-language red flags for every common scam (bank and government impostors, toll and delivery texts, "grandchild in jail" and voice-clone emergencies, gift cards, crypto ATMs, fake investment platforms, task jobs, "we can recover your money"). Links and addresses are checked against scam lists. |
+| **Check before you send** | `/prescreen` | A verdict on a crypto address before you pay it, on 14 chains, with published error rates ([benchmark](benchmark/RESULTS.md)). |
+| **Copy-paste guard** | `/clipguard` | Optional. Checks every crypto address you copy: large red STOP for a known scammer address, green note for an address in your private address book. Defeats clipboard-swapping malware. |
+| **ScamHunter Guard browser extension** | `/extension` | Chrome / Edge. Warns when a page swaps the address you copy (even to an address no list knows yet), loads code from known attack servers, tampers with core browser functions, or shows a scammer's address; blocks pasting one. Install: `edge://extensions` → Developer mode → Load unpacked → the `extension` folder, then connect it with the code on `/extension`. |
+| **Agent firewall** | `/agentguard` | For AI agents that read the web or email: finds instructions hidden from people (invisible text, comments, encoded text) and holds risky actions — payments, deletes, installs of look-alike packages, sending secrets — for your OK. Includes a Claude Code hook and a token-protected local API for your own agents. |
+| **Exposure check** | `/exposure` | Is anything at your home or business open to the internet? Refrigeration, HVAC and building controllers, remote desktop, cameras. Uses the public Shodan InternetDB record for your own address and never logs in to anything. Built after the October 2026 attacks that heated supermarket fridges through internet-exposed controllers. |
+| **Sites I use** | `/sitewatch` | Early warning when a site you use is hijacked, including a trusted outside script that starts loading new code (how the OPTIMJACK attack worked). |
+| **Campaign feed** | — | Known attacks (addresses, attacker hosts, script fingerprints) ship inside each signed release, so every user gets them under the same signature check as the code. |
 
 ---
 

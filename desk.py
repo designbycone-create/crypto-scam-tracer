@@ -444,7 +444,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/clipguard'>Copy-paste guard</a> &nbsp; <a href='/msgcheck'>Is this message a scam?</a> &nbsp; <a href='/agentguard'>Agent firewall</a> &nbsp; <a href='/exposure'>Exposure check</a> &nbsp; <a href='/extension'>Browser extension</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/clipguard'>Copy-paste guard</a> &nbsp; <a href='/msgcheck'>Is this message a scam?</a> &nbsp; <a href='/numbercheck'>Check a phone number</a> &nbsp; <a href='/agentguard'>Agent firewall</a> &nbsp; <a href='/exposure'>Exposure check</a> &nbsp; <a href='/extension'>Browser extension</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -543,6 +543,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/msgcheck":
             from shield import msgcheck
             return self._send(msgcheck.page(), "text/html; charset=utf-8")
+        if path == "/numbercheck":
+            from shield import callerlist
+            return self._send(callerlist.page(), "text/html; charset=utf-8")
         if path == "/exposure":
             from shield import exposure
             return self._send(exposure.page(), "text/html; charset=utf-8")
@@ -715,6 +718,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/msgcheck":
                 from shield import msgcheck
                 return self._send(msgcheck.post(form), "text/html; charset=utf-8")
+            if path == "/numbercheck":
+                from shield import callerlist
+                return self._send(callerlist.post(form), "text/html; charset=utf-8")
             if path == "/exposure":
                 from shield import exposure
                 return self._send(exposure.post(form), "text/html; charset=utf-8")

@@ -1,0 +1,365 @@
+{
+ "brands": {
+  "amazon": [
+   "amazon.com",
+   "amazon.co.uk",
+   "amzn.to"
+  ],
+  "apple": [
+   "apple.com",
+   "icloud.com"
+  ],
+  "bankofamerica": [
+   "bankofamerica.com",
+   "bofa.com"
+  ],
+  "binance": [
+   "binance.com",
+   "binance.us"
+  ],
+  "cashapp": [
+   "cash.app"
+  ],
+  "chase": [
+   "chase.com"
+  ],
+  "coinbase": [
+   "coinbase.com"
+  ],
+  "costco": [
+   "costco.com"
+  ],
+  "dhl": [
+   "dhl.com"
+  ],
+  "ezpass": [
+   "e-zpassny.com",
+   "ezpassnj.com",
+   "e-zpassiag.com"
+  ],
+  "facebook": [
+   "facebook.com",
+   "fb.com"
+  ],
+  "fedex": [
+   "fedex.com"
+  ],
+  "geeksquad": [
+   "bestbuy.com"
+  ],
+  "google": [
+   "google.com",
+   "goo.gl",
+   "youtube.com"
+  ],
+  "instagram": [
+   "instagram.com"
+  ],
+  "irs": [
+   "irs.gov"
+  ],
+  "kraken": [
+   "kraken.com"
+  ],
+  "ledger": [
+   "ledger.com"
+  ],
+  "medicare": [
+   "medicare.gov"
+  ],
+  "metamask": [
+   "metamask.io"
+  ],
+  "microsoft": [
+   "microsoft.com",
+   "live.com",
+   "office.com",
+   "outlook.com"
+  ],
+  "netflix": [
+   "netflix.com"
+  ],
+  "paypal": [
+   "paypal.com"
+  ],
+  "ssa": [
+   "ssa.gov"
+  ],
+  "trustwallet": [
+   "trustwallet.com"
+  ],
+  "ups": [
+   "ups.com"
+  ],
+  "usps": [
+   "usps.com"
+  ],
+  "venmo": [
+   "venmo.com"
+  ],
+  "walmart": [
+   "walmart.com"
+  ],
+  "wellsfargo": [
+   "wellsfargo.com"
+  ],
+  "zelle": [
+   "zellepay.com"
+  ]
+ },
+ "campaign": {
+  "addresses": {
+   "0xc4026b06d82b0f0b363eda0642d61cfbdc17884e": "the OPTIMJACK campaign (2026-11-16)",
+   "19g9rZcPeiz8rUvyWpTRyXXhPnjsWrc3kW": "the OPTIMJACK campaign (2026-11-16)",
+   "DBEGrxRF7KMSuhTS4c1MFviStU6efdMnu5": "the OPTIMJACK campaign (2026-11-16)",
+   "FVtL8NMYS9PA1v3HE67XUGCtGA9JaZUvqav2fU2LrV5n": "the OPTIMJACK campaign (2026-11-16)",
+   "THvs6p56XkUiMkJeSc51cAP64u2RsTYqxa": "the OPTIMJACK campaign (2026-11-16)",
+   "UQAgM1VqSZQiJLSG5w-ovurq5CZdxLEK3_7CMmwALTA5e09p": "the OPTIMJACK campaign (2026-11-16)",
+   "ltc1q3wp7g6ds0ggg6fl6kncpa4sepn0q3qfacgred5": "the OPTIMJACK campaign (2026-11-16)",
+   "qzkaaf8n6grmpr0d9lx8xutn3r9lk722f566hhpe58": "the OPTIMJACK campaign (2026-11-16)"
+  },
+  "domains": {
+   "1688360.cc": "the OPTIMJACK campaign (2026-11-16)",
+   "1y69gy2mdzaltz1.icu": "the OPTIMJACK campaign (2026-11-16)",
+   "5vobauua3ojpklx.icu": "the OPTIMJACK campaign (2026-11-16)",
+   "eil786npto9u5bq.icu": "the OPTIMJACK campaign (2026-11-16)",
+   "gm38duxoihbmy5o.icu": "the OPTIMJACK campaign (2026-11-16)",
+   "l7bcsnwc7nzr3uo.icu": "the OPTIMJACK campaign (2026-11-16)",
+   "p55abnw2pnsz0bo.icu": "the OPTIMJACK campaign (2026-11-16)",
+   "q1ls1ho9x7wsxlu.icu": "the OPTIMJACK campaign (2026-11-16)"
+  }
+ },
+ "decisive": [
+  "bad_address",
+  "bad_link",
+  "cash_courier",
+  "crypto_atm",
+  "family_emergency",
+  "gift_cards",
+  "gov_threat",
+  "move_money_safe",
+  "prize",
+  "recovery_scam",
+  "seed",
+  "task_job",
+  "withdrawal_fee"
+ ],
+ "hidden_chars": "[\u200b-\u200f\u2060\ufeff]",
+ "risky_tlds": [
+  "bond",
+  "buzz",
+  "cc",
+  "cfd",
+  "click",
+  "country",
+  "cyou",
+  "icu",
+  "kim",
+  "lat",
+  "link",
+  "live",
+  "loan",
+  "monster",
+  "mov",
+  "online",
+  "rest",
+  "sbs",
+  "shop",
+  "support",
+  "top",
+  "vip",
+  "work",
+  "xyz",
+  "zip"
+ ],
+ "rules": [
+  {
+   "id": "gift_cards",
+   "pattern": "\\b(gift ?cards?|itunes card|apple card|google play card|steam card|target card|vanilla (visa|card))\\b",
+   "weight": 3,
+   "why": "Asks for payment in gift cards. No real company, agency or court is ever paid in gift cards."
+  },
+  {
+   "id": "crypto_atm",
+   "pattern": "\\b(bitcoin|crypto|btc)\\s*(atm|kiosk|machine)\\b|\\bcoinflip\\b|\\bbitcoin depot\\b",
+   "weight": 3,
+   "why": "Tells you to put cash into a Bitcoin / crypto ATM. Government agencies and banks never ask for this."
+  },
+  {
+   "id": "cash_courier",
+   "pattern": "\\b(courier|driver|agent|officer)\\b.{0,40}\\b(pick ?up|collect)\\b|\\b(gold bars?|cash) .{0,30}\\b(pick ?up|collect|courier)\\b",
+   "weight": 3,
+   "why": "Says someone will come to pick up cash or gold from you. That is a known courier scam."
+  },
+  {
+   "id": "move_money_safe",
+   "pattern": "\\b(safe|secure|protected|new) (account|wallet)\\b.{0,60}\\b(transfer|move|send|deposit)\\b|\\b(transfer|move) (your|all) (money|funds|savings)\\b",
+   "weight": 3,
+   "why": "Tells you to move your money to a 'safe' account. Real banks never tell you to move money to protect it."
+  },
+  {
+   "id": "wire_zelle",
+   "pattern": "\\b(wire transfer|wire the|western union|moneygram|zelle|cash ?app|venmo)\\b",
+   "weight": 2,
+   "why": "Wants a wire transfer, Zelle, Cash App or Venmo payment. Money sent that way is almost never recoverable."
+  },
+  {
+   "id": "crypto_pay",
+   "pattern": "\\b(send|deposit|pay|transfer)\\b.{0,40}\\b(usdt|tether|bitcoin|btc|eth|crypto|usdc)\\b",
+   "weight": 2,
+   "why": "Asks you to pay or deposit in cryptocurrency (USDT, Bitcoin and similar)."
+  },
+  {
+   "id": "codes",
+   "pattern": "\\b(verification|security|one[- ]time|otp|2fa|login|confirmation) code\\b|\\b(read|tell|give|send) (me|us) (the )?(code|pin|password)\\b",
+   "weight": 3,
+   "why": "Asks for a verification code, password or PIN. Anyone who asks for the code sent to you is trying to get into your account."
+  },
+  {
+   "id": "seed",
+   "pattern": "\\b(seed|recovery|secret|mnemonic) (phrase|words)\\b|\\bprivate key\\b|\\b12[- ]words?\\b|\\b24[- ]words?\\b",
+   "weight": 3,
+   "why": "Asks for a wallet recovery (seed) phrase or private key. Nobody legitimate ever needs these; whoever has them owns the wallet."
+  },
+  {
+   "id": "remote_access",
+   "pattern": "\\b(anydesk|teamviewer|ultraviewer|rustdesk|logmein|screenconnect|quick ?assist|share (your )?screen|remote (access|desktop|support))\\b",
+   "weight": 3,
+   "why": "Wants you to install a remote-access app (AnyDesk, TeamViewer and similar) or share your screen. That gives them control of your computer."
+  },
+  {
+   "id": "secrecy",
+   "pattern": "\\b(don'?t|do not|never) (tell|inform|talk to|mention)\\b.{0,40}\\b(anyone|family|bank|teller|police|wife|husband|son|daughter|kids|mom|dad|mother|father|parents|grandpa|grandma)\\b|\\bkeep (this|it) (secret|confidential|between us)\\b|\\bgag order\\b",
+   "weight": 3,
+   "why": "Tells you to keep it secret or not to tell family or your bank. Scammers isolate their targets; real officials don't."
+  },
+  {
+   "id": "stay_on_line",
+   "pattern": "\\b(don'?t|do not) hang up\\b|\\bstay on the (line|phone)\\b",
+   "weight": 2,
+   "why": "Pressures you to stay on the phone or not hang up. That stops you from checking with anyone."
+  },
+  {
+   "id": "gov_threat",
+   "pattern": "\\b(irs|social security|ssa|medicare|fbi|dea|ftc|sheriff|marshal|police|customs|immigration)\\b.{0,80}\\b(arrest|warrant|suspend|suspended|lawsuit|jail|legal action|penalty)\\b",
+   "weight": 3,
+   "why": "Claims to be a government agency or police threatening arrest, a warrant, or a suspended Social Security number. Agencies don't threaten arrest by phone, text or email."
+  },
+  {
+   "id": "bank_fraud_dept",
+   "pattern": "\\b(fraud (department|team|alert)|suspicious (activity|transaction|charge)|unauthori[sz]ed (charge|transaction|purchase))\\b",
+   "weight": 2,
+   "why": "Says it's your bank's fraud department. Hang up and call the number on the back of your card instead."
+  },
+  {
+   "id": "tech_support",
+   "pattern": "\\b(your (computer|device|pc|account) (is|has been) (infected|hacked|compromised|locked))\\b|\\b(geek squad|norton|mcafee|microsoft|apple) (renewal|subscription|support)\\b.{0,60}\\b(call|charge|refund)\\b",
+   "weight": 2,
+   "why": "A tech-support or virus warning asking you to call or click. Microsoft, Apple and others don't send these."
+  },
+  {
+   "id": "delivery_toll",
+   "pattern": "\\b(usps|ups|fedex|dhl|package|parcel|shipment)\\b.{0,60}\\b(redeliver|on hold|unable to deliver|address (issue|incomplete)|fee)\\b|\\b(unpaid|outstanding) (toll|tolls|e-?zpass|sunpass)\\b",
+   "weight": 2,
+   "why": "A delivery or unpaid-toll text with a link. These are among the most common scam texts."
+  },
+  {
+   "id": "refund_overpay",
+   "pattern": "\\b(over ?paid|overpayment|refunded too much|sent too much|accidentally (sent|refunded))\\b",
+   "weight": 2,
+   "why": "Says you were refunded or paid too much and must send the difference back. That's an overpayment scam."
+  },
+  {
+   "id": "family_emergency",
+   "pattern": "(?=[\\s\\S]*(\\b(money|bail|bond|send|sent|wire|pay|paid|cash|gift ?cards?|venmo|zelle|cash ?app)\\b|\\$\\s?\\d))\\b(grandma|grandpa|grandmother|grandfather|mom|dad|it'?s me)\\b.{0,120}\\b(jail|bail|arrested|accident|hospital|lawyer|attorney)\\b|\\b(bail|bond) (money|payment)\\b",
+   "weight": 3,
+   "why": "A family emergency (accident, jail, bail, hospital) with a request for money. Voices can now be cloned with AI: hang up and call that person on their own number."
+  },
+  {
+   "id": "new_number",
+   "pattern": "\\b(new (phone|number)|lost my phone|this is my new number)\\b",
+   "weight": 1,
+   "why": "Says it's someone you know texting from a new number. Confirm by calling their old number."
+  },
+  {
+   "id": "prize",
+   "pattern": "\\b(you('ve| have)? won|winner|lottery|sweepstakes|prize|jackpot)\\b.{0,120}\\b(fee|tax|taxes|processing|shipping and handling|pay|send)\\b",
+   "weight": 3,
+   "why": "Says you won a prize, lottery or sweepstakes but must pay a fee or taxes first. Real prizes never charge you."
+  },
+  {
+   "id": "romance_money",
+   "pattern": "\\b(my love|my dear|darling|sweetheart|honey|babe)\\b.{0,200}\\b(money|send|transfer|help me|loan|fee|ticket|visa)\\b",
+   "weight": 2,
+   "why": "Someone you know only online is asking for money. Romance scammers build trust for weeks, then ask."
+  },
+  {
+   "id": "guaranteed_returns",
+   "pattern": "\\b(guaranteed|risk[- ]free|no risk)\\b.{0,40}\\b(profit|returns?|income|gains?)\\b|\\b\\d{2,4}\\s?% (daily|weekly|monthly|return|profit)\\b|\\b(double|triple) your (money|investment|crypto)\\b",
+   "weight": 3,
+   "why": "Promises guaranteed or very high returns. Real investments never guarantee profit."
+  },
+  {
+   "id": "trading_mentor",
+   "pattern": "\\b(mentor|vip group|signal group|trading (platform|app|teacher)|investment (group|club|platform)|liquidity mining|arbitrage (bot|platform))\\b",
+   "weight": 2,
+   "why": "An investment 'mentor', VIP group or trading platform you were introduced to by a stranger. This is how 'pig-butchering' scams start."
+  },
+  {
+   "id": "withdrawal_fee",
+   "pattern": "\\b(withdraw(al)?|unlock|release)\\b.{0,60}\\b(fee|tax|deposit|margin|verification payment|unfreeze)\\b",
+   "weight": 3,
+   "why": "Says you must pay a fee or tax before you can withdraw your money. That is the final stage of an investment scam: the money is gone."
+  },
+  {
+   "id": "wrong_number",
+   "pattern": "^\\s*(hi|hello|hey)[,!. ]+(is this|are you)\\b|\\bsorry,? (wrong number|i (think|guess) i have the wrong)\\b",
+   "weight": 1,
+   "why": "A friendly 'wrong number' opener. Scam groups use these to start a conversation that ends in a fake investment."
+  },
+  {
+   "id": "task_job",
+   "pattern": "\\b(tasks?|orders?|reviews?|ratings?)\\b.{0,60}\\b(commission|recharge|top ?up|deposit|unlock)\\b|\\b(work from home|remote job)\\b.{0,80}\\b(telegram|whatsapp|deposit)\\b",
+   "weight": 3,
+   "why": "A job that pays you to 'complete tasks' or review products, but asks you to deposit money first. That's a task scam."
+  },
+  {
+   "id": "recovery_scam",
+   "pattern": "\\b(recover|recovery|retrieve|get back)\\b.{0,60}\\b(lost|stolen|scammed)\\b.{0,60}\\b(funds|money|crypto|bitcoin|assets)\\b|\\b(fund|asset|crypto) recovery\\b|\\b(ethical )?hackers? (can|will) (recover|get back)\\b",
+   "weight": 3,
+   "why": "Offers to recover money you already lost to a scam, usually for an upfront fee. These are almost always a second scam. Real help (police, IC3, the FTC) is free."
+  },
+  {
+   "id": "urgency",
+   "pattern": "\\b(act now|immediately|urgent|within (24|48) hours|right away|final (notice|warning)|last chance|expires? today)\\b",
+   "weight": 1,
+   "why": "Pressures you to act right now. Scammers rush you so you don't stop and check."
+  },
+  {
+   "id": "account_threat",
+   "pattern": "\\b(account|card|service)\\b.{0,30}\\b(suspended|locked|closed|deactivated|disabled|terminated|frozen)\\b",
+   "weight": 1,
+   "why": "Says your account will be closed, locked or suspended."
+  }
+ ],
+ "shorteners": [
+  "bit.ly",
+  "buff.ly",
+  "cutt.ly",
+  "goo.gl",
+  "is.gd",
+  "lnkd.in",
+  "ow.ly",
+  "qrco.de",
+  "rb.gy",
+  "rebrand.ly",
+  "s.id",
+  "shorturl.at",
+  "t.co",
+  "t.ly",
+  "tiny.cc",
+  "tinyurl.com"
+ ],
+ "url_pattern": "\\b((?:https?://|www\\.)[^\\s<>\\\"')\\]]+|(?<![@\\w])[a-z0-9][a-z0-9-]{0,62}(?:\\.[a-z0-9-]{1,63})*\\.(?:country|monster|support|online|click|bond|buzz|cyou|info|link|live|loan|rest|shop|work|app|biz|cfd|com|gov|icu|kim|lat|mov|net|org|sbs|top|vip|xyz|zip|cc|co|gl|io|ly|me|to|us)(?:/[^\\s<>\\\"')\\]]*)?)",
+ "version": 1
+}

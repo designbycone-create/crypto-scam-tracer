@@ -64,8 +64,8 @@ RULES = [
      r"|\b(bail|bond) (money|payment)\b"),
     ("new_number", 1, "Says it's someone you know texting from a new number. Confirm by calling their old number.",
      r"\b(new (phone|number)|lost my phone|this is my new number)\b"),
-    ("prize", 2, "Says you won a prize, lottery or sweepstakes but must pay a fee or taxes first. Real prizes don't charge you.",
-     r"\b(you('ve| have)? won|winner|lottery|sweepstakes|prize|jackpot)\b.{0,80}\b(fee|tax|taxes|processing|claim)\b"),
+    ("prize", 3, "Says you won a prize, lottery or sweepstakes but must pay a fee or taxes first. Real prizes never charge you.",
+     r"\b(you('ve| have)? won|winner|lottery|sweepstakes|prize|jackpot)\b.{0,120}\b(fee|tax|taxes|processing|shipping and handling|pay|send)\b"),
     ("romance_money", 2, "Someone you know only online is asking for money. Romance scammers build trust for weeks, then ask.",
      r"\b(my love|my dear|darling|sweetheart|honey|babe)\b.{0,200}\b(money|send|transfer|help me|loan|fee|ticket|visa)\b"),
     # money-making pitches
@@ -89,7 +89,7 @@ RULES = [
 ]
 _RX = [(i, w, msg, re.compile(rx, re.I | re.S | re.M)) for i, w, msg, rx in RULES]
 DECISIVE = {"gift_cards", "crypto_atm", "cash_courier", "move_money_safe", "seed", "withdrawal_fee", "recovery_scam",
-            "task_job", "bad_address", "bad_link", "family_emergency", "gov_threat"}
+            "task_job", "bad_address", "bad_link", "family_emergency", "gov_threat", "prize"}
 
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "buff.ly", "rebrand.ly", "cutt.ly", "shorturl.at",
               "rb.gy", "t.ly", "s.id", "tiny.cc", "lnkd.in", "qrco.de"}
@@ -107,7 +107,7 @@ BRANDS = {"paypal": ["paypal.com"], "apple": ["apple.com", "icloud.com"], "amazo
           "facebook": ["facebook.com", "fb.com"], "instagram": ["instagram.com"], "google": ["google.com", "goo.gl", "youtube.com"],
           "walmart": ["walmart.com"], "costco": ["costco.com"], "geeksquad": ["bestbuy.com"]}
 _URL = re.compile(r"\b((?:https?://|www\.)[^\s<>\"')\]]+|(?<![@\w])[a-z0-9][a-z0-9-]{0,62}(?:\.[a-z0-9-]{1,63})*\.(?:"
-                  + "|".join(sorted(RISKY_TLDS | {"com", "net", "org", "io", "co", "app", "info", "biz", "us", "me", "ly", "to", "gl", "gov"}, key=len, reverse=True))
+                  + "|".join(sorted(RISKY_TLDS | {"com", "net", "org", "io", "co", "app", "info", "biz", "us", "me", "ly", "to", "gl", "gov"}, key=lambda t: (-len(t), t)))
                   + r")(?:/[^\s<>\"')\]]*)?)", re.I)
 
 

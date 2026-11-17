@@ -1,0 +1,31 @@
+# Builds and unit-tests the ScamHunter Guard Android app on every change to it.
+name: Android app
+on:
+  push:
+    paths: ["android/**", "shield/msgcheck.py", "tools/export_mobile_rules.py"]
+  pull_request:
+    paths: ["android/**"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Phone rules match the Desk's checker
+        run: python tools/export_mobile_rules.py --check
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+      - name: Unit tests and debug APK
+        run: gradle -p android testDebugUnitTest assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scamhunter-guard-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk

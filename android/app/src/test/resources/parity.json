@@ -1,0 +1,182 @@
+[
+ {
+  "rules": [
+   "bad_link",
+   "delivery_toll",
+   "urgency"
+  ],
+  "text": "E-ZPass: You have an unpaid toll of $4.15. Pay within 24 hours to avoid a late fee: https://ezpass-tolls-pay.top/pay",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "bad_link",
+   "delivery_toll"
+  ],
+  "text": "USPS: Your package is on hold due to an incomplete address. Update here: https://usps.redeliver-info.com",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "family_emergency",
+   "secrecy"
+  ],
+  "text": "Grandpa it's me, I had an accident and the lawyer says I need $3,000 sent today. Please don't tell mom.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "gov_threat"
+  ],
+  "text": "This is the Social Security Administration. Your SSN has been suspended and there is a warrant for your arrest.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "bank_fraud_dept",
+   "move_money_safe",
+   "stay_on_line"
+  ],
+  "text": "Wells Fargo fraud department: unauthorized transaction. Transfer your savings to a safe account now. Don't hang up.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "gift_cards",
+   "secrecy"
+  ],
+  "text": "Your boss here, I need you to buy 5 Apple gift cards for a client. Keep this between us.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "guaranteed_returns",
+   "trading_mentor",
+   "wrong_number"
+  ],
+  "text": "Hi, is this Linda? My uncle is a trading mentor, our VIP group gets 30% monthly returns guaranteed.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "withdrawal_fee"
+  ],
+  "text": "To withdraw your 52,000 USDT profit you must first pay a 10% tax to unlock the account.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "recovery_scam"
+  ],
+  "text": "Lost money to a crypto scam? Our certified ethical hackers can recover your stolen funds. Small upfront fee.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "task_job"
+  ],
+  "text": "Remote job: earn $300/day completing tasks. Recharge your account with USDT to unlock higher commission orders.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "remote_access",
+   "tech_support"
+  ],
+  "text": "Your computer has been infected. Call Microsoft support and install AnyDesk so we can fix it.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "seed"
+  ],
+  "text": "Trust Wallet support: to verify your wallet, reply with your 12-word recovery phrase.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "crypto_atm",
+   "crypto_pay"
+  ],
+  "text": "Officer Daniels: to clear the warrant, deposit the cash at a Bitcoin ATM today.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "bad_link"
+  ],
+  "text": "PayPal: your account is limited. Restore access: https://paypal-secure-login.xyz/verify",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "codes",
+   "gov_threat"
+  ],
+  "text": "Medicare: your benefits will be suspended. Read us the verification code we just texted you.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "prize"
+  ],
+  "text": "Congratulations, you won the Publishers sweepstakes! Pay the $250 processing fee to claim your prize.",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [
+   "romance_money",
+   "wire_zelle"
+  ],
+  "text": "My darling, I need money for the ticket to come see you, please send $800 by Zelle.",
+  "verdict": "SUSPICIOUS"
+ },
+ {
+  "rules": [],
+  "text": "Your Amazon.com order #112-4432 has shipped. Track your package at https://www.amazon.com/progress-tracker.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [],
+  "text": "Chase: Your statement is ready. Log in at chase.com to view it.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [],
+  "text": "Reminder: your appointment with Dr. Lee is tomorrow at 2pm. Reply C to confirm.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [],
+  "text": "Mom, I'm at the hospital with Dad for his checkup, call me when you can.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [],
+  "text": "I bought some bitcoin on Coinbase today, price is up.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [],
+  "text": "Please complete the review tasks in Jira by Friday.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [],
+  "text": "Police arrested a man accused of a Social Security scam, the news said Tuesday.",
+  "verdict": "NO RED FLAGS FOUND"
+ },
+ {
+  "rules": [
+   "family_emergency",
+   "hidden_chars"
+  ],
+  "text": "Grandma it\u200bs me, in jail, need bail money",
+  "verdict": "LIKELY SCAM"
+ },
+ {
+  "rules": [],
+  "text": "Hey are we still on for dinner Saturday?",
+  "verdict": "NO RED FLAGS FOUND"
+ }
+]

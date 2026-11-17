@@ -199,15 +199,19 @@ def apply(sha=None, log=print):
     if failed:
         _restore(bdir)                               # roll back: replaced files back, new files removed
         raise RuntimeError("the new version failed its self-tests, so it was rolled back: " + "; ".join(failed)[:300])
-    try:
-        subprocess.run([sys.executable, "-m", "pip", "install", "--user", "-q", "-r", os.path.join(HERE, "requirements.txt")],
-                       capture_output=True, timeout=300)
-    except Exception:
-        pass
+    deps_error = None
+    try:   # exact versions, checked against their published hashes: a swapped package is refused
+        p = subprocess.run([sys.executable, "-m", "pip", "install", "--user", "-q", "--require-hashes", "-r",
+                            os.path.join(HERE, "requirements.txt")], capture_output=True, text=True, timeout=300)
+        if p.returncode != 0:
+            last = ((p.stderr or "") + "\n" + (p.stdout or "")).strip().splitlines()
+            deps_error = "packages not updated (pip refused)" + (": " + last[-1][:200] if last else "")
+    except Exception as ex:
+        deps_error = f"packages not updated: {ex}"[:200]
     with open(VERSION_FILE, "w") as f:
         f.write(sha)
     st = _state()
-    st.update({"installed": sha, "available": False, "last_backup": bdir, "updated_at": time.time(), "changes": [],
+    st.update({"installed": sha, "available": False, "last_backup": bdir, "updated_at": time.time(), "changes": [], "deps_error": deps_error,
                "signature": sig_why})
     _save_state(st)
     return {"ok": True, "version": sha, "files": n, "backup": bdir, "signature": sig_why}

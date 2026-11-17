@@ -190,7 +190,8 @@ where your funds are, the network behind the scam, and freeze kits.
 The Desk keeps a small log of the checks you make on it (`desk_activity.jsonl`): only the kind
 of check and its result, never the message you pasted or the number you looked up.
 
-**Mac / Linux / manual:** `git clone` this repo, `pip install -r requirements.txt`,
+**Mac / Linux / manual:** Python 3.10 or newer. `git clone` this repo, `pip install --require-hashes -r requirements.txt`
+(every package is pinned to an exact version and checked against its published hash),
 `python desk.py` — the same setup page opens.
 
 ---

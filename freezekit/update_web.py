@@ -71,6 +71,10 @@ def page(force=False):
         out.append(f"<div class=card><span class=bad>{e(JOB['err'])}</span></div>")
     if st.get("error") and not latest:
         out.append(f"<div class=card><span class=bad>Couldn't reach GitHub ({e(st['error'])}). Try again later.</span></div>")
+    if st.get("deps_error"):
+        out.append(f"<div class=card><span class=bad>The program updated, but its supporting packages did not: {e(st['deps_error'])}. "
+                   "The Desk keeps using the packages it already has. Packages are only installed if they match their published "
+                   "fingerprints exactly, so this can mean a download was tampered with or interrupted.</span></div>")
     key, _m = updater.trusted_key()
     trust = (f"Updates must be signed by key <code>{e(_m.fingerprint(key))}</code>; anything else is refused."
              if key else "This copy will start checking signatures from the first signed update.")

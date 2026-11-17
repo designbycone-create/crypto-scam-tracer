@@ -7,7 +7,7 @@ tag was used (a tag usually means the funds hit an exchange deposit account,
 which is the one point where an exchange can freeze them).
 
 Alerts: console + log file + Windows beep/popup + optional phone push (ntfy).
-Requires: Python 3.9+, `pip install websockets`
+Requires: Python 3.10+, websockets (see requirements.txt)
 
 Run (Windows):
     python scam_wallet_watcher.py

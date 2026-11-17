@@ -832,7 +832,7 @@ def ensure_deps():
     print("Installing dependencies for", sys.executable, flush=True)
     for extra in (["--user"], []):
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "-q", *extra, "-r", req], check=True, timeout=600)
+            subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--require-hashes", *extra, "-r", req], check=True, timeout=600)
             return
         except Exception as e:
             print("  pip attempt failed:", e, flush=True)

@@ -88,3 +88,4 @@ callers_stats.json
 desk_status.json.*.tmp
 kev_cache.json
 exposure_state.json
+secretscan_summary.json

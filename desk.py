@@ -592,6 +592,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/exposure":
             from shield import exposure
             return self._send(exposure.page(), "text/html; charset=utf-8")
+        if path == "/secretscan":
+            from shield import secretscan
+            return self._send(secretscan.page(), "text/html; charset=utf-8")
         if path == "/agentguard":
             from agentguard import web as agw
             return self._send(agw.page(), "text/html; charset=utf-8")
@@ -719,7 +722,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self._local_origin():
             return self._send("Forbidden", "text/plain", code=403)
         n = min(int(self.headers.get("Content-Length") or 0), 2_000_000)
-        form = {k: v[0] for k, v in parse_qs(self.rfile.read(n).decode("utf-8", "replace")).items()}
+        multi = parse_qs(self.rfile.read(n).decode("utf-8", "replace"))
+        form = {k: v[0] for k, v in multi.items()}
         from freezekit import web
         path = self.path.partition("?")[0]
         try:
@@ -784,6 +788,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/exposure":
                 from shield import exposure
                 return self._send(exposure.post(form), "text/html; charset=utf-8")
+            if path == "/secretscan":
+                from shield import secretscan
+                return self._send(secretscan.post(form, multi.get("folder") or []), "text/html; charset=utf-8")
             if path == "/agentguard":
                 from agentguard import web as agw
                 return self._send(agw.post(form), "text/html; charset=utf-8")

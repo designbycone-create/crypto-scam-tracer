@@ -88,13 +88,17 @@ def _now():
 
 
 def _write_status():
+    # one writer at a time, and replace the file in one step: several supervisor threads write this,
+    # and overlapping writes used to leave a second copy glued to the end (unreadable JSON)
     with _state_lock:
         snap = dict(_state)
-    try:
-        with open(STATUS_FILE, "w", encoding="utf-8") as f:
-            json.dump({"updated": _now(), "services": snap}, f)
-    except Exception:
-        pass
+        try:
+            tmp = f"{STATUS_FILE}.{os.getpid()}.tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump({"updated": _now(), "services": snap}, f)
+            os.replace(tmp, STATUS_FILE)
+        except Exception:
+            pass
 
 
 def supervise(label, argv, logfile, stop_evt):

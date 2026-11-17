@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Restore downloaded days
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: callers_daily
           key: callers-${{ github.run_id }}
@@ -31,8 +31,16 @@ jobs:
           python - <<'PY'
           from shield import callerlist
           lst = callerlist.update(days=30, max_new_days=30)
-          print(callerlist.export("callers.json.gz", lst))
+          if not lst["days"]:
+              raise SystemExit("No days of FTC reports downloaded yet, so nothing was published.")
+          print(lst["days"], "days of reports,", callerlist.export("callers.json.gz", lst))
           PY
+      - name: Save downloaded days (even if this run failed, so the next run picks up where it stopped)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: callers_daily
+          key: callers-${{ github.run_id }}
       - name: Publish to the data branch
         run: |
           mkdir -p /tmp/pub && cp callers.json.gz /tmp/pub/

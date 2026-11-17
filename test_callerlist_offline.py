@@ -50,8 +50,29 @@ r.append(ok(C.check("202-555-0199")["level"] == "low" and C.rate({"n": 4, "robo"
 r.append(ok(C.rate({"n": 4, "robo": 0, "subjects": {"Imposters - Government": 4}}, 30)["level"] == "high", "a few reports + impostor subject: high"))
 r.append(ok(C.rate({"n": 1, "robo": 1, "subjects": {"Imposters - Government": 1}}, 30)["level"] == "low", "never high on a single report"))
 r.append(ok(not C.check("555-1234")["ok"], "non-US / short numbers refused"))
+import io, urllib.error
+def limited(u):
+    if "2026-11-14" in u:
+        calls.append(u)
+        raise urllib.error.HTTPError(u, 429, "Too Many Requests", {"Retry-After": "2677"}, io.BytesIO())
+    return fake(u)
+logs = []
+C.GET = limited
+for f in os.listdir(C.DAILY_DIR):
+    os.remove(os.path.join(C.DAILY_DIR, f))
+lim = C.update(days=3, api_key=KEY, log=logs.append, today=date(2026, 11, 16))
+r.append(ok(lim["days"] == 1 and lim["to"] == "2026-11-15" and lim["numbers"]["8335551234"]["n"] == 57,
+            "hourly limit hit: the day already downloaded is kept and the list is built from it (and says 1 day)"))
+r.append(ok(any("allowance is used up" in l and "44 min" in l for l in logs) and not any(KEY in l for l in logs),
+            "hourly limit is labelled as the hourly limit, with the reset time, and no key in the log"))
+refused = lambda: len([u for u in calls if "2026-11-14" in u])
+r.append(ok(refused() >= 1 and not any("2026-11-13" in u for u in calls[-3:]), "refused day was asked for, older days were not"))
+n429 = refused()
+C.update(days=3, api_key=KEY, log=logs.append, today=date(2026, 11, 16))
+r.append(ok(refused() == n429 + 1 and not any("2026-11-13" in u for u in calls[-2:]) and len([l for l in logs if "used up" in l]) == 2,
+            "after a refusal it stops asking that run (no hammering): one refused request per run"))
 try:
-    C.GET = lambda u: (_ for _ in ()).throw(OSError(f"HTTP 429 for {u}"))
+    C.GET = lambda u: (_ for _ in ()).throw(OSError(f"connection reset for {u}"))
     os.remove(os.path.join(C.DAILY_DIR, "2026-11-15.json"))
     C.update(days=3, api_key=KEY, log=lambda *_: None, today=date(2026, 11, 16))
     r.append(ok(False, "API failure raises"))

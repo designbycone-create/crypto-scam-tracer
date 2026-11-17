@@ -1,17 +1,17 @@
 {
  "pubkey": "c266c6598392a472899e7562045ddda9825d15d13a4d6584bcfd47bc4780c60e",
  "files": {
-  ".gitignore": "1217ff3d24cd256a08dde8cf59c3d07e2a3fb880d5d7f2550dd9d86fd598396a",
+  ".gitignore": "c24e27ede6a18da8661df7efeaa180debc3fd53eaa687c1b9ca8c2d494d88ab6",
   "CHAIN_SOURCES.md": "329e5d8813567f5367b9aae11576f04f5f3fd8b55afeeeb70dc5afc5f78f7fce",
   "LICENSE": "4966660a3d1e286c89374cbf04584405653e894d6feda09c2ae9cd4c9f06ff66",
   "NOTICE.md": "8396321e7699bb1173b0864f01c9bdfe675cb8d2cd20ac598ec08fcc10836098",
-  "README.md": "295c04834b438ca21c8c12b274599fba2cc946e8c424d99de9f1a234fc4e1140",
-  "ROADMAP.md": "a3c9ced41f9d4bf5c60a9dfcf8421f3cf3bcfdc1bd66d0ac17ddf800dd9ece45",
+  "README.md": "e8b0aaeb7b20d15b5eb4b5cb5634e885ed20f6d33ecb02f683826d1efefb84e7",
+  "ROADMAP.md": "36ddd92e5c6fe3b3c8a53cb016bdd77a3832a85412b0a39277788cb69a8314bb",
   "SECURITY.md": "4289403929bf46a774fbc6b94f651d2dbe44d4d9744cd2a93f30ab131e2e1df6",
   "TRUST.md": "108b161c12f5cb1139909cfb17cd281adc40ea622ade2ffe4377d6a2e940d8fe",
   "agentguard/__init__.py": "7018365c5988c442ce1e26e576798e537b41eef3d5e5fa0752ea7b1f811a72b3",
   "agentguard/__main__.py": "44a5c17a645697d91cd2157ef2b4215ebad96fb131836974e88729c803ebf0dd",
-  "agentguard/claude_hook.py": "d1dcb7d83b992f90b344ed5d11dcd4d20b85a1d9406dade1b7bece72fb30ba75",
+  "agentguard/claude_hook.py": "8470d8c9710f79d6c535abe4c1c78ef99d4671488d04a740d2f8cc890fece5b9",
   "agentguard/policy.py": "c028cc645ca3e91095b8d1c808518842bf1e37a3b9d415ed78b1336e6057d093",
   "agentguard/scan.py": "5ed9286770fd2ff1b9c3911fde7fa8303b88d2ec45ced26d221923c17371c16a",
   "agentguard/web.py": "282993bffb5416f83e30eb7a9056fef68515b7313d0c5f71a9005777aeeaec0b",
@@ -152,19 +152,20 @@
   "shield/xrpl.py": "b5cf6aaa6c56044566423bd105f5eda3da20a6247e9b24a8b2c7556adf723ba1",
   "telegram_setup.py": "f7f263a26bd1b7c7fad0cf48e4dc080280559b483b4141606f8db3074e4a8cf6",
   "test_campaign_defense_offline.py": "794d794cd19e5e47c73f24de542df91aa8f4c881fd2fd634299bdb805940f642",
-  "test_defense_platform_offline.py": "accb636ff74a5a0c28a029c433e116d6d700d775356b424c29e434e20c2783ae",
+  "test_defense_platform_offline.py": "1df8f9ea68e2e0e50d50bc2ba0a68effa2bda45faf7631f565adf93be11dd31c",
   "test_desk_launch_offline.py": "68657da2abb10ed9a6311795e8bdbc7442d3ca0749eae9a33ee94cca3389ee81",
   "test_extension_browser.py": "cd5405fcc094abbf2ff77b91eedc81dfe8d8cd03b41f61b7701eaf663650f08d",
   "test_updater_offline.py": "002f51d1e700d9c6599379e98ff5e716cf2dddedf361e1fb1369ec4b2dbf16d6",
+  "test_watcher_restart_offline.py": "9be821b3d9a0953daed8d65c5b22ba814d51110fca9f8a0cc46c6f54b4bb8d4f",
   "threatfeed/__init__.py": "7e3025efe6fbbaef485b5b00b537f2ac499c1d9f870ea255b5dabb0b36cf63a9",
   "threatfeed/campaigns.json": "57b3c8c0a9637be3c85d5217ec2c956c9e0305dde898905c38831bb95d9b792f",
   "tools/sign_release.ps1": "37ab8b824ea1cb07d2c299341776ba9e5359518046a2dc76b5f9bd1632893780",
   "updater.py": "799b31ef65d3f30b36ae6df445c742bc9c6dd0a311f4a0cf3dfcb37a76bff1bb",
   "victim.example.json": "865540c3542a7e6f1231b97f843abde7b7dc65f665b59407633c5eba162e82b2",
-  "xrpl_watcher.py": "e93d9cf02a0621fbfca75a197a604e79fe4d3635a74d2e1f763d05fddeebedca"
+  "xrpl_watcher.py": "80833f00792d196dc0258dec176755744608b5db3e54cda7df6bb343d7026cfe"
  },
  "meta": {
-  "signed_at": "2026-11-17T01:00:33Z",
-  "note": "Defense platform: message checker, agent firewall, browser extension, exposure check"
+  "signed_at": "2026-11-17T01:27:21Z",
+  "note": "Hook reads any encoding; watcher remembers alerts across restarts; README"
  }
 }

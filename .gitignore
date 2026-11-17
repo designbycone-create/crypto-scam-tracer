@@ -76,3 +76,8 @@ extension_events.jsonl
 
 # wallet watcher: transactions already alerted on
 watcher_seen.json
+
+# FTC reported-calls list (downloaded data)
+callers_daily/
+callers.json
+callers.json.gz

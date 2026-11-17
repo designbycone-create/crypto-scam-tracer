@@ -1,0 +1,45 @@
+# Publishes the phone app's list of FTC-reported scam / robocall numbers once a day.
+# Needs the repository secret FTC_API_KEY (free key from https://api.data.gov/signup/).
+# The list goes to the "data" branch (one file, replaced daily), never to main or stable.
+name: FTC reported-calls list
+on:
+  schedule:
+    - cron: "17 16 * * *"        # daily, after the FTC's weekday noon-Eastern update
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: callers
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Restore downloaded days
+        uses: actions/cache@v4
+        with:
+          path: callers_daily
+          key: callers-${{ github.run_id }}
+          restore-keys: callers-
+      - name: Fetch new days and build the list
+        env:
+          FTC_API_KEY: ${{ secrets.FTC_API_KEY }}
+        run: |
+          python - <<'PY'
+          from shield import callerlist
+          lst = callerlist.update(days=30, max_new_days=6)
+          print(callerlist.export("callers.json.gz", lst))
+          PY
+      - name: Publish to the data branch
+        run: |
+          mkdir -p /tmp/pub && cp callers.json.gz /tmp/pub/
+          cd /tmp/pub
+          git init -q -b data
+          git config user.name "scamhunter-bot"
+          git config user.email "scamhunter-bot@users.noreply.github.com"
+          git add callers.json.gz
+          git commit -q -m "FTC reported-calls list $(date -u +%F)"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data

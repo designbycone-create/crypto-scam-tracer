@@ -595,6 +595,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/secretscan":
             from shield import secretscan
             return self._send(secretscan.page(), "text/html; charset=utf-8")
+        if path == "/malware":
+            from shield import malcheck
+            return self._send(malcheck.page(), "text/html; charset=utf-8")
         if path == "/agentguard":
             from agentguard import web as agw
             return self._send(agw.page(), "text/html; charset=utf-8")
@@ -788,6 +791,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/exposure":
                 from shield import exposure
                 return self._send(exposure.post(form), "text/html; charset=utf-8")
+            if path == "/malware":
+                from shield import malcheck
+                return self._send(malcheck.post(form), "text/html; charset=utf-8")
             if path == "/secretscan":
                 from shield import secretscan
                 return self._send(secretscan.post(form, multi.get("folder") or []), "text/html; charset=utf-8")

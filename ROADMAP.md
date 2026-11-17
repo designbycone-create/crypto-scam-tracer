@@ -15,6 +15,9 @@ attorneys, credit unions, banks and private investigators who handle many cases:
 - bulk exports for subpoenas; cross-case network linking ("this cash-out
   account appears in 14 of your cases")
 - hosted deployment option, user accounts, audit trail
+- data licensing: abuse.ch's MalwareBazaar, URLhaus and ThreatFox are free only for not-for-profit use
+  ([terms](https://abuse.ch/terms-of-use/)); a commercial edition needs a Spamhaus/abuse.ch subscription
+  (or must leave those lookups to each customer's own non-commercial key) before shipping them
 
 The free edition stays complete for a single victim. Paid features are about
 volume and institutional workflow, never about gating a victim's ability to

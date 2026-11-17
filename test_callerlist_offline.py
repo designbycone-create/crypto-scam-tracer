@@ -14,9 +14,9 @@ r = []
 KEY = "SECRETKEY123456"
 calls = []
 
-def row(num, day, subject="Imposters - Government", robo="Y"):
+def row(num, day, subject="Imposters - Government", robo="Y", state="Alabama"):
     return {"attributes": {"company-phone-number": num, "created-date": f"{day} 10:00:00", "subject": subject,
-                           "recorded-message-or-robocall": robo}}
+                           "recorded-message-or-robocall": robo, "consumer-state": state}}
 
 def fake(url):
     calls.append(url)
@@ -43,6 +43,10 @@ r.append(ok(all('created_date_from=%222026-11-' in u for u in calls), "queries u
 before = len(calls)
 C.update(days=3, api_key=KEY, log=lambda *_: None, today=date(2026, 11, 16))
 r.append(ok(len(calls) == before + 1 and "2026-11-13" in calls[-1], "days with reports aren't fetched again (only the recent empty day is re-asked)"))
+st = C.stats()["days"]
+r.append(ok(st["2026-11-15"]["states"] == {"Alabama": 58} and st["2026-11-15"]["reports"] == 58
+            and st["2026-11-14"]["subjects"].get("Warranties") == 1 and "_stats" not in n,
+            "per-day stats for the Desk map: reports by state and subject (the stats key is never taken for a number)"))
 c1 = C.check("(833) 555-1234")
 r.append(ok(c1["level"] == "high" and c1["robocall"] and "57 times" in c1["headline"], "heavily reported impostor number: high"))
 r.append(ok(C.check("202-555-0199")["level"] == "low" and C.rate({"n": 4, "robo": 0, "subjects": {"Home improvement": 4}}, 30)["level"] == "medium",

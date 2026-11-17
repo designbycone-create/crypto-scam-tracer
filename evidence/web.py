@@ -19,7 +19,7 @@ border:1px solid #33406b;border-radius:8px;padding:8px;width:100%;box-sizing:bor
 def _shell(body, refresh=False):
     r = "<meta http-equiv=refresh content=4>" if refresh else ""
     return (f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>{r}"
-            f"<title>Court evidence</title>{CSS}<div class=w><p><a href='/'>&larr; Desk</a></p>{body}</div>")
+            f"<title>Court evidence</title>{CSS}<div class=w>{body}</div>")
 
 
 def page(msg=""):

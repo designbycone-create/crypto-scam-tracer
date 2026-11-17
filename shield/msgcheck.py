@@ -256,7 +256,7 @@ def page(text="", result=None):
                + (f"<h2>What we noticed</h2><ul>{f}</ul>" if f else "")
                + f"<h2>What to do</h2><ul>{a}</ul>")
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Message checker</title><style>{CSS}</style></head><body><p><a href="/">&larr; Desk</a></p>
+<title>Message checker</title><style>{CSS}</style></head><body>
 <h1>Is this message a scam?</h1>
 <p>Paste a text message, email, social media DM, or what a caller said. It's checked on this computer only; nothing is sent anywhere.</p>
 <form method=post action=/msgcheck><textarea name=text placeholder="Paste the message here">{e(text)}</textarea>

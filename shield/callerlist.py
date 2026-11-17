@@ -79,6 +79,7 @@ def _get(url):
 def fetch_day(day, api_key, log=print, max_pages=600):
     """All reports created on one day -> {number: {"n", "robo", "subjects": {..}}}."""
     out, offset, pages = {}, 0, 0
+    states = {}
     d = day.isoformat()
     while pages < max_pages:
         q = urllib.parse.urlencode({"api_key": api_key, "items_per_page": PAGE, "offset": offset,
@@ -107,10 +108,15 @@ def fetch_day(day, api_key, log=print, max_pages=600):
             s = (a.get("subject") or "").strip()[:80]
             if s:
                 e["subjects"][s] = e["subjects"].get(s, 0) + 1
+            st = (a.get("consumer-state") or "").strip()[:40]       # where the person who got the call lives
+            if st:
+                states[st] = states.get(st, 0) + 1
         if len(data) < PAGE:
             break
         offset += PAGE
     log(f"FTC reports {d}: {sum(e['n'] for e in out.values())} reports, {len(out)} numbers, {pages} page(s)")
+    if out:
+        out["_stats"] = {"states": states}          # keys starting with "_" are not phone numbers
     return out
 
 
@@ -154,13 +160,23 @@ def update(days=WINDOW, api_key=None, log=print, today=None, max_new_days=10):
     return build(days)
 
 
+STATS = "callers_stats.json"
+
+
 def build(days=WINDOW):
-    merged = {}
+    merged, per_day = {}, {}
     files = sorted(f for f in os.listdir(DAILY_DIR) if f.endswith(".json")) if os.path.isdir(DAILY_DIR) else []
     for f in files:
         day = f[:-5]
         with open(os.path.join(DAILY_DIR, f), encoding="utf-8") as fh:
             rows = json.load(fh)
+        stats = rows.pop("_stats", {}) if isinstance(rows.get("_stats"), dict) else {}
+        subj = {}
+        for e in rows.values():
+            for s, c in e["subjects"].items():
+                subj[s] = subj.get(s, 0) + c
+        per_day[day] = {"reports": sum(e["n"] for e in rows.values()), "numbers": len(rows),
+                        "robo": sum(e["robo"] for e in rows.values()), "subjects": subj, "states": stats.get("states")}
         for num, e in rows.items():
             m = merged.setdefault(num, {"n": 0, "robo": 0, "subjects": {}, "last": day, "first": day})
             m["n"] += e["n"]
@@ -176,7 +192,19 @@ def build(days=WINDOW):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(lst, f)
     os.replace(tmp, LIST)
+    # small per-day summary for the Desk's map and charts (states is None for days fetched before it was recorded)
+    with open(STATS + ".tmp", "w", encoding="utf-8") as f:
+        json.dump({"source": lst["source"], "days": per_day}, f)
+    os.replace(STATS + ".tmp", STATS)
     return lst
+
+
+def stats():
+    try:
+        with open(STATS, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"days": {}}
 
 
 def load():
@@ -258,7 +286,7 @@ def page(number="", result=None):
 <title>Check a phone number</title><style>body{{font:20px/1.5 Segoe UI,Arial,sans-serif;max-width:860px;margin:24px auto;padding:0 16px;color:#111}}
 input{{font-size:22px;padding:8px;width:260px}}button{{font-size:20px;padding:8px 18px}}.box{{border:2px solid #ddd;border-radius:10px;padding:14px;margin:14px 0}}
 .stop{{background:#fdecee;border-color:#b00020}}.caution{{background:#fff8e6;border-color:#f2b01e}}.info{{background:#eef3fb;border-color:#9bb}}
-.hint{{color:#444;font-size:16px}}</style></head><body><p><a href="/">&larr; Desk</a></p><h1>Has this phone number been reported?</h1>
+.hint{{color:#444;font-size:16px}}</style></head><body><h1>Has this phone number been reported?</h1>
 <form method=post action=/numbercheck><input name=number value="{e(number)}" placeholder="(555) 123-4567"> <button>Check</button></form>{res}
 <p class=hint>{status}</p></body></html>"""
 

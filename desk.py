@@ -88,13 +88,17 @@ def _now():
 
 
 def _write_status():
+    # one writer at a time, and replace the file in one step: several supervisor threads write this,
+    # and overlapping writes used to leave a second copy glued to the end (unreadable JSON)
     with _state_lock:
         snap = dict(_state)
-    try:
-        with open(STATUS_FILE, "w", encoding="utf-8") as f:
-            json.dump({"updated": _now(), "services": snap}, f)
-    except Exception:
-        pass
+        try:
+            tmp = f"{STATUS_FILE}.{os.getpid()}.tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump({"updated": _now(), "services": snap}, f)
+            os.replace(tmp, STATUS_FILE)
+        except Exception:
+            pass
 
 
 def supervise(label, argv, logfile, stop_evt):
@@ -444,8 +448,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/clipguard'>Copy-paste guard</a> &nbsp; <a href='/msgcheck'>Is this message a scam?</a> &nbsp; <a href='/numbercheck'>Check a phone number</a> &nbsp; <a href='/agentguard'>Agent firewall</a> &nbsp; <a href='/exposure'>Exposure check</a> &nbsp; <a href='/extension'>Browser extension</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
-<h1>&#128737;&#65039; ScamHunter Desk</h1>
+<h1>My case</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
 {_update_banner()}
@@ -499,6 +502,12 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _send(self, body, ctype, extra=None, code=200):
+        if isinstance(body, str) and ctype.startswith("text/html"):
+            try:
+                from deskui import shell
+                body = shell.wrap(body, self.path.partition("?")[0])
+            except Exception:
+                pass
         data = body if isinstance(body, bytes) else body.encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", ctype)
@@ -519,7 +528,26 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/index.html"):
             if _setup.needed():
                 return self._redirect("/setup")
+            from deskui import pages
+            return self._send(pages.overview(), "text/html; charset=utf-8")
+        if path == "/case":
+            if _setup.needed():
+                return self._redirect("/setup")
             return self._send(render(), "text/html; charset=utf-8")
+        if path in ("/crypto", "/phone", "/defense", "/settings"):
+            from deskui import pages
+            return self._send(pages.hub(path[1:]), "text/html; charset=utf-8")
+        if path == "/live.json":
+            # only for the Desk's own pages: a website can't read it (no CORS header), and a renamed host is refused
+            if (self.headers.get("Host") or "").split(":")[0] not in ("127.0.0.1", "localhost"):
+                return self._send("Forbidden", "text/plain", code=403)
+            from urllib.parse import parse_qs
+            from deskui import data as deskdata
+            try:
+                days = max(1, min(30, int((parse_qs(query).get("days") or ["30"])[0])))
+            except ValueError:
+                days = 30
+            return self._send(json.dumps(deskdata.live(days)), "application/json", {"Cache-Control": "no-store"})
         if path == "/setup":
             return self._send(_setup.page(), "text/html; charset=utf-8")
         if path == "/network":
@@ -545,7 +573,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(msgcheck.page(), "text/html; charset=utf-8")
         if path == "/numbercheck":
             from shield import callerlist
-            return self._send(callerlist.page(), "text/html; charset=utf-8")
+            from urllib.parse import parse_qs
+            num = (parse_qs(query).get("number") or [""])[0]
+            return self._send(callerlist.post({"number": num}) if num else callerlist.page(), "text/html; charset=utf-8")
         if path == "/exposure":
             from shield import exposure
             return self._send(exposure.page(), "text/html; charset=utf-8")
@@ -717,9 +747,24 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(clipguard.post(form), "text/html; charset=utf-8")
             if path == "/msgcheck":
                 from shield import msgcheck
+                if form.get("text", "").strip():
+                    try:
+                        from deskui import data as deskdata
+                        r = msgcheck.check(form["text"])
+                        deskdata.note("phone", r["level"], "Message checked: " + r["verdict"], ", ".join(sorted(r.get("types") or []))[:120], "/msgcheck")
+                    except Exception:
+                        pass
                 return self._send(msgcheck.post(form), "text/html; charset=utf-8")
             if path == "/numbercheck":
                 from shield import callerlist
+                try:
+                    from deskui import data as deskdata
+                    r = callerlist.check(form.get("number", ""))
+                    if r.get("ok"):
+                        deskdata.note("phone", {"high": "stop", "medium": "caution"}.get(r["level"], "info"),
+                                      "Number checked: " + (r["headline"] or "no reports"), "", "/numbercheck")
+                except Exception:
+                    pass
                 return self._send(callerlist.post(form), "text/html; charset=utf-8")
             if path == "/exposure":
                 from shield import exposure

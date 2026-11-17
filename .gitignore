@@ -81,3 +81,8 @@ watcher_seen.json
 callers_daily/
 callers.json
 callers.json.gz
+
+# Desk activity log and the FTC caller-list summary (generated)
+desk_activity.jsonl
+callers_stats.json
+desk_status.json.*.tmp

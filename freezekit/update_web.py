@@ -47,7 +47,7 @@ code{font-family:ui-monospace,Consolas,monospace}li{margin:4px 0}</style>"""
 def _shell(body, refresh=None):
     r = f"<meta http-equiv=refresh content='{refresh}'>" if refresh else ""
     return (f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>{r}"
-            f"<title>Updates</title>{CSS}<div class=w><p><a href='/'>&larr; Desk</a></p>{body}</div>")
+            f"<title>Updates</title>{CSS}<div class=w>{body}</div>")
 
 
 def page(force=False):

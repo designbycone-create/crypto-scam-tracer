@@ -259,7 +259,7 @@ def page(msg="", test=None, test_text=""):
     note = "" if os.name == "nt" else "<p class=hint>Tested on Windows. On other systems it needs a desktop session with Tk.</p>"
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
 <title>Copy-paste guard</title><style>{CSS}</style></head><body>
-<p><a href="/">&larr; Desk</a></p><h1>Copy-paste guard</h1>
+<h1>Copy-paste guard</h1>
 <p>Malware on a website can swap the crypto address you copy for a scammer's. The swapped address looks real and passes every
 wallet check. The guard checks each address the moment you copy it.</p>
 {f"<div class='box saved'>{e(msg)}</div>" if msg else ""}

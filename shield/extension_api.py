@@ -136,7 +136,7 @@ def page():
 <title>Browser extension</title><style>body{{font:19px/1.5 Segoe UI,Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#111}}
 .code{{font:22px Consolas,monospace;background:#f2f2f2;padding:10px 14px;border-radius:8px;display:inline-block;user-select:all}}
 li{{margin:6px 0}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;padding:6px;font-size:15px;text-align:left}}</style></head>
-<body><p><a href="/">&larr; Desk</a></p><h1>ScamHunter Guard for your browser</h1>
+<body><h1>ScamHunter Guard for your browser</h1>
 <p>The extension watches pages as they run. It warns you when a page swaps a crypto address you copy, loads code from known attack servers,
 or shows a known scammer's address, and it blocks pasting a known scammer address.</p>
 <h2>Install it (Chrome or Edge)</h2><ol>

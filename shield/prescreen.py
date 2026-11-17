@@ -454,6 +454,10 @@ def screen(addr, chain=None, tag=None, me=None, log=print):
 
 
 if __name__ == "__main__":
+    try:      # findings use symbols (e.g. a check mark) the Windows console can't print by default
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     args = sys.argv[1:]
     opt = lambda k: args[args.index(k) + 1] if k in args else None
     r = screen(args[0], opt("--chain"), opt("--tag"), opt("--me"))

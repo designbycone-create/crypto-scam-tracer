@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(tempfile.mkdtemp())
 json.dump({"tx_hash": "A" * 64, "scam_wallet": "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN", "ic3_id": "41abab4b"}, open("victim.json", "w"))
 from freezekit import requests as rq
+import shutil
 import subprocess
 ok = lambda c, m: print(("PASS " if c else "FAIL ") + m) or bool(c)
 r = []
@@ -14,7 +15,7 @@ okx = {"id": "okx", "entry": chan["exchanges"]["okx"], "yours": True, "deposits"
     {"chain": "xrpl", "address": "rs2dgzYeqYqsk8bvkQR5YPyqsXYcA24MP2", "tag": 742451, "amount": 10054.9, "asset": "XRP",
      "time": "2026-10-29 11:10:51 UTC", "hash": "3673D7B22664F0D3C05F9726EAB77DE4B193FEF66A542DFCDEBD1675F5D013B8", "yours": True}]}
 pdf, csvp = rq.exchange_kit(okx)
-txt = subprocess.run(["pdftotext", pdf, "-"], capture_output=True, text=True).stdout if os.system("which pdftotext >/dev/null") == 0 else ""
+txt = subprocess.run(["pdftotext", pdf, "-"], capture_output=True, text=True).stdout if shutil.which("pdftotext") else ""
 r.append(ok(os.path.exists(pdf) and os.path.getsize(pdf) > 2000, "exchange kit PDF written"))
 rows = list(csv.reader(open(csvp)))
 r.append(ok(rows[1][1] == "rs2dgzYeqYqsk8bvkQR5YPyqsXYcA24MP2" and rows[1][2] == "742451", "CSV lists address, tag and hash (exchanges ask for a copyable file)"))

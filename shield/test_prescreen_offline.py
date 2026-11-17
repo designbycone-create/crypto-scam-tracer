@@ -1,5 +1,6 @@
 """Offline test for shield.prescreen (simulated XRPL history, no network): python shield/test_prescreen_offline.py"""
 import json, os, sys, tempfile, time
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")     # Windows console: findings contain symbols like a check mark
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(tempfile.mkdtemp())
 from shield import prescreen, compromised, web

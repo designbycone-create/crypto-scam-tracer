@@ -99,17 +99,17 @@ open(bl, "wb").write(orig)
 
 # tamper 2: edit a finding
 fp = os.path.join(res["dir"], "findings.json")
-origf = open(fp, encoding="utf-8").read()
-open(fp, "w", encoding="utf-8").write(origf.replace("500.000000 XRP", "5,000.000000 XRP"))
+origf = open(fp, "rb").read()          # bytes: restoring in text mode would change line endings on Windows
+open(fp, "wb").write(origf.replace(b"500.000000 XRP", b"5,000.000000 XRP"))
 ok(not bv.main(res["dir"], out=lambda *_: None), "verifier catches an edited finding")
-open(fp, "w", encoding="utf-8").write(origf)
+open(fp, "wb").write(origf)
 
 # tamper 3: delete a log entry
 lp = os.path.join(res["dir"], "capture_log.jsonl")
-lines = open(lp, encoding="utf-8").readlines()
-open(lp, "w", encoding="utf-8").writelines(lines[:1] + lines[2:])
+lines = open(lp, "rb").readlines()
+open(lp, "wb").writelines(lines[:1] + lines[2:])
 ok(not bv.main(res["dir"], out=lambda *_: None), "verifier catches a removed log entry")
-open(lp, "w", encoding="utf-8").writelines(lines)
+open(lp, "wb").writelines(lines)
 
 # tamper 4: slip in an extra file
 xp = os.path.join(res["dir"], "extra_evidence.txt")

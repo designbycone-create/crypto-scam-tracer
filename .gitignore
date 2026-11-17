@@ -73,3 +73,6 @@ agent_approvals.json
 agentguard_hook.log
 agentguard_last_risk.json
 extension_events.jsonl
+
+# wallet watcher: transactions already alerted on
+watcher_seen.json

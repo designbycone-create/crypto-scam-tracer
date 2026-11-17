@@ -235,6 +235,27 @@ async def rpc(ws, req: dict) -> dict:
             return msg
 
 
+SEEN_FILE = "watcher_seen.json"   # transactions already alerted on, kept across restarts
+
+
+def load_seen() -> set:
+    try:
+        with open(SEEN_FILE, encoding="utf-8") as f:
+            return set(json.load(f))
+    except Exception:
+        return set()
+
+
+def save_seen(seen: set) -> None:
+    try:
+        tmp = SEEN_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(sorted(seen)[-5000:], f)
+        os.replace(tmp, SEEN_FILE)
+    except Exception:
+        pass
+
+
 async def snapshot(ws, seen: set) -> None:
     """Balance + recent history, so nothing is missed while disconnected."""
     for i, addr in enumerate(list(WATCHED)):
@@ -251,12 +272,13 @@ async def snapshot(ws, seen: set) -> None:
             if tx["hash"] in seen:
                 continue
             seen.add(tx["hash"])
-            if tx.get("Account") == addr:  # any outgoing in history is worth flagging
+            save_seen(seen)
+            if tx.get("Account") == addr:  # any outgoing in history is worth flagging (once, not every restart)
                 handle_tx(tx, t.get("meta", {}), t.get("validated", True), "history")
 
 
 async def watch() -> None:
-    seen: set = set()
+    seen: set = load_seen()
     attempt = 0
     while True:
         server = SERVERS[attempt % len(SERVERS)]
@@ -288,6 +310,7 @@ async def watch() -> None:
                     if tx["hash"] in seen:
                         continue
                     seen.add(tx["hash"])
+                    save_seen(seen)
                     handle_tx(tx, msg.get("meta", {}), msg.get("validated", False), "live")
                     new = set(WATCHED) - subscribed
                     if new:  # follow-the-money additions

@@ -44,18 +44,17 @@ def _api(token, method, **params):
 
 
 def _cfg():
+    import securestore
     try:
         with open(CFG, encoding="utf-8-sig") as f:
-            return json.load(f)
+            return securestore.reveal_config(json.load(f))
     except Exception:
         return {}
 
 
 def _save(cfg):
-    tmp = CFG + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, indent=2)
-    os.replace(tmp, CFG)
+    import securestore
+    securestore.save(cfg, CFG)
     try:
         import scamconfig
         scamconfig._cache = None

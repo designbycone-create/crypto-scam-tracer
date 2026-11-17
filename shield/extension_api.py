@@ -34,14 +34,13 @@ def _cfg():
 
 
 def token():
+    import securestore
     c = _cfg()
-    if not c.get("extension_token"):
-        c["extension_token"] = secrets.token_urlsafe(18)
-        tmp = CFG + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(c, f, indent=2)
-        os.replace(tmp, CFG)
-    return c["extension_token"]
+    t = securestore.reveal(c.get("extension_token"))
+    if not t:
+        t = c["extension_token"] = secrets.token_urlsafe(18)
+        securestore.save(c, CFG)
+    return t
 
 
 def authorized(headers):

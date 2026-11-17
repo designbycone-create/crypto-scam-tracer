@@ -911,6 +911,11 @@ def main():
             webbrowser.open(f"http://127.0.0.1:{a.port}/")
         return
     _stop_orphans()
+    try:   # keys and tokens in config.json are stored encrypted (Windows account protection) before anything reads them
+        import securestore
+        securestore.migrate(log=print)
+    except Exception as ex:
+        print(f"(could not encrypt config secrets: {ex}; they stay as they were)")
     try:   # known attack campaigns shipped with this release: trace their addresses for cash-outs
         import threatfeed
         threatfeed.seed_tracer()

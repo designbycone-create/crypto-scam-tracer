@@ -78,10 +78,14 @@ def set_enabled(channel, on):
     flags = dict(cfg.get("alerts_enabled") or {})
     flags[channel] = bool(on)
     cfg["alerts_enabled"] = flags
-    tmp = f"{path}.{os.getpid()}.tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, indent=2)
-    os.replace(tmp, path)
+    try:
+        import securestore
+        securestore.save(cfg, path)              # keeps keys encrypted
+    except ImportError:
+        tmp = f"{path}.{os.getpid()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+        os.replace(tmp, path)
     _flags_cache["mtime"] = None
     if scamconfig is not None:
         scamconfig._cache = None

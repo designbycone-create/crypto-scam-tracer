@@ -23,9 +23,13 @@ RIPPLE_EPOCH = 946684800
 def _j(p):
     try:
         with open(p, encoding="utf-8-sig") as f:
-            return json.load(f)
+            d = json.load(f)
     except Exception:
         return {}
+    if os.path.basename(p) == "config.json":        # keys are stored encrypted; this page works with plain values
+        import securestore
+        d = securestore.reveal_config(d)
+    return d
 
 
 def needed():
@@ -134,6 +138,8 @@ def save(form):
     reps = [r.strip() for r in (form.get("reports") or "").splitlines() if r.strip()]
     if reps:
         victim["reports"] = reps
+    import securestore
+    cfg = securestore.protect_config(cfg)            # keys and the alert topic are stored encrypted
     for path, data in (("config.json", cfg), ("victim.json", victim)):
         tmp = path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:

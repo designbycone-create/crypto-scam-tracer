@@ -51,7 +51,8 @@ def key():
     if not k:
         try:
             with open("config.json", encoding="utf-8-sig") as f:
-                k = json.load(f).get("ftc_api_key")
+                import securestore
+                k = securestore.reveal(json.load(f).get("ftc_api_key"))
         except Exception:
             k = None
     return k

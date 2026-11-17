@@ -59,7 +59,7 @@ unless the page says so. Open them from the Desk's menu.
 | **Copy-paste guard** | `/clipguard` | Optional. Checks every crypto address you copy: large red STOP for a known scammer address, green note for an address in your private address book. Defeats clipboard-swapping malware. |
 | **ScamHunter Guard browser extension** | `/extension` | Chrome / Edge. Warns when a page swaps the address you copy (even to an address no list knows yet), loads code from known attack servers, tampers with core browser functions, or shows a scammer's address; blocks pasting one. Install: `edge://extensions` → Developer mode → Load unpacked → the `extension` folder, then connect it with the code on `/extension`. |
 | **Agent firewall** | `/agentguard` | For AI agents that read the web or email: finds instructions hidden from people (invisible text, comments, encoded text) and holds risky actions — payments, deletes, installs of look-alike packages, sending secrets — for your OK. Includes a Claude Code hook and a token-protected local API for your own agents. |
-| **Exposure check** | `/exposure` | Is anything at your home or business open to the internet? Refrigeration, HVAC and building controllers, remote desktop, cameras. Uses the public Shodan InternetDB record for your own address and never logs in to anything. Built after the October 2026 attacks that heated supermarket fridges through internet-exposed controllers. |
+| **Exposure check** | `/exposure` | Is anything at your home or business open to the internet? Refrigeration, HVAC and building controllers, remote desktop, cameras. Uses the public Shodan InternetDB record for your own address and never logs in to anything. Known flaws found there are checked against CISA's [Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) catalog: flaws attackers are using right now (and automated attack tools try first) are marked CRITICAL. The Desk re-checks your address weekly and alerts only if something new is open (`"exposure_watch": false` turns that off). Built after the October 2026 attacks that heated supermarket fridges through internet-exposed controllers. |
 | **Sites I use** | `/sitewatch` | Early warning when a site you use is hijacked, including a trusted outside script that starts loading new code (how the OPTIMJACK attack worked). |
 | **ScamHunter Guard for Android** | `android/` | For phones, built for older users: large print, warns about reported scam numbers before you answer (Android's call-screening feature: the number only, never the call audio), an "Am I being scammed?" screen, spoken call reports prepared for the FTC / Do Not Call / FCC / FBI, and a ready-to-send text to a family member. Uses the same scam rules as the Desk. Build: `gradle -p android assembleDebug`. |
 | **Campaign feed** | — | Known attacks (addresses, attacker hosts, script fingerprints) ship inside each signed release, so every user gets them under the same signature check as the code. |
@@ -190,7 +190,8 @@ where your funds are, the network behind the scam, and freeze kits.
 The Desk keeps a small log of the checks you make on it (`desk_activity.jsonl`): only the kind
 of check and its result, never the message you pasted or the number you looked up.
 
-**Mac / Linux / manual:** `git clone` this repo, `pip install -r requirements.txt`,
+**Mac / Linux / manual:** Python 3.10 or newer. `git clone` this repo, `pip install --require-hashes -r requirements.txt`
+(every package is pinned to an exact version and checked against its published hash),
 `python desk.py` — the same setup page opens.
 
 ---
@@ -242,6 +243,18 @@ the tool handles it honestly:
 ---
 
 ## Accuracy & safety
+
+- **Your keys are stored encrypted.** API keys, personal RPC endpoints, the Telegram bot token, the email
+  app password, your private ntfy topic and the Desk's own tokens are sealed in `config.json` with Windows'
+  account protection (DPAPI): only your Windows account on this computer can unlock them, so a copied
+  settings file, a backup or a cloud-synced folder reveals nothing. The Desk encrypts existing values on
+  start. Malware already running as you could still unlock them; this stops the common file-grabbing
+  kind. On Mac and Linux the values stay as they are and the file is made readable by your account only.
+  Check with `python securestore.py status`.
+- **Packages are pinned and hash-checked.** Every dependency is an exact version checked against its
+  published hash (`pip --require-hashes`), so a swapped or hijacked package can't arrive through an update.
+- **The Desk only answers its own address.** It listens on 127.0.0.1 only and refuses requests made under any
+  other host name, so a website can't reach it through DNS rebinding.
 
 - **Time-forward tracing — no false trails.** Stolen funds often pass through
   reused laundering/consolidation wallets that have months of unrelated history

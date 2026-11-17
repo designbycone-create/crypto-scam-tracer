@@ -112,6 +112,18 @@ code, body = get("/live.json?days=7")
 d = json.loads(body) if code == 200 else {}
 r.append(ok(code == 200 and {"phone", "crypto", "defense", "feed", "services"} <= set(d), "live.json gives every section's numbers"))
 r.append(ok(get("/live.json", host="evil.example")[0] == 403, "live.json refuses a page served from another host name (DNS rebinding)"))
+r.append(ok(all(get(p, host=h)[0] == 403 for p in ("/", "/case", "/prescreen?address=x", "/api/agentguard/pending", "/setup")
+                for h in ("evil.example", "evil.example:8787", "127.0.0.1.evil.example", "localhost.evil.example")),
+            "every page and the API refuse other host names (DNS rebinding)"))
+r.append(ok(get("/", host=f"localhost:{port}")[0] == 200 and get("/", host=f"127.0.0.1:{port}")[0] == 200, "the Desk's own addresses still work"))
+def post(p, host):
+    req = urllib.request.Request(f"http://127.0.0.1:{port}{p}", data=b"text=hi", headers={"Host": host}, method="POST")
+    try:
+        return urllib.request.urlopen(req, timeout=20).status
+    except urllib.error.HTTPError as ex:
+        return ex.code
+r.append(ok(post("/msgcheck", "evil.example") == 403 and post("/api/agentguard/decide", "evil.example") == 403,
+            "form posts and API calls under another host name are refused"))
 code, body = get("/")
 r.append(ok("window.__D=" in body and "<\\/" not in body.split("window.__D=")[1][:0] and "Live map" in body, "Overview has the map and its data built in"))
 code, body = get("/case")

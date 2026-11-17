@@ -518,7 +518,22 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _host_ok(self):
+        """Refuse requests addressed to any other name (DNS rebinding: a website pointing its own
+        domain at 127.0.0.1 so its scripts can talk to the Desk). Only the Desk's own address is served."""
+        host = (self.headers.get("Host") or "").strip().lower()
+        if host.startswith("["):
+            name = host[1:host.find("]")] if "]" in host else host
+        else:
+            name = host.rsplit(":", 1)[0] if ":" in host else host
+        if name in ("127.0.0.1", "localhost"):
+            return True
+        self._send("Forbidden: the Desk only answers at http://127.0.0.1", "text/plain", code=403)
+        return False
+
     def do_GET(self):
+        if not self._host_ok():
+            return
         path, _, query = self.path.partition("?")
         try:
             from freezekit import web
@@ -538,9 +553,7 @@ class Handler(BaseHTTPRequestHandler):
             from deskui import pages
             return self._send(pages.hub(path[1:]), "text/html; charset=utf-8")
         if path == "/live.json":
-            # only for the Desk's own pages: a website can't read it (no CORS header), and a renamed host is refused
-            if (self.headers.get("Host") or "").split(":")[0] not in ("127.0.0.1", "localhost"):
-                return self._send("Forbidden", "text/plain", code=403)
+            # only for the Desk's own pages: a website can't read it (no CORS header); other host names are refused above
             from urllib.parse import parse_qs
             from deskui import data as deskdata
             try:
@@ -692,6 +705,8 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(json.dumps({"error": "unknown endpoint"}), "application/json", code=404)
 
     def do_POST(self):
+        if not self._host_ok():
+            return
         from urllib.parse import parse_qs
         if self.path.startswith("/api/"):
             n = min(int(self.headers.get("Content-Length") or 0), 5_000_000)
@@ -817,7 +832,7 @@ def ensure_deps():
     print("Installing dependencies for", sys.executable, flush=True)
     for extra in (["--user"], []):
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "-q", *extra, "-r", req], check=True, timeout=600)
+            subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--require-hashes", *extra, "-r", req], check=True, timeout=600)
             return
         except Exception as e:
             print("  pip attempt failed:", e, flush=True)
@@ -896,6 +911,11 @@ def main():
             webbrowser.open(f"http://127.0.0.1:{a.port}/")
         return
     _stop_orphans()
+    try:   # keys and tokens in config.json are stored encrypted (Windows account protection) before anything reads them
+        import securestore
+        securestore.migrate(log=print)
+    except Exception as ex:
+        print(f"(could not encrypt config secrets: {ex}; they stay as they were)")
     try:   # known attack campaigns shipped with this release: trace their addresses for cash-outs
         import threatfeed
         threatfeed.seed_tracer()

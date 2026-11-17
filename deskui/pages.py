@@ -200,6 +200,7 @@ HUB = {
     "defense": ("Your browser, the websites you use, your home network, and AI agents.",
                 "d=>[[d.defense.ext_paired?'ON':'OFF','browser extension'],[d.defense.ext_blocks,'browser blocks'],"
                 "[d.defense.sites,'websites watched'],[d.defense.site_alerts,'website alerts'],[d.defense.agent_pending,'agent requests waiting'],"
+                "[(d.defense.exposure.worst||'not yet').toUpperCase(),'internet exposure (weekly)'],"
                 "[d.defense.agent_denied,'agent actions denied']]"),
     "settings": ("Where alerts go, updates, and your case details.", "d=>[[d.services.alive+'/'+d.services.total,'watchers running']]"),
 }

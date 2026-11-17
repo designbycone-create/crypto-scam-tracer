@@ -9,10 +9,10 @@ $Repo = 'https://github.com/designbycone-create/crypto-scam-tracer/archive/refs/
 Write-Host "`nScamHunter Desk installer" -ForegroundColor Cyan
 Write-Host "Free for victims. It will never ask for money or a seed phrase.`n"
 
-# 1. Python 3.9+
+# 1. Python 3.10+
 function Find-Python {
   foreach ($c in @('py -3', 'python')) {
-    try { $v = & ([scriptblock]::Create("$c -c `"import sys;print(sys.version_info[:2]>=(3,9))`"")) 2>$null
+    try { $v = & ([scriptblock]::Create("$c -c `"import sys;print(sys.version_info[:2]>=(3,10))`"")) 2>$null
           if ($v -match 'True') { return $c } } catch {}
   }
   return $null
@@ -42,7 +42,7 @@ if ($sha) { Set-Content -Path (Join-Path $Dir 'VERSION') -Value $sha -NoNewline 
 Write-Host "Installed to $Dir"
 
 # 3. Dependencies
-& ([scriptblock]::Create("$py -m pip install --user -q -r `"$Dir\requirements.txt`""))
+& ([scriptblock]::Create("$py -m pip install --user -q --require-hashes -r `"$Dir\requirements.txt`""))
 Write-Host "Dependencies OK"
 
 # 4. Shortcuts: Start Menu + Desktop open the Desk; Startup runs it quietly at sign-in

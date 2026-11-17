@@ -139,6 +139,14 @@ def feed(n=80):
         if s.get("level") == "alert":
             ev.append({"t": str((s.get("last") or {}).get("time", ""))[:19], "sec": "defense", "lvl": "stop",
                        "title": f"Site alert: {dom}", "detail": "; ".join(s.get("signals") or [])[:200], "href": "/sitewatch"})
+    ex = _json("exposure_state.json", {}) or {}
+    for i in (ex.get("items") or [])[:6]:
+        if i.get("severity") in ("critical", "high"):
+            ev.append({"t": ex.get("checked", ""), "sec": "defense", "lvl": "stop" if i["severity"] == "critical" else "caution",
+                       "title": "Open to the internet: " + i["what"][:80], "detail": f"your address {ex.get('ip', '')}", "href": "/exposure"})
+    if ex.get("checked") and ex.get("worst") in ("none", "low", "info"):
+        ev.append({"t": ex["checked"], "sec": "defense", "lvl": "ok", "title": "Weekly exposure check: nothing serious open",
+                   "detail": f"your address {ex.get('ip', '')}", "href": "/exposure"})
     # phone alerts that couldn't be delivered
     for p in (_json("alerts_outbox.json", []) or [])[:10]:
         ev.append({"t": p.get("queued_at", ""), "sec": "settings", "lvl": "stop" if p.get("critical") else "caution",
@@ -215,7 +223,8 @@ def defense():
             "ext_paired": bool(ext),
             "agent_pending": sum(1 for a in ag if a.get("status") == "pending"),
             "agent_denied": sum(1 for a in ag if a.get("status") == "denied"),
-            "sites": len(sites), "site_alerts": sum(1 for s in sites.values() if s.get("level") == "alert")}
+            "sites": len(sites), "site_alerts": sum(1 for s in sites.values() if s.get("level") == "alert"),
+            "exposure": {k: (_json("exposure_state.json", {}) or {}).get(k) for k in ("checked", "worst")}}
 
 
 def services():

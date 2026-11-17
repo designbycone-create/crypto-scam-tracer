@@ -31,8 +31,9 @@ def load(path="config.json"):
     cfg = dict(_DEFAULTS)
     if os.path.exists(path):
         try:
-            with open(path, encoding="utf-8") as f:
-                for k, v in json.load(f).items():
+            import securestore
+            with open(path, encoding="utf-8-sig") as f:
+                for k, v in securestore.reveal_config(json.load(f)).items():
                     if v not in (None, ""):
                         cfg[k] = v
         except Exception:

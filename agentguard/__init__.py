@@ -46,11 +46,13 @@ def _save(path, data):
 
 def token():
     """The secret local programs must present to the Desk's agent API (created on first use)."""
+    import securestore
     cfg = _load(CFG, {})
-    if not cfg.get("agentguard_token"):
-        cfg["agentguard_token"] = secrets.token_urlsafe(24)
-        _save(CFG, cfg)
-    return cfg["agentguard_token"]
+    t = securestore.reveal(cfg.get("agentguard_token"))
+    if not t:
+        t = cfg["agentguard_token"] = secrets.token_urlsafe(24)
+        securestore.save(cfg, CFG)
+    return t
 
 
 def describe(action):

@@ -58,10 +58,8 @@ def main():
         with open(CFG, encoding="utf-8-sig") as f:
             cfg = json.load(f)
     cfg["telegram"] = {"bot_token": token, "chat_id": str(chat_id)}
-    tmp = CFG + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, indent=2)
-    os.replace(tmp, CFG)
+    import securestore
+    securestore.save(cfg, CFG)          # the token is stored encrypted
     api(token, "sendMessage", chat_id=chat_id,
         text="✅ ScamHunter alerts connected. Cash-out alerts will arrive here as well as ntfy.")
     print(f"Saved. Chat {chat_id} ({who}) will receive alerts. A test message was sent.")

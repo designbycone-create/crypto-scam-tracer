@@ -86,3 +86,5 @@ callers.json.gz
 desk_activity.jsonl
 callers_stats.json
 desk_status.json.*.tmp
+kev_cache.json
+exposure_state.json

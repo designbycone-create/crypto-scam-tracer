@@ -11,19 +11,30 @@ of what internet-wide scans have already seen there: open ports, product names, 
 then, only for your own address, looks at the login page of any open web port to name the device.
 It never logs in, never tries passwords, never probes anyone else.
 
-Run it from the network you want to check (the store's, the office's, your home's).
+Automated attack tools now do the first steps of a break-in with no human at the keyboard: scan
+the internet for open services, then test them against known flaws. Any known flaw found at your
+address is checked against CISA's Known Exploited Vulnerabilities catalog (flaws attackers are
+using right now); those are the ones such tools try first, so they're marked CRITICAL.
+
+Run it from the network you want to check (the store's, the office's, your home's). The Desk
+also re-checks your own address once a week and alerts you only if something new is exposed.
 
     python -m shield.exposure            # this connection's address
 """
 import html
 import ipaddress
 import json
+import os
 import re
 import ssl
+import time
 import urllib.request
 
 UA = {"User-Agent": "ScamHunter-ExposureCheck/1.0"}
 GET = None        # test hook: f(url) -> str
+KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+KEV_CACHE = "kev_cache.json"
+STATE = "exposure_state.json"
 
 # port -> (what it is, severity, plain advice)
 PORTS = {
@@ -79,11 +90,23 @@ FIX = [
 ]
 
 
-def _get(url, timeout=12):
+def _get(url, timeout=12, limit=200_000):
+    """Lookups (your address, Shodan InternetDB, CISA's catalog): certificate checked, so nobody in
+    between can fake a 'nothing exposed' answer."""
+    if GET:
+        return GET(url)
+    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout,
+                                context=ssl.create_default_context()) as r:
+        return r.read(limit).decode("utf-8", "replace")
+
+
+def _get_device(url, timeout=8):
+    """Only for the login page of a device at YOUR OWN address: those often have home-made
+    certificates, so the certificate isn't checked (nothing is sent; the page title is only read)."""
     if GET:
         return GET(url)
     ctx = ssl.create_default_context()
-    ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE        # device pages often have self-signed certificates
+    ctx.check_hostname, ctx.verify_mode = False, ssl.CERT_NONE
     with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout, context=ctx) as r:
         return r.read(200_000).decode("utf-8", "replace")
 
@@ -112,7 +135,7 @@ def identify(ip, port):
     """Title / product of the web page on one of YOUR OWN open web ports (no login attempted)."""
     for scheme in (("https",) if port in (443, 8443) else ("http", "https")):
         try:
-            page = _get(f"{scheme}://{ip}:{port}/", timeout=8)
+            page = _get_device(f"{scheme}://{ip}:{port}/")
         except Exception:
             continue
         title = (re.search(r"<title[^>]*>(.*?)</title>", page, re.I | re.S) or [None, ""])[1]
@@ -122,6 +145,33 @@ def identify(ip, port):
                 return {"title": title, "device": name, "severity": sev}
         return {"title": title, "device": None, "severity": "info"}
     return None
+
+
+def kev(max_age=86400):
+    """{CVE: {vendor, product, name, ransomware, added}} from CISA's catalog, refreshed at most daily.
+    Falls back to the last saved copy; None if it has never been fetched."""
+    cached = None
+    try:
+        with open(KEV_CACHE, encoding="utf-8") as f:
+            cached = json.load(f)
+        if time.time() - cached.get("fetched", 0) < max_age:
+            return cached["cves"]
+    except Exception:
+        pass
+    try:
+        d = json.loads(_get(KEV_URL, timeout=40, limit=30_000_000))
+        cves = {v["cveID"].upper(): {"vendor": v.get("vendorProject", ""), "product": v.get("product", ""),
+                                     "name": v.get("vulnerabilityName", ""),
+                                     "ransomware": v.get("knownRansomwareCampaignUse") == "Known", "added": v.get("dateAdded", "")}
+                for v in d.get("vulnerabilities") or [] if v.get("cveID")}
+        if not cves:
+            raise ValueError("empty catalog")
+        with open(KEV_CACHE + ".tmp", "w", encoding="utf-8") as f:
+            json.dump({"fetched": time.time(), "version": d.get("catalogVersion"), "cves": cves}, f)
+        os.replace(KEV_CACHE + ".tmp", KEV_CACHE)
+        return cves
+    except Exception:
+        return (cached or {}).get("cves")
 
 
 def check(ip=None, mine=True, look=True):
@@ -165,10 +215,21 @@ def check(ip=None, mine=True, look=True):
         items.append({"port": None, "what": "Scanners tagged this address as industrial equipment (ICS)", "severity": "critical",
                       "advice": "Find which device it is and take it off the internet."})
     vulns = sorted(db.get("vulns") or [])
+    catalog = kev() if vulns else {}
+    hits = []
+    for cve in vulns:
+        k = (catalog or {}).get(cve.upper())
+        if k:
+            hits.append(cve.upper())
+            items.append({"port": None, "cve": cve.upper(), "severity": "critical",
+                          "what": f"Actively exploited flaw {cve.upper()}: {k['vendor']} {k['product']}".strip(),
+                          "advice": ("Attackers are using this flaw right now" + (", including ransomware gangs" if k["ransomware"] else "")
+                                     + ". Update or patch that device or software today; if you can't, take it off the internet.")})
     order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
     items.sort(key=lambda i: order[i["severity"]])
     worst = items[0]["severity"] if items else "none"
-    return {"ok": True, "ip": ip, "mine": mine, "items": items, "vulns": vulns, "worst": worst,
+    return {"ok": True, "ip": ip, "mine": mine, "items": items, "vulns": vulns, "worst": worst, "kev_hits": hits,
+            "kev_checked": bool(vulns) and catalog is not None,
             "hostnames": db.get("hostnames") or [], "fix": FIX if worst in ("critical", "high") else FIX[1:3]}
 
 
@@ -192,8 +253,11 @@ def page(result=None, msg=""):
                           f"{e(i['what'])}{' &mdash; page title: ' + e(i['title']) if i.get('title') else ''}<br>{e(i['advice'])}</div>" for i in result["items"])
             head = ("<div class='box none'><b>Nothing exposed.</b> Internet scans have seen no open services at this address.</div>"
                     if not result["items"] else "")
-            vul = (f"<p><b>Known security flaws reported for software at this address:</b> {e(', '.join(result['vulns'][:15]))}</p>"
-                   if result["vulns"] else "")
+            vul = (f"<p><b>Known security flaws reported for software at this address:</b> {e(', '.join(result['vulns'][:15]))}"
+                   + (f"<br>{len(result['kev_hits'])} of them are on CISA's list of flaws attackers are using right now (marked CRITICAL above)."
+                      if result.get("kev_hits") else (" (none of them are on CISA's list of actively exploited flaws)." if result.get("kev_checked")
+                      else "<br>Couldn't load CISA's list of actively exploited flaws just now, so these weren't ranked."))
+                   + "</p>" if result["vulns"] else "")
             fix = "".join(f"<li>{e(x)}</li>" for x in result["fix"])
             body = (f"<h2>Address {e(result['ip'])}</h2>{head}{its}{vul}"
                     + (f"<h2>What to do</h2><ol>{fix}</ol>" if result["items"] else ""))
@@ -201,8 +265,11 @@ def page(result=None, msg=""):
 <title>Exposure check</title><style>{CSS}</style></head><body>
 <h1>Is anything here open to the internet?</h1>
 <p>Refrigeration, heating and cooling controllers, cameras and remote-desktop computers get attacked when they can be reached from the
-internet. In October 2026 that's how attackers heated the fridges at hundreds of supermarkets overnight. This checks what internet-wide
-scans have already seen at <b>your</b> address. It never logs in to anything.</p>
+internet. In October 2026 that's how attackers heated the fridges at hundreds of supermarkets overnight. Automated attack tools now
+scan for open services and test them against known flaws with no human at the keyboard, so anything open gets found fast.
+This checks what internet-wide scans have already seen at <b>your</b> address, and which known flaws there are being used by
+attackers right now (CISA's list). It never logs in to anything. The Desk re-checks your address every week and alerts you only if
+something new is exposed.</p>
 <p class=hint>Run it on the computer connected to the network you want to check, such as the store's or the office's.</p>
 {f"<div class='box medium'>{e(msg)}</div>" if msg else ""}
 <form method=post action=/exposure><input type=hidden name=do value=mine><button>Check this network</button></form>
@@ -210,6 +277,39 @@ scans have already seen at <b>your</b> address. It never logs in to anything.</p
 <label>Or another address you own or manage: <input type=text name=ip placeholder="203.0.113.10"></label>
 <label><input type=checkbox name=own value=1> I own or manage this address</label> <button>Check</button></form>{body}
 <p class=hint>Data: Shodan InternetDB (free, for non-commercial use), updated weekly, so a just-closed port may still show.</p></body></html>"""
+
+
+def watch(log=print, alert=None):
+    """Weekly re-check of this connection's own address. Alerts only on something new (critical / high)."""
+    try:
+        with open("config.json", encoding="utf-8-sig") as f:
+            if json.load(f).get("exposure_watch") is False:
+                return None
+    except Exception:
+        pass
+    r = check(look=False)
+    if not r.get("ok"):
+        log(f"exposure check skipped: {r.get('error')}")
+        return r
+    try:
+        with open(STATE, encoding="utf-8") as f:
+            old = json.load(f)
+    except Exception:
+        old = {}
+    key = lambda i: f"{i.get('cve') or ''}:{i.get('port')}:{i['what']}"
+    serious = {key(i): i for i in r["items"] if i["severity"] in ("critical", "high")}
+    new = [i for k, i in serious.items() if k not in set(old.get("seen") or [])]
+    state = {"checked": time.strftime("%Y-%m-%d %H:%M:%S"), "ip": r["ip"], "worst": r["worst"], "seen": sorted(serious),
+             "items": [{"severity": i["severity"], "what": i["what"], "port": i.get("port")} for i in r["items"]][:30]}
+    with open(STATE + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(state, f)
+    os.replace(STATE + ".tmp", STATE)
+    log(f"exposure check: {r['ip']} worst={r['worst']} new={len(new)}")
+    if new and alert:
+        alert("Something on your network is open to the internet",
+              "\n".join(f"{i['severity'].upper()}: {i['what']}. {i['advice']}" for i in new[:5]) + "\nDetails: Desk > Online Defense > Exposure check.",
+              critical=any(i["severity"] == "critical" for i in new))
+    return r
 
 
 def post(form):

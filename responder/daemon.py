@@ -9,6 +9,7 @@ runs the early-warning jobs on a schedule.
     python -m responder.daemon [--port 8787]
 """
 import argparse
+import json
 import time
 import traceback
 from datetime import datetime
@@ -117,6 +118,20 @@ def job_sitewatch(desk):
         key=f"site:{dom}:{sig[0][:40]}", critical=True, url=f"{desk}/sitewatch"))
 
 
+def job_exposure(desk):
+    """Once a week: is anything at this connection's address newly open to the internet? (Alerts only on new.)"""
+    from shield import exposure
+    try:
+        with open(exposure.STATE, encoding="utf-8") as f:
+            last = json.load(f).get("checked", "")
+        if last and (datetime.now() - datetime.strptime(last, "%Y-%m-%d %H:%M:%S")).days < 7:
+            return
+    except Exception:
+        pass
+    exposure.watch(log=_log, alert=lambda title, msg, critical: _alert(
+        title, msg, key=f"exposure:{msg[:60]}", critical=critical, url=f"{desk}/exposure"))
+
+
 def job_callerlist():
     """FTC reported-call numbers (needs the free ftc_api_key); a few days per run, so the key's limit holds."""
     from shield import callerlist
@@ -131,13 +146,14 @@ def main():
     desk = DESK.format(port=a.port)
     _log("Responder running: freeze kits, token freeze scan, incident feeds, radar, risk, site watch.")
     sched = [(60, job_kits, (desk,)), (900, job_tokens, (desk, set())),
-             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ()), (1800, job_sitewatch, (desk,)), (3600, job_callerlist, ())]
+             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ()), (1800, job_sitewatch, (desk,)), (3600, job_callerlist, ()), (3600, job_exposure, (desk,))]
     last = {fn.__name__: 0 for _, fn, _ in sched}
     last["job_tokens"] = time.time() - 840       # first token scan ~1 min after start
     last["job_feeds_status_radar"] = time.time() - 1680
     last["job_risk"] = time.time() - 21300
     last["job_sitewatch"] = time.time() - 1500
     last["job_attribution"] = time.time() - 3480
+    last["job_exposure"] = time.time() - 3000      # first look ~10 min after start (runs only if the last check is a week old)
     last["job_callerlist"] = time.time() - 3300     # first FTC list refresh ~5 min after start     # first pass ~2 min after start
     while True:
         for every, fn, args in sched:

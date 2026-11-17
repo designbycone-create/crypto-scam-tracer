@@ -22,6 +22,7 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date, datetime, timedelta
@@ -63,6 +64,10 @@ def norm(number):
     return d if len(d) == 10 and d[0] in "23456789" and d[3] in "23456789" else None
 
 
+class RateLimited(RuntimeError):
+    """The FTC refused because the key's hourly request allowance is used up (HTTP 429)."""
+
+
 def _get(url):
     if GET:
         return GET(url)
@@ -79,6 +84,12 @@ def fetch_day(day, api_key, log=print, max_pages=600):
                                     "created_date_from": f'"{d} 00:00:00"', "created_date_to": f'"{d} 23:59:59"'})
         try:
             data = _get(f"{API}?{q}").get("data") or []
+        except urllib.error.HTTPError as ex:
+            if ex.code == 429:
+                wait = ex.headers.get("Retry-After") if ex.headers else None
+                raise RateLimited(f"FTC refused: the API key's hourly request allowance is used up"
+                                  + (f" (resets in about {int(wait) // 60} min)" if str(wait or "").isdigit() else "")) from None
+            raise RuntimeError(f"FTC API failed on {d} at offset {offset}: HTTP {ex.code}") from None
         except Exception as ex:
             msg = str(ex).replace(api_key, "***")                 # never let the key reach a log
             raise RuntimeError(f"FTC API failed on {d} at offset {offset}: {msg}") from None
@@ -104,7 +115,10 @@ def fetch_day(day, api_key, log=print, max_pages=600):
 
 def update(days=WINDOW, api_key=None, log=print, today=None, max_new_days=10):
     """Fetch days not fetched yet (newest first, a few per run so the free key's hourly limit holds),
-    drop days older than the window, rebuild the list."""
+    drop days older than the window, rebuild the list.
+    If the FTC says the hourly allowance is used up, stop asking (retrying can't succeed), keep the
+    days already saved, and build the list from them; the rest are fetched on a later run.
+    The list records how many days it covers, so it never claims more than it has."""
     api_key = api_key or key()
     if not api_key:
         raise RuntimeError("no FTC API key: get a free one at https://api.data.gov/signup/ and save it as ftc_api_key")
@@ -116,7 +130,11 @@ def update(days=WINDOW, api_key=None, log=print, today=None, max_new_days=10):
     for d in wanted:
         if d.isoformat() in have or fetched >= max_new_days:
             continue
-        rows = fetch_day(d, api_key, log)
+        try:
+            rows = fetch_day(d, api_key, log)
+        except RateLimited as ex:
+            log(f"{ex}. Kept the days already downloaded; the rest come on a later run.")
+            break
         tmp = os.path.join(DAILY_DIR, d.isoformat() + ".json.tmp")
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(rows, f)

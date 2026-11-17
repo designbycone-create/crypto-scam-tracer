@@ -29,6 +29,7 @@ from datetime import date, datetime, timedelta
 
 API = "https://api.ftc.gov/v0/dnc-complaints"
 WINDOW = 30                 # days of reports kept in the list
+RECHECK = 4                 # recent days re-asked for while they are still empty (the FTC posts late)
 PAGE = 50                   # the API's maximum page size
 DAILY_DIR = "callers_daily"
 LIST = "callers.json"
@@ -126,6 +127,12 @@ def update(days=WINDOW, api_key=None, log=print, today=None, max_new_days=10):
     today = today or date.today()
     wanted = [today - timedelta(days=i) for i in range(1, days + 1)]      # yesterday back; today isn't complete yet
     have = {f[:-5] for f in os.listdir(DAILY_DIR) if f.endswith(".json")}
+    # The FTC posts reports a day or more late, so a recent day that came back empty may just not be
+    # posted yet: ask again for empty days from the last RECHECK days (one request each).
+    for d in wanted[:RECHECK]:
+        fp = os.path.join(DAILY_DIR, d.isoformat() + ".json")
+        if d.isoformat() in have and os.path.getsize(fp) <= 2:      # "{}"
+            have.discard(d.isoformat())
     fetched = 0
     for d in wanted:
         if d.isoformat() in have or fetched >= max_new_days:

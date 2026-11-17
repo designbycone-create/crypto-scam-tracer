@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "ScamHunter Guard",
+  "version": "0.1.0",
+  "description": "Catches crypto address swapping, pages loading known attack code, and pastes of scammer addresses. Works with the ScamHunter Desk.",
+  "permissions": ["storage", "notifications", "alarms"],
+  "host_permissions": ["http://127.0.0.1:8787/*"],
+  "background": {"service_worker": "bg.js"},
+  "content_scripts": [
+    {"matches": ["<all_urls>"], "js": ["inject.js"], "run_at": "document_start", "all_frames": true, "world": "MAIN"},
+    {"matches": ["<all_urls>"], "js": ["shared.js", "content.js"], "run_at": "document_start", "all_frames": true}
+  ],
+  "action": {"default_popup": "popup.html", "default_title": "ScamHunter Guard"},
+  "options_page": "options.html",
+  "icons": {"128": "icon128.png"},
+  "web_accessible_resources": []
+}

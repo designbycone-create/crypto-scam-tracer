@@ -66,3 +66,10 @@ signed/
 # copy-paste guard: private address book
 address_book.json
 clipguard_desk.log
+
+# extension + agent firewall: private local state
+agent_policy.json
+agent_approvals.json
+agentguard_hook.log
+agentguard_last_risk.json
+extension_events.jsonl

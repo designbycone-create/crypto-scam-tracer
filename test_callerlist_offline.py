@@ -42,7 +42,7 @@ r.append(ok(lst["days"] == 3 and lst["to"] == "2026-11-15", "window covers yeste
 r.append(ok(all('created_date_from=%222026-11-' in u for u in calls), "queries use the API's quoted date filter"))
 before = len(calls)
 C.update(days=3, api_key=KEY, log=lambda *_: None, today=date(2026, 11, 16))
-r.append(ok(len(calls) == before, "days already fetched aren't fetched again"))
+r.append(ok(len(calls) == before + 1 and "2026-11-13" in calls[-1], "days with reports aren't fetched again (only the recent empty day is re-asked)"))
 c1 = C.check("(833) 555-1234")
 r.append(ok(c1["level"] == "high" and c1["robocall"] and "57 times" in c1["headline"], "heavily reported impostor number: high"))
 r.append(ok(C.check("202-555-0199")["level"] == "low" and C.rate({"n": 4, "robo": 0, "subjects": {"Home improvement": 4}}, 30)["level"] == "medium",
@@ -50,6 +50,28 @@ r.append(ok(C.check("202-555-0199")["level"] == "low" and C.rate({"n": 4, "robo"
 r.append(ok(C.rate({"n": 4, "robo": 0, "subjects": {"Imposters - Government": 4}}, 30)["level"] == "high", "a few reports + impostor subject: high"))
 r.append(ok(C.rate({"n": 1, "robo": 1, "subjects": {"Imposters - Government": 1}}, 30)["level"] == "low", "never high on a single report"))
 r.append(ok(not C.check("555-1234")["ok"], "non-US / short numbers refused"))
+# the FTC posts late: a recent day that was empty is asked for again; an old empty day is not
+for f in os.listdir(C.DAILY_DIR):
+    os.remove(os.path.join(C.DAILY_DIR, f))
+posted = {"2026-11-15": False}
+def late(u):
+    if "2026-11-15" in u and not posted["2026-11-15"]:
+        calls.append(u)
+        return {"data": []}
+    return fake(u)
+C.GET = late
+C.update(days=3, api_key=KEY, log=lambda *_: None, today=date(2026, 11, 16))
+posted["2026-11-15"] = True
+a = C.update(days=3, api_key=KEY, log=lambda *_: None, today=date(2026, 11, 16))
+r.append(ok(a["numbers"].get("8335551234", {}).get("n") == 57, "a recent day that was empty (not posted yet) is fetched again once posted"))
+before = len(calls)
+C.update(days=3, api_key=KEY, log=lambda *_: None, today=date(2026, 11, 16))
+r.append(ok(len(calls) - before == 1, "only the still-empty recent day is re-asked for (one request), filled days aren't"))
+C.update(days=40, api_key=KEY, log=lambda *_: None, today=date(2026, 12, 20), max_new_days=40)
+before = len(calls)
+C.update(days=40, api_key=KEY, log=lambda *_: None, today=date(2026, 12, 20), max_new_days=40)
+r.append(ok(len(calls) - before == C.RECHECK, "old empty days are not re-asked for, only the last few"))
+C.GET = fake
 import io, urllib.error
 def limited(u):
     if "2026-11-14" in u:

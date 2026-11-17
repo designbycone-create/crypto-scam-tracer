@@ -1,10 +1,11 @@
-# Publishes the phone app's list of FTC-reported scam / robocall numbers once a day.
+# Publishes the phone app's list of FTC-reported scam / robocall numbers (checked hourly).
 # Needs the repository secret FTC_API_KEY (free key from https://api.data.gov/signup/).
 # The list goes to the "data" branch (one file, replaced daily), never to main or stable.
 name: FTC reported-calls list
 on:
   schedule:
-    - cron: "17 16 * * *"        # daily, after the FTC's weekday noon-Eastern update
+    - cron: "17 * * * *"         # hourly: the FTC lets a key fetch about one busy day of reports an hour,
+                                  # so 30 days take about a day to fill; once full, a run costs a few requests
   workflow_dispatch:
 permissions:
   contents: write

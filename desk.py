@@ -444,7 +444,7 @@ ul{{margin:6px 0;padding-left:18px}} a{{color:var(--acc)}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} td,th{{border-bottom:1px solid var(--line);padding:7px;text-align:left}}
 .ev{{font-family:ui-monospace,monospace;font-size:12px;color:var(--mut);padding:2px 0;border-bottom:1px solid var(--line)}}
 small{{font-size:12px}}</style></head><body>
-<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/clipguard'>Copy-paste guard</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
+<div class=nav style="margin-bottom:8px"><a href='/'>Desk</a> &nbsp; <a href='/graph'>Network graph</a> &nbsp; <a href='/submit'>Submission Center</a> &nbsp; <a href='/incident'>Incident mode</a> &nbsp; <a href='/radar'>Scam radar</a> &nbsp; <a href='/intel'>Threat intel</a> &nbsp; <a href='/check'>Claim checker</a> &nbsp; <a href='/shield'>Wallet shield</a> &nbsp; <a href='/prescreen'>Check before you send</a> &nbsp; <a href='/clipguard'>Copy-paste guard</a> &nbsp; <a href='/msgcheck'>Is this message a scam?</a> &nbsp; <a href='/agentguard'>Agent firewall</a> &nbsp; <a href='/exposure'>Exposure check</a> &nbsp; <a href='/extension'>Browser extension</a> &nbsp; <a href='/sitewatch'>Sites I use</a> &nbsp; <a href='/evidence'>Court evidence</a> &nbsp; <a href='/requests'>Officer packets</a> &nbsp; <a href='/alerts'>Phone alerts</a> &nbsp; <a href='/update'>Updates</a></div>
 <h1>&#128737;&#65039; ScamHunter Desk</h1>
 <div style="font-size:12px;color:#86efac">Free for victims &middot; never asks for money or a seed phrase &middot; never sends anything without you</div>
 {status_line}
@@ -540,6 +540,20 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/clipguard":
             from shield import clipguard
             return self._send(clipguard.page(), "text/html; charset=utf-8")
+        if path == "/msgcheck":
+            from shield import msgcheck
+            return self._send(msgcheck.page(), "text/html; charset=utf-8")
+        if path == "/exposure":
+            from shield import exposure
+            return self._send(exposure.page(), "text/html; charset=utf-8")
+        if path == "/agentguard":
+            from agentguard import web as agw
+            return self._send(agw.page(), "text/html; charset=utf-8")
+        if path == "/extension":
+            from shield import extension_api
+            return self._send(extension_api.page(), "text/html; charset=utf-8")
+        if path.startswith("/api/"):
+            return self._api("GET", path, query, {})
         if path == "/update":
             from freezekit import update_web
             return self._send(update_web.page(), "text/html; charset=utf-8")
@@ -622,8 +636,38 @@ class Handler(BaseHTTPRequestHandler):
         from urllib.parse import urlparse
         return (urlparse(src).hostname or "") in ("127.0.0.1", "localhost")
 
+    def _api(self, method, path, query, body):
+        """Local JSON API for agents and the browser extension. Every call needs a token header,
+        which a web page can't send to this server, so websites can't use the API."""
+        from urllib.parse import parse_qs
+        q = {k: v[0] for k, v in parse_qs(query or "").items()}
+        try:
+            if path.startswith("/api/agentguard/"):
+                from agentguard import web as agw
+                if not agw.authorized(self.headers):
+                    return self._send(json.dumps({"error": "missing or wrong X-AgentGuard-Token"}), "application/json", code=401)
+                code, out = agw.api(path, method, body, q)
+                return self._send(json.dumps(out), "application/json", code=code)
+            if path.startswith("/api/ext/"):
+                from shield import extension_api
+                if not extension_api.authorized(self.headers):
+                    return self._send(json.dumps({"error": "not paired"}), "application/json", code=401)
+                code, out = extension_api.api(path, method, body, q)
+                return self._send(json.dumps(out), "application/json", code=code)
+        except Exception as ex:
+            return self._send(json.dumps({"error": str(ex)}), "application/json", code=500)
+        return self._send(json.dumps({"error": "unknown endpoint"}), "application/json", code=404)
+
     def do_POST(self):
         from urllib.parse import parse_qs
+        if self.path.startswith("/api/"):
+            n = min(int(self.headers.get("Content-Length") or 0), 5_000_000)
+            try:
+                body = json.loads(self.rfile.read(n) or b"{}")
+            except ValueError:
+                return self._send(json.dumps({"error": "body must be JSON"}), "application/json", code=400)
+            path, _, query = self.path.partition("?")
+            return self._api("POST", path, query, body if isinstance(body, dict) else {})
         if not self._local_origin():
             return self._send("Forbidden", "text/plain", code=403)
         n = min(int(self.headers.get("Content-Length") or 0), 2_000_000)
@@ -668,6 +712,15 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/clipguard":
                 from shield import clipguard
                 return self._send(clipguard.post(form), "text/html; charset=utf-8")
+            if path == "/msgcheck":
+                from shield import msgcheck
+                return self._send(msgcheck.post(form), "text/html; charset=utf-8")
+            if path == "/exposure":
+                from shield import exposure
+                return self._send(exposure.post(form), "text/html; charset=utf-8")
+            if path == "/agentguard":
+                from agentguard import web as agw
+                return self._send(agw.post(form), "text/html; charset=utf-8")
             if path == "/update":
                 from freezekit import update_web
                 return self._send(update_web.post(form), "text/html; charset=utf-8")

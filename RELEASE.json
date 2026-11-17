@@ -3,11 +3,11 @@
  "files": {
   ".github/workflows/android.yml": "a7d87b3f481c87ed65e322601821ec253b6d55e169ef1670021cabd8b4e71d5a",
   ".github/workflows/callers.yml": "15f85780d3c0f4960fbacfb6e476ff54fbc62e0c968257c7582f611bb51502f5",
-  ".gitignore": "1e2d4fd53d4c466e502fd76be62de5c4a8684783e0c4138352ebb1450676a528",
+  ".gitignore": "312659c6d5399833ead6a188dac59297641ea1c94b7d50402d6df8ccb6e60c37",
   "CHAIN_SOURCES.md": "329e5d8813567f5367b9aae11576f04f5f3fd8b55afeeeb70dc5afc5f78f7fce",
   "LICENSE": "4966660a3d1e286c89374cbf04584405653e894d6feda09c2ae9cd4c9f06ff66",
-  "NOTICE.md": "8396321e7699bb1173b0864f01c9bdfe675cb8d2cd20ac598ec08fcc10836098",
-  "README.md": "053e840359f71817d1cbf49e14229c0eb4a9ed29347bfa5296b4253406075d31",
+  "NOTICE.md": "35ebaf46c55ff338d81bef2f0de039a9e0ef3cd881b7444af57e5013f9b9f76c",
+  "README.md": "e69654084366f147c644d68b7b35591dc1b613aae6e4a639b8f58c44fb8de74e",
   "ROADMAP.md": "36ddd92e5c6fe3b3c8a53cb016bdd77a3832a85412b0a39277788cb69a8314bb",
   "SECURITY.md": "4289403929bf46a774fbc6b94f651d2dbe44d4d9744cd2a93f30ab131e2e1df6",
   "TRUST.md": "108b161c12f5cb1139909cfb17cd281adc40ea622ade2ffe4377d6a2e940d8fe",
@@ -55,11 +55,11 @@
   "benchmark/run.py": "dbbf23359c8be26d84d87d3c0fdb9bf4e8e2c070e6acb7051327b3f6d1f86e8b",
   "benchmark/truth.py": "a86763e4c779d2439390bc7bc75227d5668e8a76b893d3f7fb60dd77b5ca8ee5",
   "config.example.json": "1bf807c13743d39d1cd84248795f9666b77238029ac6e922b946b09880116acc",
-  "desk.py": "d1938de593b314f05922f8e7a75e6e7a0dd73f48a1aa52368a2bef9e44300ed6",
+  "desk.py": "f55d5d2b4d33c8dc8ee49598ab334dd28b366f0f1286a52da9c5b496140a6905",
   "deskui/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "deskui/data.py": "328307243a55dea3b3fd169567cf8e1b8f27d55c2c939e2b7fe6bedadc1d5180",
+  "deskui/data.py": "c8e58bd686812d8eb6847cb14b7f8b134ae0c4e7a167721e2de6bc79d9c89c67",
   "deskui/pages.py": "a035ecbe8bb5584649cfa32a3970141d7fd5a39693137df6328953378e36c672",
-  "deskui/shell.py": "f5f45a2d0a21d31eca1b825ce4065a95b74291434a60cc846e6c3873d59bff01",
+  "deskui/shell.py": "5ca8bff648d90aba66e0ae17d28d9d86f1c39afaec8d9d987ab61e5aeffe97d3",
   "deskui/us_states.json": "4453d080adcf09182963e8d617d5d6fade9a6369118a1e5bf21e0eb4feff4456",
   "evidence/COURT_READINESS.md": "f681082d08894747387fff573555d6debf34d7aa428c24aae330b0bb0cb73944",
   "evidence/__init__.py": "dc913ce5aa656f78546212740d60fbc62314595971236da3cdd4ac578ed2c552",
@@ -160,6 +160,7 @@
   "shield/__init__.py": "2fb143154da442c1444a3d40a6ddd603b3b03212763edec293cc7c31751f2552",
   "shield/approvals.py": "c9e266084764fd611f0bb7780e25c375812bad9767198e7801281e7bd9f49f57",
   "shield/aptos.py": "f0f915262a6c18ce0c95596ad2b6ed5239995b3a756b6868ff4489094427db5a",
+  "shield/bip39_english.txt": "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda",
   "shield/callerlist.py": "90d088621c98505848f2d1c9b49fba2060118f1fd816d86575480a4d0003934a",
   "shield/clipguard.py": "774ecf29538fdc6bf09deeade54a14cf7986fd2b13e4c72b6447c0851e062460",
   "shield/compromised.py": "6de311a22fdd91f6e440b26281d158018dd805723c749ab9eafddae810072feb",
@@ -172,6 +173,7 @@
   "shield/msgcheck.py": "05b500e2074bb312a8ae6ca883053856cc41f76112518e631cfd381e8c04da8a",
   "shield/prescreen.py": "d21078c98d0ca542a4ec306bef163e300258d4d68dc4f6cc2073cb101b3f132b",
   "shield/publicaml.py": "23362f7fd33c5d955a4dd838cba54259fe5c5fc19d05dfa961f42a7adba96b87",
+  "shield/secretscan.py": "a876c21c5f24dd510468f59af3c2436758745d1516baaf857c39661a2812438c",
   "shield/sitewatch.py": "cb157c6d25e94c8eec8ab538a77a307dde734487d820175d51adbda8e3e5917d",
   "shield/solana.py": "6d30d0e0587e2c0c290739a6e72da127cce2f30036f7e31f8085f41d2008c1ad",
   "shield/test_allchains_offline.py": "b21f5323f4c5eb4e17f2e7b839c9ede7404220e03aaa8066ea7ba5194f9f9086",
@@ -192,9 +194,12 @@
   "test_exposure_kev_offline.py": "d2bd45803f6bdebaa85c8089132535d9a538e4b6a0a1d935edc49836c60d5bd1",
   "test_extension_browser.py": "cd5405fcc094abbf2ff77b91eedc81dfe8d8cd03b41f61b7701eaf663650f08d",
   "test_freeze_publicaml_offline.py": "5fab3d49e32eef1487160efc235e9dd32f315680597c1925fb3e8308b1cbca29",
+  "test_secretscan_offline.py": "4422bc7f06fe5c42e7b611ac6d5277f9a9f10dff8ef4b39fc24b4020f9483f82",
   "test_securestore_offline.py": "714a5b08f8599954148929d10cdf52126e56d735e372b4ef4cb752999d5fa071",
   "test_updater_offline.py": "002f51d1e700d9c6599379e98ff5e716cf2dddedf361e1fb1369ec4b2dbf16d6",
   "test_watcher_restart_offline.py": "9be821b3d9a0953daed8d65c5b22ba814d51110fca9f8a0cc46c6f54b4bb8d4f",
+  "third_party/python-mnemonic-LICENSE.txt": "d5e3c7c62a84e80073201e2f6e5130e9e6804fa05f8ac4f8b26a13c7d3969697",
+  "third_party/us-atlas-LICENSE.txt": "8048290dfdb6e83fbed17e8985c8cfc4ce9da9b842642f3d3e497280790cfa31",
   "threatfeed/__init__.py": "7e3025efe6fbbaef485b5b00b537f2ac499c1d9f870ea255b5dabb0b36cf63a9",
   "threatfeed/campaigns.json": "57b3c8c0a9637be3c85d5217ec2c956c9e0305dde898905c38831bb95d9b792f",
   "tools/export_mobile_rules.py": "0d461d2fafb4b7d2a08a7a50c7f01bbd57649da6d4d1c3090ab9c7e926a97b90",
@@ -204,7 +209,7 @@
   "xrpl_watcher.py": "3933eff15c7a74ec1d7f1f5c40ed1d69d821e34b1d05cbfdc372fa68acf462b6"
  },
  "meta": {
-  "signed_at": "2026-11-17T14:01:01Z",
-  "note": "Hardening: Desk refuses other host names, packages pinned and hash-checked, keys in config.json encrypted (Windows account protection), exposure check ranks actively exploited flaws (CISA KEV) with a weekly re-check. Whole test suite passes on Windows."
+  "signed_at": "2026-11-17T16:14:56Z",
+  "note": "Online Defense: Secrets left in the open (seed phrases, private keys, wallet files, API keys, password notes in files; local only, never shows the secret). Third-party credits in NOTICE.md."
  }
 }

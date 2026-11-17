@@ -2,7 +2,7 @@
  "pubkey": "c266c6598392a472899e7562045ddda9825d15d13a4d6584bcfd47bc4780c60e",
  "files": {
   ".github/workflows/android.yml": "a7d87b3f481c87ed65e322601821ec253b6d55e169ef1670021cabd8b4e71d5a",
-  ".github/workflows/callers.yml": "05d7fbb31fc550524b76c6d1f27726d7157fd3694c08bbbb37839bb20203e77a",
+  ".github/workflows/callers.yml": "17435d248628f692845d77611b2b7bdf61e5903c7ab6e566f3ad7aeb9f983757",
   ".gitignore": "982f0fb5de7691ba0f404f4bade6c078b74ccd763a49c3d1c2fabbc41ac5acac",
   "CHAIN_SOURCES.md": "329e5d8813567f5367b9aae11576f04f5f3fd8b55afeeeb70dc5afc5f78f7fce",
   "LICENSE": "4966660a3d1e286c89374cbf04584405653e894d6feda09c2ae9cd4c9f06ff66",
@@ -154,7 +154,7 @@
   "shield/__init__.py": "2fb143154da442c1444a3d40a6ddd603b3b03212763edec293cc7c31751f2552",
   "shield/approvals.py": "c9e266084764fd611f0bb7780e25c375812bad9767198e7801281e7bd9f49f57",
   "shield/aptos.py": "f0f915262a6c18ce0c95596ad2b6ed5239995b3a756b6868ff4489094427db5a",
-  "shield/callerlist.py": "9e818c8b1678354c99d8c76401a1248aeebecc364107b0820ef9a58a969f74a4",
+  "shield/callerlist.py": "c9b47d775245199a8d21109d6b12bee422b43d12b03923f1b457221f84a3cc14",
   "shield/clipguard.py": "661805f655df7689e97f0f067bcd9a2ae07d39a62f5e86dfcc4257b45164ae70",
   "shield/compromised.py": "6de311a22fdd91f6e440b26281d158018dd805723c749ab9eafddae810072feb",
   "shield/drain.py": "af006e127974dbf2046da36ad8a20ab94f777cc73135f1757c72d067136c954d",
@@ -178,7 +178,7 @@
   "shield/web.py": "86ce6c2002bd75cfcb2bd5640e33c6d4514ff22f3bd160b5d9af8cfa54334bc1",
   "shield/xrpl.py": "b5cf6aaa6c56044566423bd105f5eda3da20a6247e9b24a8b2c7556adf723ba1",
   "telegram_setup.py": "f7f263a26bd1b7c7fad0cf48e4dc080280559b483b4141606f8db3074e4a8cf6",
-  "test_callerlist_offline.py": "d17caca7cb174acb97698648fab607a66910e7c0d965ae0a2108acf0ea099090",
+  "test_callerlist_offline.py": "4faf7cf5c6d1d1b0962bf74c4ef1fb4147a0adbae0051cfc89ed844e191756f6",
   "test_campaign_defense_offline.py": "794d794cd19e5e47c73f24de542df91aa8f4c881fd2fd634299bdb805940f642",
   "test_defense_platform_offline.py": "1df8f9ea68e2e0e50d50bc2ba0a68effa2bda45faf7631f565adf93be11dd31c",
   "test_desk_launch_offline.py": "68657da2abb10ed9a6311795e8bdbc7442d3ca0749eae9a33ee94cca3389ee81",
@@ -195,7 +195,7 @@
   "xrpl_watcher.py": "80833f00792d196dc0258dec176755744608b5db3e54cda7df6bb343d7026cfe"
  },
  "meta": {
-  "signed_at": "2026-11-17T02:56:25Z",
-  "note": "Pre-screen: Tether/Circle freeze check read from the token contracts, Public AML second opinion, FreezeRadar link. Desk: FTC reported-calls list."
+  "signed_at": "2026-11-17T03:24:34Z",
+  "note": "Caller list: when the FTC hourly limit is reached, stop asking and keep the days already downloaded."
  }
 }

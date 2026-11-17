@@ -277,7 +277,7 @@ if __name__ == "__main__":
         sign_folder(sys.argv[2], " ".join(sys.argv[3:]))
     elif cmd == ["verify"]:
         root = sys.argv[2] if len(sys.argv) > 2 else "."
-        man = json.load(open(os.path.join(root, MANIFEST))) if os.path.exists(os.path.join(root, MANIFEST)) else {}
+        man = json.load(open(os.path.join(root, MANIFEST), encoding="utf-8")) if os.path.exists(os.path.join(root, MANIFEST)) else {}
         ok, why, _ = check_folder(root, RELEASE_PUBKEY or man.get("pubkey"))
         print(("VERIFIED: " if ok else "NOT VERIFIED: ") + why)
         if ok and not RELEASE_PUBKEY:

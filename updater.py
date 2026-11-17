@@ -114,7 +114,7 @@ def verify_release(src, shipped):
         return ok, why
     try:
         import release_sig as new
-        man = json.load(open(os.path.join(src, new.MANIFEST))) if os.path.exists(os.path.join(src, new.MANIFEST)) else None
+        man = json.load(open(os.path.join(src, new.MANIFEST), encoding="utf-8")) if os.path.exists(os.path.join(src, new.MANIFEST)) else None
     except Exception:
         man = None
     if man and man.get("pubkey"):
@@ -191,7 +191,7 @@ def apply(sha=None, log=print):
         f.write(installed() or "")
     added = []
     n = _copy_tree(src, HERE, backup_root=bdir, added=added)
-    with open(os.path.join(bdir, "_added_files.json"), "w") as f:
+    with open(os.path.join(bdir, "_added_files.json"), "w", encoding="utf-8") as f:
         json.dump(added, f)
     shutil.rmtree(stage, ignore_errors=True)
     log(f"installed {n} files from {sha[:7]}; testing")
@@ -229,7 +229,7 @@ def _restore(bdir):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copy2(src, dst)
     try:
-        added = json.load(open(os.path.join(bdir, "_added_files.json")))
+        added = json.load(open(os.path.join(bdir, "_added_files.json"), encoding="utf-8"))
     except Exception:
         added = []
     for rel in added:          # only files this update created; never anything of the user's

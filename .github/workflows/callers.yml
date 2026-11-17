@@ -30,7 +30,7 @@ jobs:
         run: |
           python - <<'PY'
           from shield import callerlist
-          lst = callerlist.update(days=30, max_new_days=6)
+          lst = callerlist.update(days=30, max_new_days=30)
           print(callerlist.export("callers.json.gz", lst))
           PY
       - name: Publish to the data branch

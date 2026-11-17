@@ -102,7 +102,7 @@ def fetch_day(day, api_key, log=print, max_pages=600):
     return out
 
 
-def update(days=WINDOW, api_key=None, log=print, today=None, max_new_days=3):
+def update(days=WINDOW, api_key=None, log=print, today=None, max_new_days=10):
     """Fetch days not fetched yet (newest first, a few per run so the free key's hourly limit holds),
     drop days older than the window, rebuild the list."""
     api_key = api_key or key()

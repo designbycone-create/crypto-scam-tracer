@@ -125,7 +125,7 @@ try:
     jid4, why = runner.start_spiderfoot("support@fake-exchange.com", wait=True)
     check("spiderfoot job done", why is None and next(j for j in runner.jobs() if j["id"] == jid4)["status"] == "done")
     start = next(d for u, d in sent if u.endswith("/startscan"))
-    check("passive modules only", start["usecase"] == "passive" and start["modulelist"] == "" and start["typelist"] == "")
+    check("passive modules only", start["usecase"] == "Passive" and start["modulelist"] == "" and start["typelist"] == "")
     check("talks only to this computer", all(u.startswith("http://127.0.0.1:5001/") for u, _ in sent))
     items = runner.results(jid4)["items"]
     types = [i["type"] for i in items]

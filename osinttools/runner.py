@@ -250,7 +250,9 @@ def start_spiderfoot(target, wait=False):
     u = spiderfoot_url()
     try:
         r = json.loads(_http(u + "/startscan", {"scanname": f"ScamHunter lookup {time.strftime('%Y-%m-%d %H:%M')}", "scantarget": t,
-                                                 "modulelist": "", "typelist": "", "usecase": "passive"}, timeout=120))
+                                                 "modulelist": "", "typelist": "",
+                                                 # SpiderFoot matches module groups case-sensitively: "Passive" (as its own form sends)
+                                                 "usecase": "Passive"}, timeout=120))
     except Exception as ex:
         return None, f"SpiderFoot refused the scan: {str(ex)[:100]}"
     if not r or r[0] != "SUCCESS":

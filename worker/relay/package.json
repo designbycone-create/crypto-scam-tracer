@@ -1,0 +1,10 @@
+{
+  "name": "scamhunter-relay",
+  "private": true,
+  "type": "module",
+  "description": "ScamHunter Threat Desk relay (Cloudflare Worker). Passes end-to-end encrypted messages between the Desk and the paired phone.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/relay.test.js"
+  }
+}

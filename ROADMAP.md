@@ -52,6 +52,14 @@ act on their own case.
 - [ ] Extension in the Chrome and Edge stores (after the trademark filing)
 - [ ] Monthly exposure re-check with alerts
 
+## Phone
+- [x] ScamHunter Guard: warns about reported scam numbers, message checker, large print
+- [x] ScamHunter Threat Desk app: the Desk on your phone through your own Cloudflare Worker, end-to-end encrypted, QR pairing
+- [ ] Release-signed APKs (your own signing key) so updates install over the old version
+- [ ] Desk alerts as phone notifications in the app (today: Telegram / ntfy)
+- [ ] Standalone checks in the app when the Desk is off
+- [ ] Guard: warn while the call is still ringing, and easier setup
+
 ## Investigate
 - [x] Look up a scammer: usernames on 500 sites (Maigret), emails / phones / websites / names in public records
       (SpiderFoot, passive modules only), with an IC3-ready summary

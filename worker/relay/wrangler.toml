@@ -1,0 +1,15 @@
+# ScamHunter Threat Desk relay -- deploy on your own Cloudflare account (free plan is enough).
+# From this folder:  npx wrangler deploy
+# The Desk sets the ADMIN_KEY secret for you (Settings > Phone app); it is never typed or shown.
+name = "scamhunter-relay"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "CHANNEL"
+class_name = "Channel"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Channel"]

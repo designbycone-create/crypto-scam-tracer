@@ -1,0 +1,17 @@
+{
+ "_about": "Fixed public test values for the phone app's unit tests; never a real key.",
+ "channel": "0123456789abcdef0123456789abcdef",
+ "key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+ "request": {
+  "blob": "AQEBAQEBAQEBAQEBAQzhkxdStEREvTBFIjpXYun6XL3oorci6cbtMduqMcYIlbcDLYS0dhEsUdXlA5K3RbvVeD1+z607kFQeHJdt2IsoQ2LIpx/rQohOJzVAjkbd3o2i8xPtZweMMKvVkEEx6filUb/Wj+bfjNWSrz9hGGZEPO6Xtz0LF4ZezPASNwl25qvKHkdXatijL5nlSdlDraepoOKz4ZjSE5dCuK2ofPk5YM9SLNJe+g==",
+  "nonce": "AQEBAQEBAQEBAQEB",
+  "plaintext": "{\"v\":1,\"id\":\"00112233445566778899aabb\",\"ts\":1795000000,\"m\":\"POST\",\"p\":\"/msgcheck\",\"ct\":\"application/x-www-form-urlencoded\",\"b\":\"dGV4dD1oZWxsbw==\",\"z\":0}"
+ },
+ "response": {
+  "blob": "AQICAgICAgICAgICAuAKcN+b4xNr+7STygFK6Sco3JpaomNPyXpn6GIWCSvg/NqrQCUEw+j1SOHFyMJs7BeheLIu3bUIN/Ip2nxrHTGo/iYZWQdns8afYagvHDDE35qt1YD/nIJ9xNv69vNi/TipfJ1tUCN44cEb9Z4+KZtZOfHBKkEwv/KIk3RfvEjtADBO7I2CZswRKZKbBTj/9UdiYXRKMJ8Wxf3z/28HC+lETWTxfV3IP0VVLYlSymd8KtLyzjVLzMdUROanQZVd++m4ZwMRTyI=",
+  "nonce": "AgICAgICAgICAgIC",
+  "page": "<!doctype html><h1>Threat Desk</h1><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p><p>caf\u00e9 \u2713</p>",
+  "plaintext": "{\"id\":\"00112233445566778899aabb\",\"s\":200,\"ct\":\"text/html; charset=utf-8\",\"loc\":\"\",\"b\":\"eJyzUUzJTy6pLEhVyCjJzbGzyTC0C8koSk0sUXBJLc620c8wtLMpsEtOTDu8UuHRnMk2+gWj/FH+KB+JDwDin19Q\",\"z\":1}",
+  "rid": "00112233445566778899aabb"
+ }
+}

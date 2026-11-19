@@ -73,18 +73,25 @@ website or name the scammer used against public records. It needs two free progr
 once. The page shows the exact lines to paste into PowerShell. Lookups are passive: nothing is
 sent to the scammer, and results stay on your computer.
 
-## 6. Alerts on your phone (recommended)
+## 6. The Threat Desk phone app (optional)
+
+**Settings → Phone app** walks you through it: put the free relay on your own Cloudflare account
+(one button), give it its key (one button), then scan the pairing code with the **ScamHunter
+Threat Desk** app. The phone then shows your Desk anywhere, encrypted end to end. If the phone is
+lost, press **Unpair** on that page and its access stops at once.
+
+## 7. Alerts on your phone (recommended)
 
 **Settings → Alerts to your phone.** Connect Telegram (about two minutes, no typing commands) and
 the free ntfy app. If a watched wallet moves money, or something urgent is found, you get a push
 message. Use two channels so one being down never loses an alert.
 
-## 7. The browser extension (recommended)
+## 8. The browser extension (recommended)
 
 **Online Defense → Browser extension** walks you through adding it to Chrome or Edge. It blocks
 address-swapping, wallet-draining pages and known attack scripts, and checks what you paste.
 
-## 8. Updates
+## 9. Updates
 
 **Settings → Updates.** One click. Every update is signature-checked, backed up, self-tested,
 and rolled back automatically if anything fails.

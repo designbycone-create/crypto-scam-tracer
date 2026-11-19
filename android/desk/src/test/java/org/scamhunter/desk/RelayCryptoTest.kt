@@ -69,15 +69,18 @@ class RelayCryptoTest {
         fails { RelayCrypto.unpackBody(b, z, 1024 * 1024) }
     }
 
+    private fun code(worker: String) = "shtd1:" + Base64.getUrlEncoder().withoutPadding().encodeToString(
+        JSONObject().put("u", worker).put("c", "0123456789abcdef0123456789abcdef")
+            .put("t", "x".repeat(43)).put("k", Base64.getEncoder().encodeToString(ByteArray(32))).toString().toByteArray())
+
     @Test fun pairingCodes() {
-        val good = "shtd1:" + Base64.getUrlEncoder().withoutPadding().encodeToString(
-            JSONObject().put("u", "https://scamhunter-relay.matt.workers.dev").put("c", "0123456789abcdef0123456789abcdef")
-                .put("t", "x".repeat(43)).put("k", Base64.getEncoder().encodeToString(ByteArray(32))).toString().toByteArray())
+        val good = code("https://scamhunter-relay.matt.workers.dev")
         val p = Pairing.parse(good)
         assertNotNull(p)
         assertEquals("https://scamhunter-relay.matt.workers.dev", p!!.worker)
         assertEquals(32, Pairing.fromJson(p.toJson())!!.key.size)
-        for (bad in listOf("", "hello", "shtd1:!!!", good.replace("https://", "http://"))) assertNull(bad, Pairing.parse(bad))
+        for (bad in listOf("", "hello", "shtd1:!!!", code("http://scamhunter-relay.matt.workers.dev"), code("https://evil.example/x?y")))
+            assertNull(bad, Pairing.parse(bad))
         val shortKey = "shtd1:" + Base64.getUrlEncoder().encodeToString(JSONObject().put("u", "https://a.b").put("c", "0".repeat(32))
             .put("t", "x".repeat(43)).put("k", Base64.getEncoder().encodeToString(ByteArray(16))).toString().toByteArray())
         assertNull(Pairing.parse(shortKey))

@@ -105,7 +105,7 @@ def parse_rss(src, raw):
     return out
 
 
-FAMILIES = ["ClickFix", "Lumma", "Vidar", "RedLine", "AsyncRAT", "Mirai", "Emotet", "QakBot", "IcedID", "Remcos", "AgentTesla", "Raccoon",
+FAMILIES = ["FaceStealer", "TraderTraitor", "OPTIMJACK", "Lunex", "SalatStealer", "DEVPOPPER", "ClickFix", "Lumma", "Vidar", "RedLine", "AsyncRAT", "Mirai", "Emotet", "QakBot", "IcedID", "Remcos", "AgentTesla", "Raccoon",
             "StealC", "Rhadamanthys", "LockBit", "BlackCat", "ALPHV", "Akira", "Qilin", "Medusa", "Cl0p", "Scattered Spider",
             "Lazarus", "pig butchering", "drainer", "phishing", "ransomware", "infostealer", "botnet", "zero-day", "deepfake"]
 

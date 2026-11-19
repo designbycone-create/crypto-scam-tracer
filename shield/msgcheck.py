@@ -81,6 +81,21 @@ RULES = [
      r"\b(tasks?|orders?|reviews?|ratings?)\b.{0,60}\b(commission|recharge|top ?up|deposit|unlock)\b|\b(work from home|remote job)\b.{0,80}\b(telegram|whatsapp|deposit)\b"),
     ("recovery_scam", 3, "Offers to recover money you already lost to a scam, usually for an upfront fee. These are almost always a second scam. Real help (police, IC3, the FTC) is free.",
      r"\b(recover|recovery|retrieve|get back)\b.{0,60}\b(lost|stolen|scammed)\b.{0,60}\b(funds|money|crypto|bitcoin|assets)\b|\b(fund|asset|crypto) recovery\b|\b(ethical )?hackers? (can|will) (recover|get back)\b"),
+    # lures seen Oct-Nov 2026 (Binance heist "compensation", FaceStealer fake meetings, ClickFix, midterm scams)
+    ("fee_to_receive", 3, "Asks you to pay a fee to receive compensation, a refund, a payout or a reward. Real compensation never costs you anything.",
+     r"\b(compensation|reimbursement|refund|payout|airdrop|settlement|reward|unclaimed|allocation)\b.{0,160}\b(?<!no )(?<!without a )(?<!free of )(fee|verification (payment|deposit)|activation (payment|deposit)|gas deposit)\b"
+     r"|\b(wallet|address)[- ]verification fee\b"),
+    ("wallet_verify", 3, "Tells you to 'verify', 'validate' or 'sync' your wallet from a link. Wallet companies never ask this; these pages steal the wallet.",
+     r"\b(verify|validate|sync|synchroni[sz]e|reactivate|re-?activate|whitelist)\b.{0,25}\b(your |the )?(crypto |trust |metamask |coinbase |binance )?(wallet|seed phrase|recovery phrase)\b"),
+    ("paste_command", 3, "Tells you to paste or run a command (PowerShell, the Run box, Terminal) to prove you're human or fix a problem. No real website or company ever asks this: it installs malware.",
+     r"\b(paste|run|type|enter|copy)\b.{0,80}\b(powershell|terminal|command prompt|cmd\.exe|run (box|dialog)|win ?\+ ?r|windows key ?\+ ?r)\b"
+     r"|\b(powershell|terminal|run (box|dialog)|win ?\+ ?r)\b.{0,80}\b(paste|ctrl ?\+ ?v)\b"),
+    ("meeting_update", 3, "Says your audio, camera or meeting app needs an 'update' or 'fix' you must install from them. Hackers use fake meeting problems to install malware: hang up and rejoin from the official app.",
+     r"\b(audio|microphone|mic|camera|webcam|video|sound|zoom|teams|meeting)\b.{0,60}\b(issue|problem|not working|error|broken)\b.{0,100}\b(install|update|download|run|script|driver|sdk|fix)\b"),
+    ("campaign_investment", 3, "Offers returns on a political campaign 'investment' or 'pool'. Campaign donations are never an investment and never pay anything back.",
+     r"\b(campaign|candidate|election|pac|super ?pac)\b.{0,80}\b(investment|invest|pool)\b.{0,80}\b(return|returns|payout|profit|pays? out|win)\b"),
+    ("official_recovery", 3, "Claims the FBI, IC3, FTC or a 'government recovery unit' will return lost money. Agencies don't charge fees or contact you to release recovered funds this way: call your FBI field office yourself to check.",
+     r"\b(ic3|internet crime complaint center|fbi|ftc|interpol|recovery (unit|department|division))\b.{0,120}\b(recover(ed)?|return|release|refund|reimburse)\w*\b.{0,80}\b(funds|money|crypto|bitcoin|assets|losses)\b"),
     # pressure
     ("urgency", 1, "Pressures you to act right now. Scammers rush you so you don't stop and check.",
      r"\b(act now|immediately|urgent|within (24|48) hours|right away|final (notice|warning)|last chance|expires? today)\b"),
@@ -89,7 +104,8 @@ RULES = [
 ]
 _RX = [(i, w, msg, re.compile(rx, re.I | re.S | re.M)) for i, w, msg, rx in RULES]
 DECISIVE = {"gift_cards", "crypto_atm", "cash_courier", "move_money_safe", "seed", "withdrawal_fee", "recovery_scam",
-            "task_job", "bad_address", "bad_link", "family_emergency", "gov_threat", "prize"}
+            "task_job", "bad_address", "bad_link", "family_emergency", "gov_threat", "prize",
+            "fee_to_receive", "paste_command", "campaign_investment", "campaign_text"}
 
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "buff.ly", "rebrand.ly", "cutt.ly", "shorturl.at",
               "rb.gy", "t.ly", "s.id", "tiny.cc", "lnkd.in", "qrco.de"}
@@ -179,6 +195,17 @@ def check(text):
         if rx.search(flat):
             findings.append({"weight": w, "why": msg, "rule": rid})
             types.append(rid)
+    try:   # exact wording from current campaigns in the signed feed
+        import threatfeed
+        low = flat.lower()
+        for c in threatfeed.campaigns():
+            for m in c.get("message_markers", []):
+                if m.lower() in low:
+                    findings.append({"weight": 3, "why": f"It matches the {c['name']} scam ({c.get('first_seen', '')}): \"{m}\".", "rule": "campaign_text"})
+                    types.append("campaign_text")
+                    break
+    except Exception:
+        pass
     if flat != t:
         findings.append({"weight": 2, "why": "The message hides invisible characters, a trick used to slip past spam filters.", "rule": "hidden_chars"})
     links = []
@@ -230,7 +257,12 @@ def advice(level, types):
         out.append("Government agencies don't threaten arrest by phone, text or email. Hang up.")
     if {"remote_access", "tech_support"} & set(types):
         out.append("If you already let them into your computer, disconnect it from the internet and have it checked.")
-    if {"recovery_scam"} & set(types):
+    if {"paste_command", "meeting_update"} & set(types):
+        out.append("If you already ran a command or installed an 'update', disconnect from the internet, and from a clean device move "
+                   "your crypto to a new wallet and change your passwords.")
+    if {"fee_to_receive", "wallet_verify", "campaign_text"} & set(types):
+        out.append("Never pay to receive money, and never 'verify' a wallet or enter a recovery phrase from a link.")
+    if {"recovery_scam", "official_recovery"} & set(types):
         out.append("Real help after a scam is free: report it at ic3.gov and reportfraud.ftc.gov. ScamHunter can trace crypto at no cost.")
     out.append("If you already sent money: contact your bank or the payment app right away, then report it at ic3.gov "
                "(and reportfraud.ftc.gov). If it was crypto, start a case in the ScamHunter Threat Desk.")

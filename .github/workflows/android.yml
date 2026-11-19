@@ -31,8 +31,28 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.11.1"
+      - name: Permanent signing key for the Threat Desk app (when this repository has it)
+        env:
+          KS_B64: ${{ secrets.ANDROID_DESK_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            printf '%s' "$KS_B64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/desk.p12"
+            echo "SHTD_KEYSTORE=$RUNNER_TEMP/desk.p12" >> "$GITHUB_ENV"
+            echo "signing with the project key"
+          else
+            echo "no project key here: throwaway debug key"
+          fi
       - name: Unit tests and debug APK
+        env:
+          SHTD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_DESK_KEYSTORE_PASSWORD }}
         run: gradle -p android testDebugUnitTest assembleDebug --no-daemon
+      - name: Threat Desk app is signed with the project key
+        if: env.SHTD_KEYSTORE != ''
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | tail -1)
+          $APKSIGNER verify --print-certs android/desk/build/outputs/apk/debug/*.apk | tee certs.txt
+          grep -qi "SHA-256 digest: 255ef12f50cdc6897fe7fd3d75fba4c7b798008c95d73e021a04bd9f976655d6" certs.txt \
+            || (echo "the app isn't signed with the project key" && exit 1)
       - name: Threat Desk app ships the libraries its scanner needs at run time
         run: |
           gradle -p android :desk:dependencies --configuration debugRuntimeClasspath --no-daemon -q > deps.txt

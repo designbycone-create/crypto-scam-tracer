@@ -21,6 +21,19 @@ object Prefs {
         p(c).edit().putString("last_number", number).putString("last_level", level).putString("last_headline", headline)
             .putString("last_subject", subject).putLong("last_time", System.currentTimeMillis()).apply()
 
+    fun setState(c: Context, state: String) = p(c).edit().putString("state", state).apply()
+
+    /** The person's own details for filling in complaint forms. Kept only on this phone (backups are off). */
+    fun me(c: Context): FccLink.Me {
+        fun g(k: String) = p(c).getString("me_$k", "") ?: ""
+        return FccLink.Me(g("first"), g("last"), g("address"), g("city"), state(c), g("zip"), g("phone"), g("email"))
+    }
+
+    fun saveMe(c: Context, m: FccLink.Me) = p(c).edit()
+        .putString("me_first", m.first).putString("me_last", m.last).putString("me_address", m.address)
+        .putString("me_city", m.city).putString("state", m.state).putString("me_zip", m.zip)
+        .putString("me_phone", m.phone).putString("me_email", m.email).apply()
+
     fun lastNumber(c: Context) = p(c).getString("last_number", "") ?: ""
     fun lastTime(c: Context) = p(c).getLong("last_time", 0)
 }

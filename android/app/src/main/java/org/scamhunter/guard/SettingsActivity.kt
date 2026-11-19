@@ -20,6 +20,10 @@ class SettingsActivity : Activity() {
         val num = Ui.input(this, "Their phone number", phone = true).apply { setText(Prefs.familyNumber(this@SettingsActivity)) }
         col.addView(name); col.addView(num)
 
+        col.addView(Ui.text(this, "My details for reports", 24f, bold = true))
+        col.addView(Ui.text(this, "Your name and address, so the FCC complaint form opens already filled in. Stays on this phone.", 17f))
+        col.addView(Ui.button(this, "Fill in my details") { startActivity(android.content.Intent(this, MyDetailsActivity::class.java)) })
+
         col.addView(Ui.text(this, "Family code word", 24f, bold = true))
         col.addView(Ui.text(this, "A word only your family knows. If a \"grandchild\" calls in trouble, ask for it. AI can copy a voice, not a secret.", 17f))
         val code = Ui.input(this, "Code word (stays on this phone)").apply { setText(Prefs.codeWord(this@SettingsActivity)) }

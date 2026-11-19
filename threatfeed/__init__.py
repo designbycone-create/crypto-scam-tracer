@@ -84,6 +84,8 @@ def seed_tracer(log=print):
     from responder.addresses import TRACEABLE
     added = []
     for c in campaigns():
+        if c.get("trace") is False:
+            continue        # warn-only list (e.g. hundreds of laundering wallets): checked before you send, not traced
         text = " ".join(e["address"] for e in c.get("addresses", []) if e["chain"] in TRACEABLE)
         if text:
             import time

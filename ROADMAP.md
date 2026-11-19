@@ -45,7 +45,7 @@ act on their own case.
 - [x] Browser extension (Chrome / Edge): address swaps, attack code, scam addresses
 - [x] Agent firewall: hidden-instruction scanning, approval gate, Claude Code hook, local API
 - [x] Exposure check for equipment and remote access open to the internet
-- [x] Signed campaign feed (first entry: OPTIMJACK, Nov 2026)
+- [x] Signed campaign feed: OPTIMJACK, the Binance heist (the FBI's 628 laundering addresses), fake Binance compensation, FaceStealer, Lunex/ClickFix, midterm election scams (Nov 2026)
 - [ ] Telegram bot: forward a suspicious message, get a verdict
 - [ ] Voice-clone defense kit: family code word and call-back checklist, large print
 - [ ] Wallet-signing gate: the agent firewall in front of wallet signatures

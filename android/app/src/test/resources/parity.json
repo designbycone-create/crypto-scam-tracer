@@ -88,7 +88,8 @@
  },
  {
   "rules": [
-   "seed"
+   "seed",
+   "wallet_verify"
   ],
   "text": "Trust Wallet support: to verify your wallet, reply with your 12-word recovery phrase.",
   "verdict": "LIKELY SCAM"

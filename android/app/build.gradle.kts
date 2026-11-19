@@ -13,8 +13,22 @@ android {
         versionCode = 2
         versionName = "0.2.0"
     }
+    // Signed with the project's permanent key when CI has it (GitHub secrets), so each new version installs
+    // as an update over the last and keeps the person's settings. Without it (forks, local builds) the build
+    // falls back to Android's throwaway debug key.
+    val ks = System.getenv("SHG_KEYSTORE")
+    signingConfigs {
+        if (ks != null) create("scamhunter") {
+            storeFile = file(ks)
+            storeType = "pkcs12"
+            storePassword = System.getenv("SHG_KEYSTORE_PASSWORD")?.trim()
+            keyAlias = "scamhunterguard"
+            keyPassword = System.getenv("SHG_KEYSTORE_PASSWORD")?.trim()
+        }
+    }
     buildTypes {
         release { isMinifyEnabled = false }
+        if (ks != null) getByName("debug") { signingConfig = signingConfigs.getByName("scamhunter") }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

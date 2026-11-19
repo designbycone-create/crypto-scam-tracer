@@ -34,7 +34,15 @@ def _j(p):
 
 def needed():
     cfg = _j("config.json")
-    return not (cfg.get("scam_wallet") or cfg.get("watched_wallets") or cfg.get("cases"))
+    return not (cfg.get("scam_wallet") or cfg.get("watched_wallets") or cfg.get("cases") or cfg.get("protect_only"))
+
+
+def protect_only():
+    """'I don't have a case, just protect me': skip case setup (it can be added any time from Settings > Case setup)."""
+    import securestore
+    cfg = _j("config.json")
+    cfg["protect_only"] = True
+    securestore.save(cfg, "config.json")
 
 
 def xrpl_case():
@@ -274,7 +282,11 @@ public services sometimes block home connections or only show recent activity; a
 
 <button class="btn big">Start tracking</button>
 <p class=mut style="text-align:center;font-size:12.5px;margin-top:10px">The watchers start immediately. The first map of the scam network appears within a few minutes.</p>
-</form></div>
+</form>
+<form method=post action=/setup style="text-align:center;margin-top:18px"><input type=hidden name=do value=protect>
+<button class="btn" style="background:#475569">I haven't lost anything &mdash; just protect me</button>
+<p class=mut style="font-size:12.5px;margin-top:6px">Skips the case. Phone, message, link and download checks and the browser extension all work without one. You can add a case later in Settings &rarr; Case setup.</p></form>
+</div>
 <script>
 document.getElementById('topic').addEventListener('input',e=>document.getElementById('tlink').href='https://ntfy.sh/'+encodeURIComponent(e.target.value));
 const EVM=['ethereum','bsc','polygon','arbitrum','base','optimism','avalanche'];

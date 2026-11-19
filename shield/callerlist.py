@@ -266,12 +266,42 @@ def export(path, lst=None, min_reports=1):
 
 # ---------------------------------------------------------------- Desk page /numbercheck ----
 
-def page(number="", result=None):
+def key_id():
+    import hashlib
+    k = key()
+    return hashlib.sha256(k.encode()).hexdigest()[:8] if k else None
+
+
+def save_key(k):
+    """Store the user's own api.data.gov key encrypted; returns its short ID (never the key)."""
+    import securestore
+    try:
+        with open("config.json", encoding="utf-8-sig") as f:
+            cfg = json.load(f)
+    except Exception:
+        cfg = {}
+    k = (k or "").strip()
+    if k:
+        cfg["ftc_api_key"] = k
+    else:
+        cfg.pop("ftc_api_key", None)
+    securestore.save(cfg, "config.json")
+    return key_id()
+
+
+def page(number="", result=None, msg=""):
     import html
     e = lambda s: html.escape(str(s if s is not None else ""), quote=True)
     lst = load()
     status = (f"List: {lst.get('days', 0)} days of FTC reports up to {e(lst.get('to'))}, {len(lst.get('numbers', {})):,} numbers."
-              if lst.get("days") else "The FTC list hasn't been downloaded yet. It needs a free api.data.gov key (ftc_api_key in config.json).")
+              if lst.get("days") else "The FTC list hasn't been downloaded yet." + ("" if key() else " It needs your free api.data.gov key (below)."))
+    kid = key_id()
+    keybox = ("<details class=box><summary><b>FTC data key</b> " + (f"(set, Key ID <code>{kid}</code>, stored encrypted)" if kid else "(not set yet)") +
+              "</summary><p class=hint>The list comes from the FTC's official API, which needs a free key: sign up at "
+              "<code>https://api.data.gov/signup/</code> (name and email), copy the key from the email, paste it here. "
+              "The Desk then downloads the list by itself, about one day of reports per hour, until it has 30 days.</p>"
+              "<form method=post action=/numbercheck><input type=hidden name=do value=key><input type=password name=key autocomplete=off "
+              "style='width:100%' placeholder='api.data.gov key'> <button>Save key</button></form></details>")
     res = ""
     if result:
         if not result.get("ok"):
@@ -289,10 +319,13 @@ input{{font-size:22px;padding:8px;width:260px}}button{{font-size:20px;padding:8p
 .stop{{background:#fdecee;border-color:#b00020}}.caution{{background:#fff8e6;border-color:#f2b01e}}.info{{background:#eef3fb;border-color:#9bb}}
 .hint{{color:#444;font-size:16px}}</style></head><body><h1>Has this phone number been reported?</h1>
 <form method=post action=/numbercheck><input name=number value="{e(number)}" placeholder="(555) 123-4567"> <button>Check</button></form>{res}
-<p class=hint>{status}</p></body></html>"""
+{('<div class="box info">' + e(msg) + '</div>') if msg else ''}<p class=hint>{status}</p>{keybox}</body></html>"""
 
 
 def post(form):
+    if form.get("do") == "key":
+        kid = save_key(form.get("key"))
+        return page(msg=f"FTC key saved (Key ID {kid}). The list starts downloading within the hour." if kid else "FTC key removed.")
     num = form.get("number", "")
     return page(num, check(num))
 

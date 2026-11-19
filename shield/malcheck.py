@@ -73,7 +73,12 @@ def check_file(path):
     name = os.path.basename(path)
     low = name.lower().rstrip(". ")
     ext = os.path.splitext(low)[1]
-    sha = _sha256(path)
+    try:
+        sha = _sha256(path)
+    except OSError:      # Windows refuses to open a file Defender is quarantining (or another program has locked)
+        return {"path": path, "name": name, "level": "stop", "sha256": None,
+                "findings": [("stop", "Windows blocked this file while it was being checked. That usually means Windows Defender "
+                                      "caught it as malware and is removing it. Don't open it.")]}
     # name tricks
     parts = low.split(".")
     if len(parts) >= 3 and "." + parts[-1] in EXEC and "." + parts[-2] in DOCS:

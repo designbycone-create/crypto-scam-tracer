@@ -49,6 +49,7 @@ Every page has the same tabs across the top:
 | Tab | Use it to |
 |---|---|
 | **Overview** | See everything at a glance: status, the scam-call map, the latest warning, the live feed. |
+| **Threat Map** | See threats being reported around the world right now, and which ones are rising. |
 | **Crypto & Wallets** | Check an address before you send; protect your wallet; follow stolen funds; draft freeze requests; build evidence. |
 | **Phone & Messages** | Check a phone number or a message. |
 | **Online Defense** | Windows Defender and download / link checks; secrets left in files; the browser extension; your home network's exposure; AI-agent firewall. |
@@ -62,7 +63,7 @@ on this computer can read it. You only ever see a short Key ID afterwards.
 | Key | Where to get it | Where to paste it | What it adds |
 |---|---|---|---|
 | **FTC data** | [api.data.gov/signup](https://api.data.gov/signup/) (name + email; the key arrives by email) | Phone & Messages → **Check a phone number** → *FTC data key* | The list of phone numbers reported to the FTC as scams / robocalls, and the scam-call map |
-| **abuse.ch** | [auth.abuse.ch](https://auth.abuse.ch/): sign in with Google, GitHub, X or LinkedIn, connect a second sign-in, **Save profile**, then create the **Auth-Key** under *Optional* | Online Defense → **Malware & link check** → *abuse.ch lookups* | Known-malware files (MalwareBazaar) and malware links (URLhaus, ThreatFox). Free for personal, not-for-profit use |
+| **abuse.ch** | [auth.abuse.ch](https://auth.abuse.ch/): sign in with Google, GitHub, X or LinkedIn, connect a second sign-in, **Save profile**, then create the **Auth-Key** under *Optional* | Online Defense → **Malware & link check** → *abuse.ch lookups* | Known-malware files (MalwareBazaar) and malware links (URLhaus, ThreatFox), and the botnet and malware layers on the Threat Map. Free for personal, not-for-profit use |
 | **Etherscan** | [etherscan.io/apis](https://etherscan.io/apis) (free account) | Settings → **Case setup** | Tracing on Ethereum and the chains built on it (Bitcoin and Tron need no key) |
 
 ## 5. Alerts on your phone (recommended)

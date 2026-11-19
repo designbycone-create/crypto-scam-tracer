@@ -549,6 +549,12 @@ class Handler(BaseHTTPRequestHandler):
             if _setup.needed():
                 return self._redirect("/setup")
             return self._send(render(), "text/html; charset=utf-8")
+        if path == "/threatmap":
+            from threatmap import page as tmpage
+            return self._send(tmpage.page(), "text/html; charset=utf-8")
+        if path == "/threatmap.json":
+            from threatmap import page as tmpage
+            return self._send(tmpage.json_api(query), "application/json", {"Cache-Control": "no-store"})
         if path in ("/crypto", "/phone", "/defense", "/settings"):
             from deskui import pages
             return self._send(pages.hub(path[1:]), "text/html; charset=utf-8")

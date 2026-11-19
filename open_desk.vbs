@@ -1,4 +1,4 @@
-' ScamHunter Desk -- what the Desktop and Start Menu icons run.
+' ScamHunter Threat Desk -- what the Desktop and Start Menu icons run.
 ' If the Desk is already running, just opens the dashboard.
 ' If it isn't (crashed, stopped, or never started this session), starts it
 ' quietly first, waits for it to answer, then opens the dashboard.
@@ -31,8 +31,8 @@ If Not DeskUp() Then
     If DeskUp() Then Exit For
   Next
   If Not DeskUp() Then
-    MsgBox "ScamHunter Desk didn't start within 30 seconds." & vbCrLf & vbCrLf & _
-           "See desk.log in " & here & " for the reason.", vbExclamation, "ScamHunter Desk"
+    MsgBox "ScamHunter Threat Desk didn't start within 30 seconds." & vbCrLf & vbCrLf & _
+           "See desk.log in " & here & " for the reason.", vbExclamation, "ScamHunter Threat Desk"
     WScript.Quit 1
   End If
 End If

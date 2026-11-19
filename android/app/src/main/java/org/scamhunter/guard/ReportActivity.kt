@@ -90,7 +90,7 @@ class ReportActivity : Activity() {
         out.addView(Ui.button(this, "Report to the FCC") { copyOpen(report, "https://consumercomplaints.fcc.gov/hc/en-us") })
         if (lost.isChecked) {
             out.addView(Ui.banner(this, "You lost money or details", "Call your bank or card company now, using the number on your card. " +
-                "Then report it to the FBI. If it was crypto, the ScamHunter Desk can trace it for free.", "stop"))
+                "Then report it to the FBI. If it was crypto, the ScamHunter Threat Desk can trace it for free.", "stop"))
             out.addView(Ui.button(this, "Report to the FBI (IC3)", Ui.RED) { copyOpen(report, "https://www.ic3.gov/") })
         }
         val fam = Prefs.familyNumber(this)

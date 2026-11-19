@@ -1,4 +1,4 @@
-# ScamHunter Desk - one-line Windows installer (free for victims).
+# ScamHunter Threat Desk - one-line Windows installer (free for victims).
 #   irm https://raw.githubusercontent.com/designbycone-create/crypto-scam-tracer/stable/install.ps1 | iex
 # Installs to %USERPROFILE%\ScamHunter, adds Start Menu / Desktop / startup shortcuts,
 # then opens the setup page in your browser. No admin rights needed.
@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 $Dir  = Join-Path $env:USERPROFILE 'ScamHunter'
 $Zip  = Join-Path $env:TEMP 'scamhunter.zip'
 $Repo = 'https://github.com/designbycone-create/crypto-scam-tracer/archive/refs/heads/stable.zip'   # signed releases only
-Write-Host "`nScamHunter Desk installer" -ForegroundColor Cyan
+Write-Host "`nScamHunter Threat Desk installer" -ForegroundColor Cyan
 Write-Host "Free for victims. It will never ask for money or a seed phrase.`n"
 
 # 1. Python 3.10+
@@ -60,15 +60,16 @@ Write-Host "Dependencies OK"
 # 4. Shortcuts: Start Menu + Desktop open the Desk; Startup runs it quietly at sign-in
 $ws = New-Object -ComObject WScript.Shell
 $cmd = Join-Path $Dir 'run_desk.cmd'
-$startup = Join-Path ([Environment]::GetFolderPath('Startup')) 'ScamHunter Desk.lnk'
+$startup = Join-Path ([Environment]::GetFolderPath('Startup')) 'ScamHunter Threat Desk.lnk'
+Remove-Item (Join-Path ([Environment]::GetFolderPath('Startup')) 'ScamHunter Desk.lnk') -ErrorAction SilentlyContinue   # renamed
 $vbs = Join-Path $Dir 'run_desk_hidden.vbs'
 $l = $ws.CreateShortcut($startup); $l.TargetPath = "$env:WINDIR\System32\wscript.exe"; $l.Arguments = "`"$vbs`""; $l.WorkingDirectory = $Dir; $l.Save()
 $open = Join-Path $Dir 'open_desk.vbs'      # starts the Desk if it's down, then opens the dashboard
 foreach ($p in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFolderPath('Desktop'))) {
-  Remove-Item (Join-Path $p 'ScamHunter Desk.url') -ErrorAction SilentlyContinue   # older installs: link that only opened the page
-  $s = $ws.CreateShortcut((Join-Path $p 'ScamHunter Desk.lnk'))
+  Remove-Item (Join-Path $p 'ScamHunter Desk.url'), (Join-Path $p 'ScamHunter Desk.lnk') -ErrorAction SilentlyContinue   # older installs: old link / old name
+  $s = $ws.CreateShortcut((Join-Path $p 'ScamHunter Threat Desk.lnk'))
   $s.TargetPath = "$env:WINDIR\System32\wscript.exe"; $s.Arguments = "`"$open`""; $s.WorkingDirectory = $Dir
-  $s.IconLocation = "$env:WINDIR\System32\shell32.dll,47"; $s.Description = 'Open ScamHunter Desk (starts it if needed)'
+  $s.IconLocation = "$env:WINDIR\System32\shell32.dll,47"; $s.Description = 'Open ScamHunter Threat Desk (starts it if needed)'
   $s.Save()
 }
 Write-Host "Shortcuts created (Desktop + Start Menu; starts automatically when you sign in)"

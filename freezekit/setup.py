@@ -205,9 +205,9 @@ def page(msg="", prefill=None):
     topic = cfg.get("ntfy_topic") or f"scamhunter-{secrets.token_hex(5)}"
     first = needed()
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<title>Set up ScamHunter Desk</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel=stylesheet>
+<title>Set up ScamHunter Threat Desk</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel=stylesheet>
 <style>{CSS}</style></head><body><div class=wrap>
-<div class=brand><div class=logo></div>ScamHunter Desk</div>
+<div class=brand><div class=logo></div>ScamHunter Threat Desk</div>
 <h1>{'Let&rsquo;s start tracking your case' if first else 'Case setup'}</h1>
 <p class=lead>Three short steps. Everything stays on this computer. You can change any of it later.</p>
 <div class=pledge><b>Free for victims, always.</b> This tool never asks for money, a seed phrase or a &ldquo;recovery fee&rdquo;, never contacts anyone for you,
@@ -341,7 +341,7 @@ def done_page(topic):
     refresh = "" if camp else '<meta http-equiv=refresh content="8;url=/">'   # stay put when there's a notice to read
     return f"""<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
 {refresh}<title>Tracking started</title><style>{CSS}</style></head><body><div class=wrap>
-<div class=brand><div class=logo></div>ScamHunter Desk</div><h1>&#10003; Tracking started</h1>
+<div class=brand><div class=logo></div>ScamHunter Threat Desk</div><h1>&#10003; Tracking started</h1>
 <p class=lead>The watchers are restarting with your case. In a few minutes the Desk will show where your funds are, the network behind the scam,
 and freeze kits for any exchange the money reaches.</p>
 {camp}<div class=step><h2><span class=num>!</span>Do this now on your phone</h2><p>Open the ntfy app &rarr; <b>Subscribe to topic</b> &rarr; <span class=mono>{e(topic)}</span></p></div>

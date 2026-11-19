@@ -153,7 +153,7 @@ def _page(title, body, kpi_js="d=>[]", sec="all"):
     d = data.live()
     blob = json.dumps(d).replace("</", "<\\/")
     return (f"<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
-            f"<title>{e(title)} - ScamHunter Desk</title><style>{CSS}</style></head><body><main>{body}</main><div class=tip id=tip></div>"
+            f"<title>{e(title)} - ScamHunter Threat Desk</title><style>{CSS}</style></head><body><main>{body}</main><div class=tip id=tip></div>"
             f"<script>window.__D={blob};window.__SEC={json.dumps(sec)};window.__KPI={kpi_js};</script><script>{JS}</script></body></html>")
 
 

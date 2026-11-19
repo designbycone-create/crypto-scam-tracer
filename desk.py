@@ -1,4 +1,4 @@
-"""ScamHunter Desk -- one program that runs everything.
+"""ScamHunter Threat Desk -- one program that runs everything.
 
 Launch this and it:
   * starts and SUPERVISES every watcher in the background (restarts any that
@@ -431,7 +431,7 @@ def render():
     return f"""<!doctype html><html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <meta http-equiv=refresh content=15>
-<title>ScamHunter Desk</title><style>
+<title>ScamHunter Threat Desk</title><style>
 :root{{--bg:#0f1115;--fg:#e8eaf0;--mut:#9aa1b2;--line:#262b36;--acc:#5aa2ff;--warn:#ff6a5a}}
 body{{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif;max-width:960px;margin:0 auto;padding:18px}}
 h1{{font-size:22px;margin:0 0 4px}} h2{{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:24px 0 8px}}
@@ -861,7 +861,7 @@ def ensure_deps():
 
 
 def _already_running(port):
-    """True if a ScamHunter Desk already answers on this port (so a second copy must not start)."""
+    """True if a ScamHunter Threat Desk already answers on this port (so a second copy must not start)."""
     import urllib.request
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=2) as r:
@@ -897,24 +897,29 @@ def _stop_orphans(log=print):
 
 
 def _repair_shortcuts(log=print):
-    """Windows: older installs made Desktop / Start Menu icons that only opened the web page, so they
-    did nothing once the Desk had stopped. Replace them with icons that start the Desk if needed."""
+    """Windows: bring older Desktop / Start Menu / Startup icons up to date.
+      * very old installs made a .url that only opened the page (did nothing once the Desk stopped):
+        replace it with an icon that starts the Desk if needed;
+      * the program was renamed from 'ScamHunter Desk' to 'ScamHunter Threat Desk': rename the icons."""
     opener = os.path.join(HERE, "open_desk.vbs")
     if os.name != "nt" or not os.path.exists(opener):
         return
     q = lambda t: t.replace("'", "''")          # PowerShell single-quote escaping
-    ps = ("$ws=New-Object -ComObject WScript.Shell; "
-          "foreach ($p in @([Environment]::GetFolderPath('Programs'),[Environment]::GetFolderPath('Desktop'))) { "
+    ps = ("$ws=New-Object -ComObject WScript.Shell; $new='ScamHunter Threat Desk.lnk'; "
+          "foreach ($p in @([Environment]::GetFolderPath('Programs'),[Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('Startup'))) { "
           "$u=Join-Path $p 'ScamHunter Desk.url'; if ((Test-Path $u) -and ((Get-Content $u -Raw) -match '127\\.0\\.0\\.1:8787')) { "
-          "$s=$ws.CreateShortcut((Join-Path $p 'ScamHunter Desk.lnk')); "
+          "$s=$ws.CreateShortcut((Join-Path $p $new)); "
           "$s.TargetPath=\"$env:WINDIR\\System32\\wscript.exe\"; $s.Arguments='\"" + q(opener) + "\"'; "
           "$s.WorkingDirectory='" + q(HERE) + "'; $s.IconLocation=\"$env:WINDIR\\System32\\shell32.dll,47\"; "
-          "$s.Description='Open ScamHunter Desk (starts it if needed)'; $s.Save(); Remove-Item $u; 'fixed ' + $p } }")
+          "$s.Description='Open ScamHunter Threat Desk (starts it if needed)'; $s.Save(); Remove-Item $u; 'fixed ' + $p }; "
+          "$o=Join-Path $p 'ScamHunter Desk.lnk'; if (Test-Path $o) { "
+          "if (Test-Path (Join-Path $p $new)) { Remove-Item $o } else { Rename-Item $o $new }; "
+          "$l=$ws.CreateShortcut((Join-Path $p $new)); $l.Description='Open ScamHunter Threat Desk'; $l.Save(); 'renamed ' + $p } }")
     try:
         out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
                              timeout=30, creationflags=0x08000000).stdout.strip()
         if out:
-            log("shortcuts updated: icons now start the Desk if it isn't running")
+            log("shortcuts updated: " + "; ".join(out.splitlines())[:200])
     except Exception:
         pass
 
@@ -928,7 +933,7 @@ def main():
     a = ap.parse_args()
     os.chdir(HERE)
     if _already_running(a.port):
-        print(f"ScamHunter Desk is already running at http://127.0.0.1:{a.port}/")
+        print(f"ScamHunter Threat Desk is already running at http://127.0.0.1:{a.port}/")
         if not a.no_open:
             webbrowser.open(f"http://127.0.0.1:{a.port}/")
         return
@@ -965,7 +970,7 @@ def main():
     port = _free_port(a.port)
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"
-    print("ScamHunter Desk running.")
+    print("ScamHunter Threat Desk running.")
     print("  Dashboard:", url)
     print("  Supervising:", ", ".join(l for l, _, _ in SERVICES))
     print("  Close this window (or Ctrl+C) to stop everything.")

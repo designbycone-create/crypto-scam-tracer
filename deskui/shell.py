@@ -119,7 +119,7 @@ def header(path):
             bits.append(f"<span class=sh-grp>{esc(g)}</span>")
             bits += [f"<a class='sh-pill{' on' if p == current else ''}' href='{p}' title='{esc(d)}'>{esc(lbl)}</a>" for p, lbl, d in pages]
         sub = "<div class=sh-sub>" + "".join(bits) + "</div>"
-    return (f"<style>{CSS}</style><div id=sh-shell><div class=sh-top><a class=sh-brand href='/'>&#128737;&#65039; SCAMHUNTER</a>{tabs}"
+    return (f"<style>{CSS}</style><div id=sh-shell><div class=sh-top><a class=sh-brand href='/'>&#128737;&#65039; SCAMHUNTER <span style='color:#8ea3c2;font-weight:600'>THREAT DESK</span></a>{tabs}"
             f"<span class=sh-pledge>Free &middot; never asks for money or a seed phrase</span></div>{sub}</div>")
 
 

@@ -22,7 +22,6 @@ object FccLink {
     const val F_UNWANTED_SUB = "360000167206"
     const val F_PHONE_METHOD = "22781220"
     const val F_PHONE_TYPE = "22659804"
-    const val F_NUMBER_COMPLAINED_OF = "22664804"
     const val F_NUMBER_RECEIVED_ON = "22625614"
     const val F_DATE = "22591154"
     const val F_TIME = "22732340"
@@ -38,6 +37,8 @@ object FccLink {
     const val F_CONTACT_PHONE = "22615094"
     const val F_ON_BEHALF = "22636844"
     const val F_ATTEST = "22625624"          // never filled: the person ticks it
+    // Not filled on purpose: "Telephone Number Subject of Complaint" (22664804) is hidden for unwanted calls,
+    // so a value there would be sent without the person seeing it. Every value we fill is one they can see.
 
     /** What kind of contact it was, as the person told the app. */
     enum class Kind(val tag: String) {
@@ -85,7 +86,6 @@ object FccLink {
         if (!r.callerNumber.isNullOrBlank()) {
             cf(F_HAD_CALLER_ID, "yes_caller_id_information")
             cf(F_CALLER_ID_NUMBER, r.callerNumber)
-            cf(F_NUMBER_COMPLAINED_OF, r.callerNumber)
         }
         val me = r.me
         val myPhone = digits(me.phone).ifBlank { null }

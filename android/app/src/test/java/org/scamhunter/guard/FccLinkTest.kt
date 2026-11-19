@@ -31,7 +31,7 @@ class FccLinkTest {
         assertEquals("phone_unwanted_calls_all_other_unwanted_calls", q["tf_360000167206"])
         assertEquals("prerecorded_voice_type_of_call_telemarketing", q["tf_22787840"])
         assertEquals("yes_caller_id_information", q["tf_22787920"])
-        assertEquals("2025550199", q["tf_22659864"]); assertEquals("2025550199", q["tf_22664804"])
+        assertEquals("2025550199", q["tf_22659864"]); assertNull(q["tf_22664804"])   // hidden on this form: never filled
         assertEquals("2026-11-19", q["tf_22591154"]); assertEquals("10:30 AM", q["tf_22732340"])
         assertEquals("2515550100", q["tf_22625614"]); assertEquals("2515550100", q["tf_22615094"])
         assertEquals("Mary", q["tf_22539594"]); assertEquals("Smith", q["tf_22704720"])
@@ -44,7 +44,7 @@ class FccLinkTest {
     @Test fun writeSampleLink() {
         val url = FccLink.url(FccLink.Report("2025550199", "2026-11-19", "10:30 AM",
             "TEST ONLY - do not submit. Said he was from Medicare & asked for my code + card", FccLink.Kind.RECORDING, me))
-        val out = java.io.File("build/fcc-sample-link.txt"); out.parentFile.mkdirs(); out.writeText(url)
+        val out = java.io.File("build/fcc-sample-link.txt"); out.parentFile?.mkdirs(); out.writeText(url)
         println("FCC_SAMPLE_LINK=$url")
     }
 

@@ -18,7 +18,7 @@ STATUS = {"AMServiceEnabled": True, "AntivirusEnabled": True, "RealTimeProtectio
           "AntivirusSignatureAge": 0, "AntivirusSignatureLastUpdated": "/Date(1794889826000)/", "QuickScanAge": 1, "FullScanAge": 4294967295,
           "AMRunningMode": "Normal"}
 DET = [{"when": "/Date(1794000000000)/", "name": "Trojan:Win32/Wacatac.B!ml", "sev": 5, "where": "file:_C:\\Users\\you\\Downloads\\setup_tool.bin", "handled": True}]
-EVIL = b"pretend malware bytes"
+EVIL = b"pretend malware " + os.urandom(16).hex().encode()     # fresh every run: real Defender learns fixed test bytes and blocks them
 calls = []
 def run(args, env, timeout):
     calls.append((args, env))

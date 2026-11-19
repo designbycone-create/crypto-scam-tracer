@@ -175,6 +175,25 @@ def parse_threatfox(raw, data_dir="."):
     return out
 
 
+# URLhaus tags that describe the file type, the hosting site or the chip -- not who is behind it
+TAG_NOISE = {"exe", "elf", "dll", "zip", "rar", "7z", "msi", "ps1", "bat", "cmd", "sh", "js", "vbs", "hta", "lnk", "apk", "jar", "doc", "xls", "pdf",
+             "iso", "img", "github", "gitlab", "bitbucket", "dropbox", "discord", "mediafire", "google", "onedrive", "telegram", "arm", "arm7",
+             "mips", "mipsel", "x86", "x64", "i686", "sparc", "ppc", "m68k", "sh4", "ascii", "encoded", "base64", "opendir", "payload", "dropper",
+             "malware", "malware_download", "botnet", "c2", "script", "powershell", "geofenced", "signed", "unsigned"}
+
+
+def _tag_family(tags):
+    tags = [t for t in (tags or []) if isinstance(t, str)]
+    named = _family(" ".join(tags))
+    if named and named not in ("botnet",):
+        return named
+    for t in tags:
+        low = t.lower()
+        if low not in TAG_NOISE and "bit" not in low and len(t) >= 4 and not re.fullmatch(r"[\d.]+|[a-z]{2}", low):
+            return t
+    return None
+
+
 def parse_urlhaus(raw, data_dir="."):
     d = json.loads(raw)
     out = []
@@ -182,11 +201,12 @@ def parse_urlhaus(raw, data_dir="."):
         host = r.get("host") or ""
         cc = geo.country_of_ip(host, data_dir) if re.fullmatch(r"[\d.]+", host) else None
         tags = r.get("tags") or []
+        fam = _tag_family(tags)
         out.append({"id": _id("urlhaus", r.get("id")), "src": "urlhaus", "layer": "malware",
-                    "title": f"Malware download site ({r.get('url_status', 'unknown')})" + (f": {tags[0]}" if tags else ""),
+                    "title": f"Malware download site ({r.get('url_status', 'unknown')})" + (f": {fam}" if fam else ""),
                     "detail": f"{r.get('threat') or 'malware'} on a {'server address' if cc else 'website'}",
                     "url": r.get("urlhaus_reference") or "", "time": _abuse_time(r.get("date_added") or ""), "cc": cc,
-                    "family": tags[0] if tags else None})
+                    "family": fam})
     return out
 
 

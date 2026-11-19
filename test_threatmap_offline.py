@@ -125,6 +125,9 @@ try:
          "urlhaus_reference": "https://urlhaus.abuse.ch/url/9/", "date_added": now.strftime("%Y-%m-%d %H:%M:%S UTC")},
         {"id": 10, "host": "evil.example", "tags": None, "date_added": ""}]}).encode())
     check("urlhaus ip geolocated", uh[0]["cc"] == "IT" and uh[0]["family"] == "Mirai")
+    check("tag noise skipped", feeds._tag_family(["exe", "github", "32-bit", "DEVPOPPER"]) == "DEVPOPPER")
+    check("tag known family wins", feeds._tag_family(["elf", "mirai"]) == "Mirai")
+    check("tag only noise", feeds._tag_family(["exe", "elf", "github"]) is None)
     check("urlhaus hostname no cc", uh[1]["cc"] is None and uh[1]["family"] is None)
 
     # ---------- refresh: per-source intervals, errors, keys, merge ----------

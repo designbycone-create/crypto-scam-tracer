@@ -118,6 +118,7 @@ class DeskActivity : Activity() {
         root.addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
         if (savedInstanceState != null) web.restoreState(savedInstanceState) else web.loadUrl(Html.BASE + "/")
+        App.showLastCrash(this)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

@@ -51,3 +51,21 @@ act on their own case.
 - [ ] Wallet-signing gate: the agent firewall in front of wallet signatures
 - [ ] Extension in the Chrome and Edge stores (after the trademark filing)
 - [ ] Monthly exposure re-check with alerts
+
+## Bait & Trace (after a breach)
+The bank dye-pack idea for computers and wallets: plant decoys that look valuable, and when an
+intruder uses one, record what *their own action* sends back, for an IC3 report.
+- [ ] Decoys ("canary tokens"): a fake passwords file, a document such as "Bank login.docx", a fake
+      API key, a fake seed phrase, each unique so a trigger says exactly which decoy was touched
+- [ ] Trigger endpoint: a small Cloudflare Worker the user owns (no third party sees triggers;
+      canarytokens.org stays an optional, clearly labelled alternative). The Desk itself stays
+      on 127.0.0.1; it picks up triggers from the Worker
+- [ ] Trace: IP address, time and device type from the trigger, plus public facts only: country
+      (DB-IP), the network that owns the address and its abuse contact (RDAP)
+- [ ] Report: timestamped evidence page laid out for IC3, plus a ready-to-send abuse report to the
+      hosting provider (the user sends it)
+- [ ] Decoy wallet: small balance, its seed phrase planted as bait; any sweep is followed by the
+      existing network mapper
+- Limits, by design: a decoy never runs code on the intruder's machine and never reaches into
+  their systems (no "hacking back", a federal crime that would also spoil the evidence). It only
+  records what their own action sends.

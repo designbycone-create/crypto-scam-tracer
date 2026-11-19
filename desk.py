@@ -604,6 +604,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/malware":
             from shield import malcheck
             return self._send(malcheck.page(), "text/html; charset=utf-8")
+        if path == "/relay":
+            from relay import web as relayweb
+            return self._send(relayweb.page(), "text/html; charset=utf-8")
         if path == "/lookup":
             from osinttools import web as lookweb
             from urllib.parse import parse_qs
@@ -813,6 +816,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/lookup":
                 from osinttools import web as lookweb
                 return self._send(lookweb.post(form), "text/html; charset=utf-8")
+            if path == "/relay":
+                from relay import web as relayweb
+                return self._send(relayweb.post(form), "text/html; charset=utf-8")
             if path == "/share":
                 from freezekit import share_web
                 return self._send(share_web.post(form), "text/html; charset=utf-8")
@@ -860,6 +866,8 @@ def ensure_deps():
     try:
         import websockets  # noqa: F401
         import reportlab  # noqa: F401
+        import cryptography  # noqa: F401
+        import segno  # noqa: F401
         return
     except ImportError:
         pass
@@ -981,6 +989,11 @@ def main():
     threading.Thread(target=alert_flusher, args=(stop_evt,), daemon=True).start()
 
     port = _free_port(a.port)
+    try:   # phone app relay: connects OUT to the user's own Worker while a phone is paired (relay/)
+        from relay import client as relay_client
+        threading.Thread(target=relay_client.run, args=(stop_evt, port, print), daemon=True).start()
+    except Exception as ex:
+        print(f"(phone relay not active: {ex})")
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"
     print("ScamHunter Threat Desk running.")

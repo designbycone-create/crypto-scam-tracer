@@ -598,6 +598,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/malware":
             from shield import malcheck
             return self._send(malcheck.page(), "text/html; charset=utf-8")
+        if path == "/share":
+            from freezekit import share_web
+            return self._send(share_web.page(), "text/html; charset=utf-8")
         if path == "/agentguard":
             from agentguard import web as agw
             return self._send(agw.page(), "text/html; charset=utf-8")
@@ -736,6 +739,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(json.dumps(chainlookup.lookup(form.get("q", ""))), "application/json")
             if path == "/setup":
                 from freezekit import setup as _setup
+                if form.get("do") == "protect":
+                    _setup.protect_only()
+                    return self._redirect("/")
                 ok, info = _setup.save(form)
                 if not ok:
                     return self._send(_setup.page(info, prefill=form), "text/html; charset=utf-8")
@@ -794,6 +800,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/malware":
                 from shield import malcheck
                 return self._send(malcheck.post(form), "text/html; charset=utf-8")
+            if path == "/share":
+                from freezekit import share_web
+                return self._send(share_web.post(form), "text/html; charset=utf-8")
             if path == "/secretscan":
                 from shield import secretscan
                 return self._send(secretscan.post(form, multi.get("folder") or []), "text/html; charset=utf-8")

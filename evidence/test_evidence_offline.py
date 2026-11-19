@@ -18,7 +18,7 @@ from evidence.facts import Findings  # noqa: E402
 capture.STORE = os.environ["SCAMHUNTER_EVIDENCE_DIR"]
 
 VICTIM = "rVictimXXXXXXXXXXXXXXXXXXXXXXXXXX"
-SCAM = "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN"
+SCAM = "rLrDarYHqNJnZwxuRXXuR1HHrBJKL7gbkm"
 EXCH = "rExchangeHotWalletXXXXXXXXXXXXXXX"
 TX1, TX2 = "A" * 64, "B" * 64
 

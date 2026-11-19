@@ -14,8 +14,8 @@ CASES = [
     ("prescreen", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", None),
     ("approvals", "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", None),
     ("prescreen", "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM", None),
-    ("approvals", "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN", None),
-    ("prescreen", "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN", None),
+    ("approvals", "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B", None),      # Bitstamp hot wallet (public, busy)
+    ("prescreen", "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B", None),
     ("prescreen", "rM27yzkCw6WA3T4g1sPaeC1kpxHUhuxRWn", None),
     ("prescreen", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", None),
 ]

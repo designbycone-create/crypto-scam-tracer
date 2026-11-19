@@ -10,9 +10,9 @@ import xrpl_watcher as W  # noqa: E402
 
 ok = lambda c, m: print(("PASS " if c else "FAIL ") + m) or bool(c)
 r = []
-SCAM = "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN"
+SCAM = "rLrDarYHqNJnZwxuRXXuR1HHrBJKL7gbkm"
 HIST = {"result": {"transactions": [{"hash": "AA" * 32, "validated": True, "meta": {},
-         "tx_json": {"Account": SCAM, "Destination": "rnbp2BSBQsbSo4FyNb2n1RcwqTTL1Wznwm", "TransactionType": "Payment", "Amount": "6070749896"}}]}}
+         "tx_json": {"Account": SCAM, "Destination": "rNkdwsUbCfRbsArmkpmKLiykTgS2DoVqUf", "TransactionType": "Payment", "Amount": "6070749896"}}]}}
 
 async def fake_rpc(ws, req):
     return {"result": {"account_data": {"Balance": "1000000"}}} if req["command"] == "account_info" else HIST

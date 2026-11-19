@@ -52,6 +52,7 @@ SECTIONS = [
             ("/alerts", "Alerts to your phone", "Where the Desk sends warnings: Telegram, ntfy or email."),
             ("/update", "Updates", "Install signed updates."),
             ("/setup", "Case setup", "Your case details: wallets, chains, the scam address."),
+            ("/share", "Share ScamHunter", "Give the program to someone without giving them your case."),
         ]),
     ]),
 ]

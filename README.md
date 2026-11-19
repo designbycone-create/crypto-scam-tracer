@@ -157,6 +157,10 @@ submitted → acknowledged → frozen) shows what's left.
 
 ## Quick start
 
+New user? **[SETUP.md](SETUP.md)** walks through install, first start, the optional free keys, alerts and
+privacy, step by step. To give ScamHunter to someone else without giving them your case, use the Desk's
+**Settings → Share ScamHunter** page.
+
 **Windows (one line, no admin needed)** — open PowerShell and paste:
 
 ```powershell
@@ -187,7 +191,7 @@ where your funds are, the network behind the scam, and freeze kits.
 | **Crypto & Wallets** | *Protect*: check before you send, wallet shield, copy-paste guard, claim checker, wallet compromised. *My case*: where your funds are, freeze requests, officer packets, court evidence. *Investigate*: network graph and table, scam radar, threat intel, incident mode. |
 | **Phone & Messages** | Check a phone number, check a message, the scam-call map, and the Android app. |
 | **Online Defense** | Browser extension, sites you use, exposure check, malware & link check, secrets left in the open, agent firewall. |
-| **Settings** | Alerts to your phone, updates, case setup. |
+| **Settings** | Alerts to your phone, updates, case setup, share ScamHunter. |
 
 The Desk keeps a small log of the checks you make on it (`desk_activity.jsonl`): only the kind
 of check and its result, never the message you pasted or the number you looked up.

@@ -30,6 +30,17 @@ if (-not $py) {
 Write-Host "Python OK ($py)"
 
 # 2. Download / update (keeps your case files). Pin the exact version so the Desk's Updates page knows what's installed.
+#    From a share copy (INSTALL.cmd sets SCAMHUNTER_FROM): its signature is checked first, nothing is downloaded.
+$From = $env:SCAMHUNTER_FROM
+if ($From) { $From = $From.TrimEnd('\') }     # a trailing \ would break the quoting below
+if ($From -and (Test-Path (Join-Path $From 'RELEASE.json'))) {
+  $chk = & ([scriptblock]::Create("$py `"$From\release_sig.py`" verify `"$From`""))
+  if ($LASTEXITCODE -ne 0) { Write-Host "This share copy failed its signature check ($chk). Not installed - use the online install line instead." -ForegroundColor Red; return }
+  Write-Host "Share copy verified: $chk"
+  New-Item -ItemType Directory $Dir -Force | Out-Null
+  Copy-Item (Join-Path $From '*') $Dir -Recurse -Force -Exclude 'INSTALL.cmd'
+  Write-Host "Installed to $Dir"
+} else {
 $sha = $null
 try { $sha = (Invoke-RestMethod 'https://api.github.com/repos/designbycone-create/crypto-scam-tracer/commits/stable' -TimeoutSec 20).sha } catch {}
 if ($sha) { $Repo = "https://github.com/designbycone-create/crypto-scam-tracer/archive/$sha.zip" }
@@ -40,6 +51,7 @@ New-Item -ItemType Directory $Dir -Force | Out-Null
 Copy-Item (Join-Path (Get-ChildItem $tmp)[0].FullName '*') $Dir -Recurse -Force
 if ($sha) { Set-Content -Path (Join-Path $Dir 'VERSION') -Value $sha -NoNewline }
 Write-Host "Installed to $Dir"
+}
 
 # 3. Dependencies
 & ([scriptblock]::Create("$py -m pip install --user -q --require-hashes -r `"$Dir\requirements.txt`""))

@@ -68,7 +68,8 @@ def _post(url, data, as_json=False):
     try:
         if POST:
             return POST(url, body, hdr)
-        with urllib.request.urlopen(urllib.request.Request(url, data=body, headers=hdr), timeout=20) as r:
+        import nettls
+        with urllib.request.urlopen(urllib.request.Request(url, data=body, headers=hdr), timeout=20, context=nettls.context()) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as ex:
         return {"query_status": f"http_{ex.code}"}

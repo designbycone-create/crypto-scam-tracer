@@ -7,7 +7,7 @@ from shield import prescreen, compromised, web
 import scam_investigator.attribution as A
 A._xrpscan = lambda a: None
 now = int(time.time()); RE = 946684800
-SCAM = "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN"      # collector + pass-through
+SCAM = "rLrDarYHqNJnZwxuRXXuR1HHrBJKL7gbkm"      # collector + pass-through
 EXCH = "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De"      # requires dest tag
 ME = "rUrYCcn3UkgC2ZXDWDvWT1D8VmM2X5Yiws"
 PAST = "rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh"      # someone I paid before

@@ -255,6 +255,15 @@ def keygen():
 
 
 def sign_folder(root, note=""):
+    # never sign a release that contains the maintainer's own case (wallets, IC3 number, tags, name...)
+    try:
+        import privacy_guard
+        hits = privacy_guard.find(root, privacy_guard.case_values())
+    except ImportError:
+        hits = {}
+    if hits:
+        raise SystemExit("NOT SIGNED: your own case details appear in: " + ", ".join(sorted(os.path.relpath(f, root) for f in hits))
+                         + ". Remove them from the code first.")
     sk = _load_private()
     pk = public_key(sk).hex()
     files = file_hashes(root)

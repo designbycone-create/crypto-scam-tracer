@@ -160,7 +160,7 @@ p = prescreen.screen(SW)
 results.append(ok(p["ok"] and p["chain"] == "solana" and p["stats"]["movements"] >= 1, "Solana pre-screen reads behavior"))
 
 # ---------------- XRP Ledger ----------------
-XW = "rUrYCcn3UkgC2ZXDWDvWT1D8VmM2X5Yiws"; XK = "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN"
+XW = "rUrYCcn3UkgC2ZXDWDvWT1D8VmM2X5Yiws"; XK = "rLrDarYHqNJnZwxuRXXuR1HHrBJKL7gbkm"
 def xrpc(method, p):
     if method == "account_info": return {"account_data": {"RegularKey": XK, "Flags": 0x00100000, "Balance": "1000000"}}
     if method == "account_objects":

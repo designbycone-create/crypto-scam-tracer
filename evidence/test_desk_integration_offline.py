@@ -17,7 +17,7 @@ os.chdir(TMP)
 os.environ["SCAMHUNTER_EVIDENCE_DIR"] = os.path.join(TMP, "evidence_store")
 
 from evidence import capture, corroborate, case  # noqa: E402
-VICTIM, SCAM = "rVictimXXXXXXXXXXXXXXXXXXXXXXXXXX", "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN"
+VICTIM, SCAM = "rVictimXXXXXXXXXXXXXXXXXXXXXXXXXX", "rLrDarYHqNJnZwxuRXXuR1HHrBJKL7gbkm"
 EXCH, TX1, TX2 = "rExchangeHotWalletXXXXXXXXXXXXXXX", "A" * 64, "B" * 64
 
 
@@ -58,7 +58,7 @@ ok(res["usd_at_risk"] == 260.0, "total dollars at risk")
 evm.RPC_POST = None
 
 # --- seal a case from the Desk's own files
-json.dump({"tx_hash": TX1, "scam_wallet": "rwW2qTeD3dfk74bfURPrPAwfz2XADmocaN", "ic3_id": "TEST"}, open("victim.json", "w"))
+json.dump({"tx_hash": TX1, "scam_wallet": "rLrDarYHqNJnZwxuRXXuR1HHrBJKL7gbkm", "ic3_id": "TEST"}, open("victim.json", "w"))
 with open("cashouts.jsonl", "w") as f:
     f.write(json.dumps({"address": EXCH, "label": "ExampleExchange", "destination_tag": 1234567, "hash": TX2,
                         "detected": "2026-10-01 10:00:00"}) + "\n")

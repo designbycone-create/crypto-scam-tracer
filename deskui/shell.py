@@ -29,6 +29,7 @@ SECTIONS = [
             ("/network", "Network table", "Every wallet in the network, as a table."),
             ("/radar", "Scam radar", "New scam wallets and patterns seen on-chain."),
             ("/intel", "Threat intel", "Search known scam addresses, operators and campaigns."),
+            ("/lookup", "Look up a scammer", "Check a scammer's username, email, phone, website or name in public records (Maigret, SpiderFoot)."),
             ("/incident", "Incident mode", "Step-by-step help in the first hour after a theft."),
         ]),
     ]),

@@ -52,6 +52,12 @@ act on their own case.
 - [ ] Extension in the Chrome and Edge stores (after the trademark filing)
 - [ ] Monthly exposure re-check with alerts
 
+## Threat Map
+- [x] World map of reported threats: FBI/CISA, security news, abuse.ch botnet and malware feeds
+- [x] Posts from trusted security researchers on Bluesky and Mastodon (free, named accounts only)
+- [ ] X as an extra source: the user's own pay-per-use key, with a monthly spending cap the Desk enforces
+- [ ] ransomware.live and Cloudflare Radar layers (each with the user's own free token)
+
 ## Bait & Trace (after a breach)
 The bank dye-pack idea for computers and wallets: plant decoys that look valuable, and when an
 intruder uses one, record what *their own action* sends back, for an IC3 report.

@@ -66,18 +66,25 @@ on this computer can read it. You only ever see a short Key ID afterwards.
 | **abuse.ch** | [auth.abuse.ch](https://auth.abuse.ch/): sign in with Google, GitHub, X or LinkedIn, connect a second sign-in, **Save profile**, then create the **Auth-Key** under *Optional* | Online Defense → **Malware & link check** → *abuse.ch lookups* | Known-malware files (MalwareBazaar) and malware links (URLhaus, ThreatFox), and the botnet and malware layers on the Threat Map. Free for personal, not-for-profit use |
 | **Etherscan** | [etherscan.io/apis](https://etherscan.io/apis) (free account) | Settings → **Case setup** | Tracing on Ethereum and the chains built on it (Bitcoin and Tron need no key) |
 
-## 5. Alerts on your phone (recommended)
+## 5. Look up a scammer (optional)
+
+**Crypto & Wallets → Investigate → Look up a scammer** checks a username, email, phone number,
+website or name the scammer used against public records. It needs two free programs, installed
+once. The page shows the exact lines to paste into PowerShell. Lookups are passive: nothing is
+sent to the scammer, and results stay on your computer.
+
+## 6. Alerts on your phone (recommended)
 
 **Settings → Alerts to your phone.** Connect Telegram (about two minutes, no typing commands) and
 the free ntfy app. If a watched wallet moves money, or something urgent is found, you get a push
 message. Use two channels so one being down never loses an alert.
 
-## 6. The browser extension (recommended)
+## 7. The browser extension (recommended)
 
 **Online Defense → Browser extension** walks you through adding it to Chrome or Edge. It blocks
 address-swapping, wallet-draining pages and known attack scripts, and checks what you paste.
 
-## 7. Updates
+## 8. Updates
 
 **Settings → Updates.** One click. Every update is signature-checked, backed up, self-tested,
 and rolled back automatically if anything fails.

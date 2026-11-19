@@ -52,6 +52,11 @@ act on their own case.
 - [ ] Extension in the Chrome and Edge stores (after the trademark filing)
 - [ ] Monthly exposure re-check with alerts
 
+## Investigate
+- [x] Look up a scammer: usernames on 500 sites (Maigret), emails / phones / websites / names in public records
+      (SpiderFoot, passive modules only), with an IC3-ready summary
+- [ ] Add a lookup's results to the court evidence bundle with one click
+
 ## Threat Map
 - [x] World map of reported threats: FBI/CISA, security news, abuse.ch botnet and malware feeds
 - [x] Posts from trusted security researchers on Bluesky and Mastodon (free, named accounts only)

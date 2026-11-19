@@ -28,6 +28,11 @@ Contact: open an issue at https://github.com/designbycone-create/crypto-scam-tra
 | World country outlines for the Threat Map (simplified and pre-drawn) | `threatmap/world.json` | [world-atlas 2.0.2](https://github.com/topojson/world-atlas) countries-110m, copyright 2013-2019 Michael Bostock, built from [Natural Earth](https://www.naturalearthdata.com) (public domain) | ISC, see `third_party/world-atlas-LICENSE.txt` |
 | Country names and codes for the Threat Map | `threatmap/country_names.json`, `threatmap/world.json` | [i18n-iso-countries 7.14.0](https://github.com/michaelwittig/node-i18n-iso-countries), copyright (c) 2016 Michael Wittig | MIT, see `third_party/i18n-iso-countries-LICENSE.txt` |
 
+**Separate programs the Desk can start, not included:** "Look up a scammer" runs
+[Maigret](https://github.com/soxoj/maigret) (MIT) and [SpiderFoot](https://github.com/smicallef/spiderfoot) (MIT)
+if you have installed them yourself. The Desk starts them and reads their results; none of their code is part
+of this repository. AGPL-licensed tools are never bundled or linked; they may only be run as separate programs.
+
 **Downloaded at run time, not included:** the Threat Map's server locations use
 [IP Geolocation by DB-IP](https://db-ip.com) (free country file, CC BY 4.0), downloaded
 monthly to your computer. Threat Map feeds are fetched from each source and keep their own terms:

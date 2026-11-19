@@ -604,6 +604,10 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/malware":
             from shield import malcheck
             return self._send(malcheck.page(), "text/html; charset=utf-8")
+        if path == "/lookup":
+            from osinttools import web as lookweb
+            from urllib.parse import parse_qs
+            return self._send(lookweb.page(show=(parse_qs(query).get("show") or [None])[0]), "text/html; charset=utf-8")
         if path == "/share":
             from freezekit import share_web
             return self._send(share_web.page(), "text/html; charset=utf-8")
@@ -806,6 +810,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/malware":
                 from shield import malcheck
                 return self._send(malcheck.post(form), "text/html; charset=utf-8")
+            if path == "/lookup":
+                from osinttools import web as lookweb
+                return self._send(lookweb.post(form), "text/html; charset=utf-8")
             if path == "/share":
                 from freezekit import share_web
                 return self._send(share_web.post(form), "text/html; charset=utf-8")

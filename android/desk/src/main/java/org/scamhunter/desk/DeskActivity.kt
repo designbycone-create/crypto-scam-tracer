@@ -116,6 +116,8 @@ class DeskActivity : Activity() {
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(0xFF0B1220.toInt()) }
         root.addView(bar)
         root.addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.setBackgroundColor(0xFF070D18.toInt())        // the strip behind the status bar matches the app's top bar
+        Insets.fit(root)
         setContentView(root)
         if (savedInstanceState != null) web.restoreState(savedInstanceState) else web.loadUrl(Html.BASE + "/")
         App.showLastCrash(this)

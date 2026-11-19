@@ -46,6 +46,27 @@ class App : Application() {
     }
 }
 
+/**
+ * Android 15+ draws apps edge to edge (under the status bar and the navigation bar). Pad the screen by the bars'
+ * actual size so the app's own top bar sits below the phone's status bar on every phone (found on Matt's A25).
+ */
+object Insets {
+    fun fit(v: android.view.View) {
+        v.setOnApplyWindowInsetsListener { view, insets ->
+            if (Build.VERSION.SDK_INT >= 30) {
+                val b = insets.getInsets(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.ime()
+                    or android.view.WindowInsets.Type.displayCutout())
+                view.setPadding(b.left, b.top, b.right, b.bottom)
+            } else {
+                @Suppress("DEPRECATION")
+                view.setPadding(insets.systemWindowInsetLeft, insets.systemWindowInsetTop, insets.systemWindowInsetRight, insets.systemWindowInsetBottom)
+            }
+            insets
+        }
+        v.requestApplyInsets()
+    }
+}
+
 object BuildConfigInfo {
     fun version(c: Context): String = try {
         c.packageManager.getPackageInfo(c.packageName, 0).versionName ?: "?"

@@ -63,7 +63,9 @@ class PairActivity : Activity() {
         col.addView(status)
         col.addView(text("The code connects only this phone to your own Desk. Everything between them is encrypted; " +
             "your Cloudflare Worker passes it along without being able to read it.", 16f, color = 0xFF9FB0C8.toInt()))
-        setContentView(ScrollView(this).apply { addView(col); setBackgroundColor(0xFF0B1220.toInt()) })
+        val scroll = ScrollView(this).apply { addView(col); setBackgroundColor(0xFF0B1220.toInt()) }
+        Insets.fit(scroll)
+        setContentView(scroll)
         App.showLastCrash(this)
     }
 

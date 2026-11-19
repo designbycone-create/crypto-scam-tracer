@@ -48,7 +48,7 @@ X.GET = fake
 # certificate checks: lookups verified, only your own device pages aren't
 src = open(os.path.join(ROOT, "shield", "exposure.py")).read()
 look = src[src.index("def _get(") : src.index("def _get_device(")]
-r.append(ok("CERT_NONE" not in look and "create_default_context()" in look and "_get_device(f\"{scheme}://{ip}" in src
+r.append(ok("CERT_NONE" not in look and "nettls.context()" in look and "_get_device(f\"{scheme}://{ip}" in src
             and src.count("_get_device(") == 2, "address / InternetDB / CISA lookups check certificates; only device pages skip it"))
 
 # weekly re-check: alert only on new

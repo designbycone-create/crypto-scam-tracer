@@ -95,8 +95,8 @@ def _get(url, timeout=12, limit=200_000):
     between can fake a 'nothing exposed' answer."""
     if GET:
         return GET(url)
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout,
-                                context=ssl.create_default_context()) as r:
+    import nettls
+    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout, context=nettls.context()) as r:
         return r.read(limit).decode("utf-8", "replace")
 
 

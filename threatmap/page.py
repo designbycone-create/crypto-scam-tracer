@@ -89,7 +89,7 @@ function draw(){
   $('#fams').innerHTML=fm.length?fm.map(([k,v])=>`<div class=bar data-q="${esc(k)}" style="cursor:pointer"><span>${esc(k)}</span><div style="width:${Math.max(3,100*v/fmax)}%"></div><em>${num(v)}</em></div>`).join(''):'<div class=empty>No named families yet.</div>';
   ticker(); panel(); feed(); sources(); }
 function ticker(){ const it=T.items.slice(0,24); if(!it.length){$('#tick').innerHTML='<span class=empty>Waiting for the first feeds...</span>';return;}
-  const one=it.map(x=>`<a class="chip ${x.layer==='news'?'info':x.layer==='exploited'?'caution':'stop'}" href="${esc(x.url||'#')}" target=_blank rel=noopener><b>${esc(x.title)}</b><small>${esc(x.time.slice(0,16).replace('T',' '))} &middot; ${esc(LNAME[x.layer])}${x.cc?' &middot; '+esc(NAMES[x.cc]||x.cc):''}</small></a>`).join('');
+  const one=it.map(x=>`<a class="chip ${(x.layer==='news'||x.layer==='social')?'info':x.layer==='exploited'?'caution':'stop'}" href="${esc(x.url||'#')}" target=_blank rel=noopener><b>${esc(x.title)}</b><small>${esc(x.time.slice(0,16).replace('T',' '))} &middot; ${esc(LNAME[x.layer])}${x.cc?' &middot; '+esc(NAMES[x.cc]||x.cc):''}</small></a>`).join('');
   $('#tick').innerHTML=`<div class=run>${one}${one}</div>`; }
 function panel(){ const el=$('#cpanel'); if(!sel){ el.innerHTML='<span class=lbl>Country</span><h2>Click a country</h2><div class="small mut">See what\'s been reported there in this time window.</div>'; return; }
   const c=T.countries[sel]||{n:0,layers:{}}, its=T.items.filter(x=>(x.ccs||[x.cc]).includes(sel)).slice(0,12);
@@ -102,7 +102,7 @@ let shown=30;
 function feed(){ const q=fq.toLowerCase();
   const rows=T.items.filter(x=>(!sel||(x.ccs||[x.cc]).includes(sel))&&(!q||(x.title+' '+x.detail+' '+(x.family||'')).toLowerCase().includes(q)));
   $('#more').style.display=rows.length>shown?'inline-block':'none'; $('#more').textContent=`Show more (${rows.length-shown})`;
-  $('#rows').innerHTML=rows.length?rows.slice(0,shown).map(x=>`<tr data-u="${esc(x.url)}"><td><span class="dot lv-${x.layer==='news'?'info':x.layer==='exploited'?'caution':'stop'}"></span>${esc(x.title)}<div class="small mut">${esc(x.detail)}</div></td><td class=small>${esc(x.time.slice(0,16).replace('T',' '))}</td><td class=small>${esc(x.cc?(NAMES[x.cc]||x.cc):'unknown')}</td><td class=small>${esc(LNAME[x.layer])}</td></tr>`).join('')
+  $('#rows').innerHTML=rows.length?rows.slice(0,shown).map(x=>`<tr data-u="${esc(x.url)}"><td><span class="dot lv-${(x.layer==='news'||x.layer==='social')?'info':x.layer==='exploited'?'caution':'stop'}"></span>${esc(x.title)}<div class="small mut">${esc(x.detail)}</div></td><td class=small>${esc(x.time.slice(0,16).replace('T',' '))}</td><td class=small>${esc(x.cc?(NAMES[x.cc]||x.cc):'unknown')}</td><td class=small>${esc(LNAME[x.layer])}</td></tr>`).join('')
    :'<tr><td colspan=4 class=empty>Nothing matches.</td></tr>'; }
 function sources(){ $('#srcs').innerHTML=T.sources.map(s=>`<div class=src><b>${esc(s.name)}</b> &middot; ${esc(s.license)} &middot; <a href="${esc(s.link)}" target=_blank rel=noopener style="color:#8ec5ff">${esc(s.link.replace('https://',''))}</a> &middot; <span class="${s.status==='ok'?'':'bad'}">${esc(s.status==='ok'?(s.count??0)+' items last fetch':s.error||s.status)}</span></div>`).join('')
 ; }

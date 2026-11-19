@@ -33,4 +33,6 @@ Contact: open an issue at https://github.com/designbycone-create/crypto-scam-tra
 monthly to your computer. Threat Map feeds are fetched from each source and keep their own terms:
 FBI IC3 and CISA KEV (US government works), abuse.ch Feodo Tracker (CC0), abuse.ch ThreatFox and
 URLhaus (abuse.ch terms, not-for-profit use, your own key), and news headlines with links only
-(The Record, BleepingComputer, Krebs on Security); article text is never copied.
+(The Record, BleepingComputer, Krebs on Security); article text is never copied. Posts from named
+security researchers and newsrooms on Bluesky and Mastodon are read through each network's free public
+API and shown as the author's name, a link, and at most the first 120 characters, credited to the author.

@@ -28,13 +28,18 @@ KEEP_DAYS = 30
 UA = {"User-Agent": "ScamHunter-ThreatDesk/1.0 (free scam-victim tool; github.com/designbycone-create/crypto-scam-tracer)"}
 GET = None          # test hook: f(url, headers, data) -> bytes
 
-LAYERS = {"news": "News & alerts", "botnet": "Botnet servers", "malware": "Malware sites & files", "exploited": "Exploited flaws"}
+LAYERS = {"news": "News & alerts", "social": "Researchers' posts", "botnet": "Botnet servers", "malware": "Malware sites & files",
+          "exploited": "Exploited flaws"}
 SOURCES = [
     # id, name, layer, every (seconds), license / terms, link, needs abuse.ch key
     ("ic3", "FBI IC3 public alerts", "news", 3600, "US government work (public domain)", "https://www.ic3.gov/PSA", False),
     ("record", "The Record (Recorded Future News)", "news", 3600, "RSS headline + link only", "https://therecord.media", False),
     ("bleeping", "BleepingComputer", "news", 3600, "RSS headline + link only", "https://www.bleepingcomputer.com", False),
     ("krebs", "Krebs on Security", "news", 3600, "RSS headline + link only", "https://krebsonsecurity.com", False),
+    ("bluesky", "Bluesky: trusted security accounts", "social", 1800, "post excerpt (120 characters) + link, credited to the author",
+     "https://bsky.app", False),
+    ("mastodon", "Mastodon: trusted security accounts", "social", 1800, "post excerpt (120 characters) + link, credited to the author",
+     "https://joinmastodon.org", False),
     ("kev", "CISA Known Exploited Vulnerabilities", "exploited", 6 * 3600, "US government work (public domain)",
      "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", False),
     ("feodo", "abuse.ch Feodo Tracker", "botnet", 6 * 3600, "CC0", "https://feodotracker.abuse.ch", False),
@@ -279,6 +284,13 @@ def refresh(force=False, log=print, data_dir="."):
             elif sid == "threatfox":
                 items = parse_threatfox(_get("https://threatfox-api.abuse.ch/api/v1/", {"Auth-Key": key, "Content-Type": "application/json"},
                                              json.dumps({"query": "get_iocs", "days": 1}).encode()), data_dir)
+            elif sid in ("bluesky", "mastodon"):
+                from threatmap import social
+                items, errs, tried = social.fetch("bsky" if sid == "bluesky" else "masto", lambda u: _get(u, {"Accept": "application/json"}), log)
+                if errs and len(errs) == tried:            # every account failed: that's an error, not "no posts"
+                    raise RuntimeError("; ".join(errs)[:120])
+                if errs:
+                    log(f"threat map: {name}: " + "; ".join(errs)[:200])
             elif sid == "urlhaus":
                 items = parse_urlhaus(_get("https://urlhaus-api.abuse.ch/v1/urls/recent/limit/1000/", {"Auth-Key": key}), data_dir)
             else:

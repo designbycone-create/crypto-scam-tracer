@@ -188,6 +188,7 @@ where your funds are, the network behind the scam, and freeze kits.
 | Tab | What's in it |
 |---|---|
 | **Overview** | Everything at a glance: live status, a map of scam-call reports by state, the most-reported scam types and numbers, the latest warning, and one live feed of what every part of the Desk is seeing (filter by section, warnings only, or search). It refreshes itself every 20 seconds. |
+| **Threat Map** | A world map of threats being reported right now: FBI and security-news alerts, botnet servers, malware sites and newly exploited flaws. Zoom, drag, click a country; switch layers and 24 hours / 7 days / 30 days. "Rising" marks countries and malware families well above their usual level. Each source is credited on the page with its terms; abuse.ch layers use your own free key. |
 | **Crypto & Wallets** | *Protect*: check before you send, wallet shield, copy-paste guard, claim checker, wallet compromised. *My case*: where your funds are, freeze requests, officer packets, court evidence. *Investigate*: network graph and table, scam radar, threat intel, incident mode. |
 | **Phone & Messages** | Check a phone number, check a message, the scam-call map, and the Android app. |
 | **Online Defense** | Browser extension, sites you use, exposure check, malware & link check, secrets left in the open, agent firewall. |

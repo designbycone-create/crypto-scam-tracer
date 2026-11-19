@@ -9,6 +9,7 @@ import html
 # (key, tab label, landing page, [(group label, [(path, label, description), ...]), ...])
 SECTIONS = [
     ("overview", "Overview", "/", []),
+    ("threatmap", "Threat Map", "/threatmap", []),
     ("crypto", "Crypto & Wallets", "/crypto", [
         ("Protect", [
             ("/prescreen", "Check before you send", "Background check on any address before you send crypto to it."),
@@ -112,7 +113,7 @@ def header(path):
     esc = lambda s: html.escape(s, quote=True)
     tabs = "".join(f"<a class='sh-tab{' on' if k == key else ''}' href='{h}'>{esc(t)}</a>" for k, t, h, _ in SECTIONS)
     sub = ""
-    if key and key != "overview":
+    if key and section(key)[3]:          # sections with sub-pages get the pill bar
         _, tab, home, groups = section(key)
         bits = [f"<a class='sh-pill{' on' if current is None else ''}' href='{home}'>All {esc(tab)}</a>"]
         for g, pages in groups:

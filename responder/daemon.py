@@ -132,6 +132,14 @@ def job_exposure(desk):
         title, msg, key=f"exposure:{msg[:60]}", critical=critical, url=f"{desk}/exposure"))
 
 
+def job_threatmap():
+    """Threat Map feeds: each source is fetched only when its own interval has passed (RSS hourly, abuse.ch every few hours)."""
+    from threatmap import feeds
+    n = feeds.refresh(log=_log)
+    if n:
+        _log(f"threat map: {n} reports refreshed")
+
+
 def job_callerlist():
     """FTC reported-call numbers (needs the free ftc_api_key); a few days per run, so the key's limit holds."""
     from shield import callerlist
@@ -146,13 +154,14 @@ def main():
     desk = DESK.format(port=a.port)
     _log("Responder running: freeze kits, token freeze scan, incident feeds, radar, risk, site watch.")
     sched = [(60, job_kits, (desk,)), (900, job_tokens, (desk, set())),
-             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ()), (1800, job_sitewatch, (desk,)), (3600, job_callerlist, ()), (3600, job_exposure, (desk,))]
+             (1800, job_feeds_status_radar, ()), (3600, job_attribution, ()), (21600, job_risk, ()), (1800, job_sitewatch, (desk,)), (3600, job_callerlist, ()), (3600, job_exposure, (desk,)), (1800, job_threatmap, ())]
     last = {fn.__name__: 0 for _, fn, _ in sched}
     last["job_tokens"] = time.time() - 840       # first token scan ~1 min after start
     last["job_feeds_status_radar"] = time.time() - 1680
     last["job_risk"] = time.time() - 21300
     last["job_sitewatch"] = time.time() - 1500
     last["job_attribution"] = time.time() - 3480
+    last["job_threatmap"] = time.time() - 1680      # first fill ~2 min after start
     last["job_exposure"] = time.time() - 3000      # first look ~10 min after start (runs only if the last check is a week old)
     last["job_callerlist"] = time.time() - 3300     # first FTC list refresh ~5 min after start     # first pass ~2 min after start
     while True:

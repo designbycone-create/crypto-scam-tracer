@@ -43,9 +43,18 @@ def dumps(o):
 if __name__ == "__main__":
     v = dumps(build())
     if "--check" in sys.argv:
+        # compressed bytes differ between zlib builds, so check what matters: the saved vectors still open with
+        # today's code, and the (uncompressed) request seals to exactly the same bytes
         try:
-            same = open(OUT, encoding="utf-8").read() == v
-        except OSError:
+            saved = json.load(open(OUT, encoding="utf-8"))
+            key, ch = base64.b64decode(saved["key"]), saved["channel"]
+            rq, rs = saved["request"], saved["response"]
+            same = (envelope.seal_bytes(key, ch, "req", rq["plaintext"].encode(), "", base64.b64decode(rq["nonce"]))
+                    == base64.b64decode(rq["blob"]))
+            res = envelope.unseal(key, ch, "res", base64.b64decode(rs["blob"]), rid=rs["rid"])
+            same = same and envelope.unpack_body(res["b"], res["z"]).decode("utf-8") == rs["page"] and key == KEY and ch == CH
+        except Exception as ex:
+            print("vectors unreadable:", ex)
             same = False
         print("up to date" if same else "OUT OF DATE: run python tools/export_relay_vectors.py")
         sys.exit(0 if same else 1)

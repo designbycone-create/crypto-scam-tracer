@@ -126,5 +126,7 @@ def run(stop_evt, port=8787, log=print, connect=None):
             if code in (4001, 4002) or "401" in str(ex):
                 backoff = 60                                # not allowed / re-paired: no point hammering the Worker
         STATE.update(connected=False)
+        if pairing.load().get("channel") != channel:
+            backoff = 1                                     # a new pairing: connect on the new channel right away
         stop_evt.wait(backoff)
         backoff = min(backoff * 2, 300)

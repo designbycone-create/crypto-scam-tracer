@@ -248,6 +248,26 @@ try:
     out = envelope.unseal(k, CH, "res", base64.b64decode(by["w1"]["b"]), rid=rid1)
     check("answers a good request", out["s"] == 200)
     check("bad request gets a plain error, no content", "err" in by["w2"] and "b" not in by["w2"])
+    # re-pairing: the Worker closes the old connection; the Desk must reconnect on the new channel at once
+    import types
+    stop2 = threading.Event()
+    seen_urls = []
+
+    def connect2(url, tok):
+        seen_urls.append((time.time(), url))
+        if len(seen_urls) == 1:
+            cfg = json.load(open("config.json"))
+            cfg["relay"]["channel"] = "cd" * 16                        # what pair() does
+            json.dump(cfg, open("config.json", "w"))
+            err = Exception("received 4002 (private use) unpaired")
+            err.rcvd = types.SimpleNamespace(code=4002)
+            raise err
+        stop2.set()
+        raise Exception("done")
+    t0 = time.time()
+    client.run(stop2, PORT, log=lambda *_: None, connect=connect2)
+    check("re-pair: reconnects on the new channel within seconds, not a minute",
+          len(seen_urls) == 2 and seen_urls[1][1].endswith(f"/c/{'cd' * 16}/desk") and seen_urls[1][0] - t0 < 5)
 finally:
     os.chdir(old)
     shutil.rmtree(tmp, ignore_errors=True)

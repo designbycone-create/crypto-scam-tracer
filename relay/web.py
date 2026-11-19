@@ -29,8 +29,9 @@ def _qr_svg(text):
     try:
         import segno
         return segno.make(text, error="m").svg_inline(scale=7)
-    except Exception:
-        return "<p class=small>(The QR picture needs the segno package; use the code below instead.)</p>"
+    except Exception as ex:
+        return (f"<p class=small>(The QR picture couldn't be drawn: {e(type(ex).__name__)}: {e(str(ex)[:120])}. "
+                "Restart the Desk and try again, or use the code below.)</p>")
 
 
 def page(msg="", level="info", qr=None):

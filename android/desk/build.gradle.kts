@@ -10,8 +10,8 @@ android {
         applicationId = "org.scamhunter.desk"     // separate from ScamHunter Guard (org.scamhunter.guard)
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 4
+        versionName = "0.1.3"
     }
     buildTypes {
         release { isMinifyEnabled = false }
@@ -27,6 +27,9 @@ android {
 dependencies {
     // QR scanning for pairing: ZXing Android Embedded (Apache-2.0) and ZXing core (Apache-2.0). See NOTICE.md.
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    // The scanner calls androidx.core (ContextCompat, ActivityCompat) when it opens the camera, but its published
+    // package doesn't bring it along, so the app must (Apache-2.0). Without it: NoClassDefFoundError on "Scan the code".
+    implementation("androidx.core:core:1.13.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
 }

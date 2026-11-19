@@ -44,8 +44,13 @@ class PairActivity : Activity() {
         col.addView(text("Pair with my Desk", 30f, bold = true))
         col.addView(text("On your computer, open the Desk, then Settings → Phone app → Pair my phone. A square code appears. Scan it here."))
         col.addView(button("Scan the code", true) {
-            IntentIntegrator(this).setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("Point at the code on your Desk")
-                .setBeepEnabled(false).setOrientationLocked(false).initiateScan()
+            try {
+                IntentIntegrator(this).setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("Point at the code on your Desk")
+                    .setBeepEnabled(false).setOrientationLocked(false).initiateScan()
+            } catch (e: Exception) {
+                status.setTextColor(0xFFFF8AA0.toInt())
+                status.text = "The scanner couldn't start: ${e.javaClass.simpleName}: ${e.message}"
+            }
         })
         col.addView(text("Can't scan? Copy the code shown under the picture on the computer and paste it here:", 18f, color = 0xFF9FB0C8.toInt()))
         val paste = EditText(this).apply {
@@ -58,7 +63,10 @@ class PairActivity : Activity() {
         col.addView(status)
         col.addView(text("The code connects only this phone to your own Desk. Everything between them is encrypted; " +
             "your Cloudflare Worker passes it along without being able to read it.", 16f, color = 0xFF9FB0C8.toInt()))
-        setContentView(ScrollView(this).apply { addView(col); setBackgroundColor(0xFF0B1220.toInt()) })
+        val scroll = ScrollView(this).apply { addView(col); setBackgroundColor(0xFF0B1220.toInt()) }
+        Insets.fit(scroll)
+        setContentView(scroll)
+        App.showLastCrash(this)
     }
 
     @Deprecated("Activity result API from the scanner library")

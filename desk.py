@@ -876,6 +876,11 @@ def ensure_deps():
     for extra in (["--user"], []):
         try:
             subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--require-hashes", *extra, "-r", req], check=True, timeout=600)
+            # start over in a fresh Python: one that was already running when packages were installed may not see them
+            if not os.environ.get("SCAMHUNTER_DEPS_RESTARTED"):
+                os.environ["SCAMHUNTER_DEPS_RESTARTED"] = "1"
+                print("Dependencies installed; restarting the Desk so it loads them.", flush=True)
+                sys.exit(subprocess.call([sys.executable] + sys.argv))
             return
         except Exception as e:
             print("  pip attempt failed:", e, flush=True)

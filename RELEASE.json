@@ -3,14 +3,14 @@
  "files": {
   ".github/workflows/android.yml": "a7d87b3f481c87ed65e322601821ec253b6d55e169ef1670021cabd8b4e71d5a",
   ".github/workflows/callers.yml": "15f85780d3c0f4960fbacfb6e476ff54fbc62e0c968257c7582f611bb51502f5",
-  ".gitignore": "9601de4d278226c64b975c7ac50fe87b9b1de6f5e02400689c929203c4903c0b",
+  ".gitignore": "e1209ec8075ed14e784fc163be32213d01b895f4ae8f9c530f786909ba46c413",
   "CHAIN_SOURCES.md": "329e5d8813567f5367b9aae11576f04f5f3fd8b55afeeeb70dc5afc5f78f7fce",
   "LICENSE": "4966660a3d1e286c89374cbf04584405653e894d6feda09c2ae9cd4c9f06ff66",
-  "NOTICE.md": "e948bb5a51b2d69297647eb27a172d1671df897bd4d12bd0cad4dd026764fb6c",
-  "README.md": "e06bc8c05662cc9d9a6fb00754c45360adcb188e295a05613043bd5504aa3d61",
-  "ROADMAP.md": "9dcbb45ca5dd31391d12bbac6d413824067f54f27d273be6f10a8973125f2619",
+  "NOTICE.md": "20a19c2727f56831dd8a17d8f34b6af86a287582c4fcdf17133a8d24d909c5ba",
+  "README.md": "ff8d48d933ee7398faa9c6bca1ca8055fced57df9b08227e4ef31e17126c1d62",
+  "ROADMAP.md": "697653d5a3f1be8585bc33f440e79215f2c6808a6bb7c178d66d964c533b0922",
   "SECURITY.md": "4289403929bf46a774fbc6b94f651d2dbe44d4d9744cd2a93f30ab131e2e1df6",
-  "SETUP.md": "44dc57240e1b8bc6bfe36e158fe28fb0692394ecce62dd4babd22698fbbf8a8a",
+  "SETUP.md": "867b4714f4a52fdb1291c685634a30c5127a00c56d92b141e3f83bff42a2f2b4",
   "TRUST.md": "108b161c12f5cb1139909cfb17cd281adc40ea622ade2ffe4377d6a2e940d8fe",
   "agentguard/__init__.py": "b98b6ec854ed1baa3ee2afa162dae721aefb1cfba5492b898f60b11a33b126c5",
   "agentguard/__main__.py": "44a5c17a645697d91cd2157ef2b4215ebad96fb131836974e88729c803ebf0dd",
@@ -56,11 +56,11 @@
   "benchmark/run.py": "dbbf23359c8be26d84d87d3c0fdb9bf4e8e2c070e6acb7051327b3f6d1f86e8b",
   "benchmark/truth.py": "a86763e4c779d2439390bc7bc75227d5668e8a76b893d3f7fb60dd77b5ca8ee5",
   "config.example.json": "1bf807c13743d39d1cd84248795f9666b77238029ac6e922b946b09880116acc",
-  "desk.py": "ebbc9777f9b24e37ade4e06e0b7d86d20524ec9cd3a140c34f993c0cbccf39a7",
+  "desk.py": "0693cc1b7741806f5d5a05e199f459e23f625b726f30a4374d10ba239ead506b",
   "deskui/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "deskui/data.py": "c8e58bd686812d8eb6847cb14b7f8b134ae0c4e7a167721e2de6bc79d9c89c67",
   "deskui/pages.py": "158a0aa2a1247a3bc47ced5d8a8e036a14946aa51b1809f75f6049b730a66c0c",
-  "deskui/shell.py": "b0d9a9cc6bad8e07e52e6c0cf2bf813ad9b2800d1342752ca4656fa5dc6f6a5d",
+  "deskui/shell.py": "3fec6797aaff55d942e4ca89b497c5a0389f33d2061fb5a433189c85f2e663bf",
   "deskui/us_states.json": "4453d080adcf09182963e8d617d5d6fade9a6369118a1e5bf21e0eb4feff4456",
   "evidence/COURT_READINESS.md": "f681082d08894747387fff573555d6debf34d7aa428c24aae330b0bb0cb73944",
   "evidence/__init__.py": "dc913ce5aa656f78546212740d60fbc62314595971236da3cdd4ac578ed2c552",
@@ -123,6 +123,9 @@
   "multichain/util.py": "8cf2f3719e933694d191a2fab4d50c6ccb55ce781001a2acab58aa89cd85e0f7",
   "nettls.py": "7dafd86ad6d6525f394e2d6c22ad99bdbd58add08b7b228cd6831d0dd69a3115",
   "open_desk.vbs": "4d1266a1f558742ed1786721ec238b9f738781af962fa46adf9737dd40475a75",
+  "osinttools/__init__.py": "3c6cbb889cf32fc1f168a598255c8acf5036b446054919884026e1277aa3d17e",
+  "osinttools/runner.py": "639e494ebd23403d63909fc635a0b317fe05ea61e85d55bfcd5cfda17b2d701d",
+  "osinttools/web.py": "c448c13c9b0a561e24ef292a9fc3704e48f8922494bdd25bd5cc4f346d3a4470",
   "privacy_guard.py": "8719b846c32f5826a0105da7967228e35d20c7229959a5af5f0f24b1b8a597e5",
   "release_sig.py": "9c953bc7355192fe6a269443859ce4ce0a586a878dedd3a05a07c300214cb53a",
   "requirements.txt": "cea26be9f0f69a5399f86e2e8293e5e0814999e9c5942c96b509b51be16644cf",
@@ -202,6 +205,7 @@
   "test_extension_browser.py": "cd5405fcc094abbf2ff77b91eedc81dfe8d8cd03b41f61b7701eaf663650f08d",
   "test_freeze_publicaml_offline.py": "5fab3d49e32eef1487160efc235e9dd32f315680597c1925fb3e8308b1cbca29",
   "test_malcheck_offline.py": "2618f459b0cd2d0d0b17ad22ef55399259cddcb050fe17d369871448051f35eb",
+  "test_osint_offline.py": "e1b9e25315ebf732a5a21bc5411a3494ee09a4becc9161daf6e674d3e902eda5",
   "test_secretscan_offline.py": "4422bc7f06fe5c42e7b611ac6d5277f9a9f10dff8ef4b39fc24b4020f9483f82",
   "test_securestore_offline.py": "714a5b08f8599954148929d10cdf52126e56d735e372b4ef4cb752999d5fa071",
   "test_share_privacy_offline.py": "f0eca42a84539dd89924100d7dbed3b409410cbad3a1380ec5bcf2c7875c318c",
@@ -230,7 +234,7 @@
   "xrpl_watcher.py": "3933eff15c7a74ec1d7f1f5c40ed1d69d821e34b1d05cbfdc372fa68acf462b6"
  },
  "meta": {
-  "signed_at": "2026-11-19T02:10:36Z",
-  "note": "Threat Map: researcher posts from Bluesky and Mastodon"
+  "signed_at": "2026-11-19T02:46:37Z",
+  "note": "Investigate: Look up a scammer (Maigret, SpiderFoot passive)"
  }
 }

@@ -17,7 +17,7 @@ from shield import defender as D, abusech as A, malcheck as M  # noqa: E402
 STATUS = {"AMServiceEnabled": True, "AntivirusEnabled": True, "RealTimeProtectionEnabled": True, "IsTamperProtected": True,
           "AntivirusSignatureAge": 0, "AntivirusSignatureLastUpdated": "/Date(1794889826000)/", "QuickScanAge": 1, "FullScanAge": 4294967295,
           "AMRunningMode": "Normal"}
-DET = [{"when": "/Date(1794000000000)/", "name": "Trojan:Win32/Wacatac.B!ml", "sev": 5, "where": "file:_C:\\Users\\you\\Downloads\\setup_tool.exe", "handled": True}]
+DET = [{"when": "/Date(1794000000000)/", "name": "Trojan:Win32/Wacatac.B!ml", "sev": 5, "where": "file:_C:\\Users\\you\\Downloads\\setup_tool.bin", "handled": True}]
 EVIL = b"pretend malware bytes"
 calls = []
 def run(args, env, timeout):
@@ -54,7 +54,7 @@ M.downloads_dir = lambda: dl
 w = lambda n, b: open(os.path.join(dl, n), "wb").write(b)
 w("invoice.pdf.exe", b"MZ fake program")
 w("photo.jpg", b"\xff\xd8 picture")
-w("setup_tool.exe", EVIL)
+w("setup_tool.bin", EVIL)
 with zipfile.ZipFile(os.path.join(dl, "docs.zip"), "w") as z:
     z.writestr("statement.pdf.js", "x")
 w("name" + " " * 6 + ".pdf.scr", b"MZ")
@@ -62,9 +62,9 @@ w("name" + " " * 6 + ".pdf.scr", b"MZ")
 res = M.check_file(os.path.join(dl, "invoice.pdf.exe"))
 r.append(ok(res["level"] == "stop" and any("pretends to be a .pdf" in t for _, t in res["findings"]), "invoice.pdf.exe: DANGER, the double-extension trick is explained"))
 r.append(ok(any("isn't digitally signed" in t for _, t in res["findings"]) or os.name != "nt", "unsigned program noted (Windows)"))
-res = M.check_file(os.path.join(dl, "setup_tool.exe"))
+res = M.check_file(os.path.join(dl, "setup_tool.bin"))
 r.append(ok(res["level"] == "stop" and any("Windows Defender found a threat" in t for _, t in res["findings"]), "Defender detection = DANGER"))
-r.append(ok(any(a[0] == "MpCmdRun.exe" and a[a.index("-File") + 1].endswith("setup_tool.exe") and "-DisableRemediation" not in a for a, _ in calls),
+r.append(ok(any(a[0] == "MpCmdRun.exe" and a[a.index("-File") + 1].endswith("setup_tool.bin") and "-DisableRemediation" not in a for a, _ in calls),
             "Defender scans the actual file and is allowed to quarantine it"))
 real_sha = M._sha256
 def _blocked(p):
@@ -104,7 +104,7 @@ def post(url, body, hdr):
         return {"query_status": "ok", "data": [{"malware_printable": "Lumma Stealer"}]} if b"c2.example" in body else {"query_status": "no_result"}
     return {"query_status": "no_results"}
 A.POST = post
-res = M.check_file(os.path.join(dl, "setup_tool.exe"))
+res = M.check_file(os.path.join(dl, "setup_tool.bin"))
 r.append(ok(any("RedLineStealer" in t for _, t in res["findings"]), "MalwareBazaar recognises a known malware file by fingerprint"))
 r.append(ok(all(EVIL not in b for _, b, _ in sent) and any(EVIL_SHA.encode() in b for _, b, _ in sent), "only the fingerprint is sent, never the file"))
 r.append(ok(M.check_file(os.path.join(dl, "photo.jpg"))["level"] == "ok" and any("Not in MalwareBazaar" in t for _, t in M.check_file(os.path.join(dl, "photo.jpg"))["findings"]),

@@ -117,6 +117,8 @@ try:
     check("threatfox ip geolocated", tf[0]["cc"] == "BR" and tf[0]["layer"] == "botnet" and tf[0]["family"] == "Vidar")
     check("threatfox url no cc, no family", tf[1]["cc"] is None and tf[1]["family"] is None and tf[1]["layer"] == "malware")
     check("threatfox bad time -> now", tf[1]["time"][:10] == now.date().isoformat())
+    check("threatfox short title", tf[0]["title"] == "Vidar: botnet control server")
+    check("ua- tag skipped", feeds._tag_family(["ua-wget", "Mozi"]) == "Mozi")
     check("threatfox no raw ioc shown", "bad.example" not in tf[1]["title"] + tf[1]["detail"])
 
     # ---------- URLhaus ----------
@@ -178,6 +180,8 @@ try:
     for d in range(2, 9):                                # 1 per day for FR, before and today
         items.append({"id": f"b{d}", "src": "feodo", "layer": "botnet", "title": "y", "detail": "", "url": "", "time": iso(now - timedelta(days=d + 0.5)),
                       "cc": "FR", "family": None})
+    items.append({"id": "rec-old", "src": "record", "layer": "news", "title": "w", "detail": "", "url": "", "time": iso(now - timedelta(days=12)),
+                  "cc": None, "family": None})
     items.append({"id": "old", "src": "kev", "layer": "exploited", "title": "z", "detail": "", "url": "", "time": iso(now - timedelta(days=40)),
                   "cc": None, "family": None})
     with open(feeds.ITEMS, "w") as f:
@@ -187,6 +191,17 @@ try:
     check("summary total 24h", s["total"] == 5 and s["countries"]["KP"]["n"] == 5)
     check("rising country KP", any(r["kind"] == "country" and r["key"] == "KP" for r in s["rising"]))
     check("rising family Lazarus", any(r["kind"] == "family" and r["key"] == "Lazarus" for r in s["rising"]))
+    check("learning flag off with history", s["learning_since"] is None)
+    young = [dict(i, time=iso(now - timedelta(hours=k % 20))) for k, i in enumerate(items)]
+    with open(feeds.ITEMS, "w") as f:
+        json.dump(young, f)
+    os.utime(feeds.ITEMS, (now.timestamp() + 7, now.timestamp() + 7))
+    sy = feeds.summary(24)
+    check("no rising without a week of history", sy["rising"] == [] and sy["learning_since"] is not None)
+    with open(feeds.ITEMS, "w") as f:
+        json.dump(sorted(items, key=lambda i: i["time"], reverse=True), f)
+    os.utime(feeds.ITEMS, (now.timestamp() + 8, now.timestamp() + 8))
+    s = feeds.summary(24)
     check("steady FR not rising", not any(r["key"] == "FR" for r in s["rising"]))
     s7 = feeds.summary(24 * 7)
     check("7-day window", s7["countries"]["FR"]["n"] == 5 and s7["total"] == 10)

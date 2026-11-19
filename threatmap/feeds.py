@@ -159,6 +159,9 @@ def _abuse_time(s):
         return _iso(_now())
 
 
+TF_KIND = {"botnet_cc": "botnet control server", "payload_delivery": "malware download server", "payload": "malware file"}
+
+
 def parse_threatfox(raw, data_dir="."):
     d = json.loads(raw)
     out = []
@@ -168,8 +171,9 @@ def parse_threatfox(raw, data_dir="."):
         ioc = r.get("ioc") or ""
         cc = geo.country_of_ip(ioc.split(":")[0], data_dir) if r.get("ioc_type") == "ip:port" else None
         fam = r.get("malware_printable") or "Unknown malware"
+        what = TF_KIND.get(r.get("threat_type"), "malware indicator")
         out.append({"id": _id("threatfox", r.get("id")), "src": "threatfox", "layer": "botnet" if r.get("threat_type") == "botnet_cc" else "malware",
-                    "title": f"{fam}: {r.get('threat_type_desc') or r.get('threat_type')}"[:160],
+                    "title": f"{fam}: {what}"[:160],
                     "detail": f"{r.get('ioc_type')} reported {str(r.get('first_seen') or '')[:16]}", "url": f"https://threatfox.abuse.ch/ioc/{r.get('id')}/",
                     "time": _abuse_time(r.get("first_seen") or ""), "cc": cc, "family": None if fam == "Unknown malware" else fam})
     return out
@@ -189,7 +193,7 @@ def _tag_family(tags):
         return named
     for t in tags:
         low = t.lower()
-        if low not in TAG_NOISE and "bit" not in low and len(t) >= 4 and not re.fullmatch(r"[\d.]+|[a-z]{2}", low):
+        if low not in TAG_NOISE and "bit" not in low and not low.startswith("ua-") and len(t) >= 4 and not re.fullmatch(r"[\d.]+|[a-z]{2}", low):
             return t
     return None
 
@@ -317,19 +321,35 @@ def summary(window_hours=24, layers=None):
     st = _state()
     return {"generated": _iso(now), "window_hours": window_hours, "total": len(win), "unlocated": sum(1 for i in win if not i.get("cc")),
             "countries": by_cc, "families": sorted(by_fam.items(), key=lambda kv: -kv[1])[:10], "layers": by_layer,
-            "rising": rising, "items": win[:300],
+            "rising": rising, "items": win[:300], "learning_since": _learning(items, now),
             "sources": [{"id": s[0], "name": s[1], "license": s[4], "link": s[5], "status": (st.get(s[0]) or {}).get("status", "not fetched yet"),
                          "error": (st.get(s[0]) or {}).get("error"), "count": (st.get(s[0]) or {}).get("count")} for s in SOURCES],
             "attribution": GEO_ATTRIBUTION}
+
+
+def _first_seen(items):
+    first = {}
+    for i in items:
+        if i["time"] < first.get(i["src"], "9999"):
+            first[i["src"]] = i["time"]
+    return first
+
+
+def _learning(items, now):
+    """Earliest start among sources that don't have a week of history yet (None when all do)."""
+    week = _iso(now - timedelta(days=7))
+    young = [t for s, t in _first_seen(items).items() if s != "kev" and t > week]
+    return min(young) if young else None
 
 
 def _rising(items, now, layers):
     """Countries and malware families clearly above their own normal: last 24h >= 3 and >= 2x the 7-day daily average."""
     d0 = _iso(now - timedelta(hours=24))
     d7 = _iso(now - timedelta(days=8))
+    ready = {s for s, t in _first_seen(items).items() if t <= _iso(now - timedelta(days=7))}     # a source needs a week of history first
     cur, base = {}, {}
     for i in items:
-        if i["layer"] not in layers or i["layer"] == "exploited":
+        if i["layer"] not in layers or i["layer"] == "exploited" or i["src"] not in ready:
             continue
         keys = [("country", c) for c in (i.get("ccs") or ([i["cc"]] if i.get("cc") else []))] + ([("family", i["family"])] if i.get("family") else [])
         bucket = cur if i["time"] >= d0 else base if i["time"] >= d7 else None

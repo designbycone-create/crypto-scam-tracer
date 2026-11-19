@@ -82,7 +82,9 @@ function draw(){
   const top=Object.entries(C).sort((a,b)=>b[1].n-a[1].n).slice(0,6), tot=Math.max(1,top.reduce((s,x)=>s+x[1].n,0));
   $('#top').innerHTML=top.length?top.map(([cc,c],i)=>`<div class=rank data-cc="${cc}" style="cursor:pointer"><i>0${i+1}</i><div class=nm>${esc(NAMES[cc]||cc)}<small>${num(c.n)} threats</small></div><span class=pct>${Math.round(100*c.n/tot)}%</span></div>`).join(''):'<div class=empty>Nothing in this window yet.</div>';
   $('#rising').innerHTML=T.rising.length?T.rising.map(r=>`<div class=rise data-cc="${r.kind==='country'?esc(r.key):''}" data-q="${r.kind==='family'?esc(r.key):''}"><span class=badge>RISING</span><b>${esc(r.kind==='country'?(NAMES[r.key]||r.key):r.key)}</b><span class=x title="${num(r.now)} in the last 24 hours; usually ${r.usual} a day">x${r.x}<br><span style="font-weight:400;color:var(--mut)">${num(r.now)} today</span></span></div>`).join('')
-     :'<div class=empty>Nothing is clearly above its usual level right now.</div>';
+     :(T.learning_since
+       ? `<div class=empty>Still learning what's normal. A source is only compared after a week of history (collecting since ${esc(T.learning_since.slice(0,10))}).</div>`
+       : '<div class=empty>Nothing is clearly above its usual level right now.</div>');
   const fm=T.families, fmax=Math.max(1,...fm.map(f=>f[1]));
   $('#fams').innerHTML=fm.length?fm.map(([k,v])=>`<div class=bar data-q="${esc(k)}" style="cursor:pointer"><span>${esc(k)}</span><div style="width:${Math.max(3,100*v/fmax)}%"></div><em>${num(v)}</em></div>`).join(''):'<div class=empty>No named families yet.</div>';
   ticker(); panel(); feed(); sources(); }

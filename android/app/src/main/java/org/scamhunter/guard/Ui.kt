@@ -40,10 +40,10 @@ object Ui {
         setPadding(0, dp(c, 8), 0, dp(c, 8))
     }
 
-    fun button(c: Context, label: String, color: Int = BLUE, onClick: () -> Unit) = Button(c).apply {
-        text = label; textSize = 23f; isAllCaps = false; setTextColor(if (color == AMBER) INK else Color.WHITE)
+    fun button(c: Context, label: String, color: Int = BLUE, small: Boolean = false, onClick: () -> Unit) = Button(c).apply {
+        text = label; textSize = if (small) 20f else 23f; isAllCaps = false; setTextColor(if (color == AMBER) INK else Color.WHITE)
         background = GradientDrawable().apply { setColor(color); cornerRadius = dp(c, 14).toFloat() }
-        minHeight = dp(c, 72)
+        minHeight = dp(c, if (small) 60 else 72)
         setOnClickListener { onClick() }
         layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(c, 14) }
     }

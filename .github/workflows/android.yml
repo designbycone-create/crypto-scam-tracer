@@ -46,6 +46,8 @@ jobs:
         env:
           SHTD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_DESK_KEYSTORE_PASSWORD }}
         run: gradle -p android testDebugUnitTest assembleDebug --no-daemon
+      - name: Sample FCC pre-fill link (test values only; open it to check the live form)
+        run: cat android/app/build/fcc-sample-link.txt
       - name: Threat Desk app is signed with the project key
         if: env.SHTD_KEYSTORE != ''
         run: |

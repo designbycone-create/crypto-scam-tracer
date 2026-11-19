@@ -36,6 +36,7 @@
         <activity android:name=".ReportActivity" android:exported="false" />
         <activity android:name=".HelpActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
+        <activity android:name=".MyDetailsActivity" android:exported="false" />
 
         <!-- Android's official call-screening role: sees the incoming number only, never the audio -->
         <service

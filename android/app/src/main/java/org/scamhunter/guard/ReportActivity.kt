@@ -10,20 +10,26 @@ import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.widget.CheckBox
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.Toast
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 /**
  * After a scam call: the person tells the app what the caller said (by voice or typing). Their own
  * account of the call -- no call audio is ever recorded by the app. The checker reads it, then the
- * app prepares the report for the FTC, Do Not Call, FCC or FBI (IC3) and a text to a family member.
+ * app prepares the report. The big button opens the FCC's complaint form already filled in (FccLink); the
+ * FTC, Do Not Call and FBI (IC3) sites can't be pre-filled, so for those the report is copied to paste.
  * Nothing is sent until the person presses Send / Submit themselves.
  */
 class ReportActivity : Activity() {
     private lateinit var number: android.widget.EditText
     private lateinit var story: android.widget.EditText
     private lateinit var lost: CheckBox
+    private lateinit var kind: RadioGroup
     private lateinit var out: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,6 +44,12 @@ class ReportActivity : Activity() {
         intent.getStringExtra("story")?.let { story.setText(it) }
         col.addView(story)
         col.addView(Ui.button(this, "🎤  Say it instead of typing") { listen() })
+        col.addView(Ui.text(this, "Was it...", 22f, bold = true))
+        kind = RadioGroup(this)
+        listOf("A recorded voice" to 1, "A real person" to 2, "A text message" to 3).forEach { (label, id) ->
+            kind.addView(RadioButton(this).apply { text = label; textSize = 21f; this.id = id; minHeight = Ui.dp(this@ReportActivity, 52) })
+        }
+        col.addView(kind)
         lost = CheckBox(this).apply { text = "I lost money or gave out personal or bank details"; textSize = 21f }
         col.addView(lost)
         col.addView(Ui.button(this, "Check it and prepare my report", Ui.RED) { prepare() })
@@ -83,11 +95,23 @@ class ReportActivity : Activity() {
             if (r.findings.isNotEmpty()) append("Warning signs: ${r.findings.joinToString("; ") { it.rule.replace('_', ' ') }}\n")
             if (lost.isChecked) append("Money or personal information was lost.\n")
         }
-        out.addView(Ui.text(this, "Your report is ready. Each button copies it, then opens the official site. Paste it into the form " +
-            "(press and hold, then Paste). Nothing is sent until you submit the form yourself.", 18f))
-        out.addView(Ui.button(this, "Report to the FTC") { copyOpen(report, "https://reportfraud.ftc.gov/") })
-        out.addView(Ui.button(this, "Report to the Do Not Call Registry") { copyOpen(report, "https://www.donotcall.gov/report.html") })
-        out.addView(Ui.button(this, "Report to the FCC") { copyOpen(report, "https://consumercomplaints.fcc.gov/hc/en-us") })
+        // the FCC form opens already filled in
+        val me = Prefs.me(this)
+        val fcc = FccLink.url(FccLink.Report(
+            callerNumber = num, date = callDay(num), time = callTime(num), description = report,
+            kind = when (kind.checkedRadioButtonId) { 1 -> FccLink.Kind.RECORDING; 2 -> FccLink.Kind.PERSON; 3 -> FccLink.Kind.TEXT; else -> null },
+            me = me))
+        out.addView(Ui.button(this, "Report this call to the FCC", Ui.GREEN) { copyOpen(report, fcc, filled = true) })
+        out.addView(Ui.text(this, "The government form opens already filled in. Answer the few yes/no questions left, " +
+            "tick the box at the bottom, then tap Submit. Nothing is sent until you tap Submit.", 19f))
+        if (me.isEmpty()) {
+            out.addView(Ui.text(this, "Tip: add your name and address once, and the form fills those in too.", 18f, bold = true))
+            out.addView(Ui.button(this, "Add my details", small = true) { startActivity(Intent(this, MyDetailsActivity::class.java)) })
+        }
+        out.addView(Ui.text(this, "Also report it (optional). These sites can't be filled in for you: the button copies your " +
+            "report, then press and hold in their form and choose Paste.", 17f))
+        out.addView(Ui.button(this, "Also report to the FTC", small = true) { copyOpen(report, "https://reportfraud.ftc.gov/") })
+        out.addView(Ui.button(this, "Also report to Do Not Call", small = true) { copyOpen(report, "https://www.donotcall.gov/report.html") })
         if (lost.isChecked) {
             out.addView(Ui.banner(this, "You lost money or details", "Call your bank or card company now, using the number on your card. " +
                 "Then report it to the FBI. If it was crypto, the ScamHunter Threat Desk can trace it for free.", "stop"))
@@ -106,9 +130,21 @@ class ReportActivity : Activity() {
         }
     }
 
-    private fun copyOpen(text: String, url: String) {
+    /** The time of the screened call if this is that number (within a day), otherwise now. */
+    private fun callDate(num: String?): Date {
+        val t = Prefs.lastTime(this)
+        val same = num != null && NumberList.norm(Prefs.lastNumber(this)) == num
+        return if (same && t > 0 && System.currentTimeMillis() - t < 24 * 3600_000L) Date(t) else Date()
+    }
+    private fun callDay(num: String?) = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(callDate(num))
+    private fun callTime(num: String?) = SimpleDateFormat("h:mm a", Locale.US).format(callDate(num))
+
+    private fun copyOpen(text: String, url: String, filled: Boolean = false) {
         getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Scam call report", text))
-        Toast.makeText(this, "Report copied. Paste it into the form.", Toast.LENGTH_LONG).show()
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        Toast.makeText(this, if (filled) "Opening the form, already filled in." else "Report copied. Paste it into the form.",
+            Toast.LENGTH_LONG).show()
+        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No web browser found on this phone.", Toast.LENGTH_LONG).show()
+        }
     }
 }

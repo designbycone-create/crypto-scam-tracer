@@ -261,5 +261,8 @@ check("Settings tab lists it", any(p == "/relay" for _, _, _, groups in shell.SE
 reqs = open(os.path.join(ROOT, "requirements.txt"), encoding="utf-8").read()
 check("new libraries pinned with hashes", all(f"{n}==" in reqs for n in ("cryptography", "cffi", "pycparser", "segno")))
 
+r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "export_relay_vectors.py"), "--check"], capture_output=True, text=True)
+check("phone app's encryption vectors match this code", r.returncode == 0)
+
 print(f"relay: {ok} passed, {fail} failed")
 sys.exit(1 if fail else 0)

@@ -29,9 +29,13 @@ def _aad(channel, direction, rid=""):
     return f"shtd1|{channel}|{direction}|{rid}".encode()
 
 
+def seal_bytes(key, channel, direction, plaintext, rid="", _nonce=None):
+    nonce = _nonce or os.urandom(12)          # _nonce only for the fixed test vectors (tools/export_relay_vectors.py)
+    return VERSION + nonce + AESGCM(key).encrypt(nonce, plaintext, _aad(channel, direction, rid))
+
+
 def seal(key, channel, direction, obj, rid=""):
-    nonce = os.urandom(12)
-    return VERSION + nonce + AESGCM(key).encrypt(nonce, json.dumps(obj, separators=(",", ":")).encode(), _aad(channel, direction, rid))
+    return seal_bytes(key, channel, direction, json.dumps(obj, separators=(",", ":")).encode(), rid)
 
 
 def unseal(key, channel, direction, blob, rid=""):

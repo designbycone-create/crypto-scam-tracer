@@ -1,10 +1,11 @@
-# Builds and unit-tests the ScamHunter Guard Android app on every change to it.
+# Builds and unit-tests both Android apps (ScamHunter Guard, ScamHunter Threat Desk) and the relay Worker.
 name: Android app
 on:
   push:
-    paths: ["android/**", "shield/msgcheck.py", "tools/export_mobile_rules.py"]
+    paths: ["android/**", "shield/msgcheck.py", "tools/export_mobile_rules.py", "relay/**", "worker/**", "tools/export_relay_vectors.py",
+            ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**"]
+    paths: ["android/**", "relay/**", "worker/**"]
   workflow_dispatch:
 jobs:
   build:
@@ -16,6 +17,13 @@ jobs:
           python-version: "3.12"
       - name: Phone rules match the Desk's checker
         run: python tools/export_mobile_rules.py --check
+      - name: Relay encryption vectors match the Desk
+        run: pip install --require-hashes -r requirements.txt -q && python tools/export_relay_vectors.py --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Relay Worker tests
+        run: cd worker/relay && npm test
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -29,3 +37,7 @@ jobs:
         with:
           name: scamhunter-guard-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scamhunter-threat-desk-debug-apk
+          path: android/desk/build/outputs/apk/debug/*.apk

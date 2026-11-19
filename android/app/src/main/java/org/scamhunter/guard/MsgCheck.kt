@@ -6,7 +6,7 @@ import java.net.URI
 import java.util.regex.Pattern
 
 /**
- * The same scam-message checker as the ScamHunter Desk (shield/msgcheck.py), driven by the same
+ * The same scam-message checker as the ScamHunter Threat Desk (shield/msgcheck.py), driven by the same
  * rules file (assets/scam_rules.json, exported by tools/export_mobile_rules.py). A unit test holds
  * the two to identical verdicts on a shared sample of messages.
  */

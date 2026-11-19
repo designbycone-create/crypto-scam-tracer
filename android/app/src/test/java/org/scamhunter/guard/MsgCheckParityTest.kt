@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/** The phone must reach the same verdicts as the ScamHunter Desk on the shared sample (parity.json,
+/** The phone must reach the same verdicts as the ScamHunter Threat Desk on the shared sample (parity.json,
  *  produced by tools/export_mobile_rules.py from the Desk's own checker). */
 class MsgCheckParityTest {
     private val mc = MsgCheck(File("src/main/assets/scam_rules.json").readText())

@@ -1,5 +1,5 @@
 @echo off
-REM ScamHunter Desk -- starts and supervises all watchers + the dashboard.
+REM ScamHunter Threat Desk -- starts and supervises all watchers + the dashboard.
 REM Uses whichever Python has the dependencies installed (python, else py -3).
 set PYTHONUTF8=1
 set PYTHONIOENCODING=utf-8

@@ -25,7 +25,7 @@ PRIVATE = [("config.json", "your settings and keys (keys are also encrypted to y
            ("*.log, network and map files", "watcher history about your case")]
 
 INSTALL_CMD = """@echo off
-rem ScamHunter Desk - install from this share copy (no download needed)
+rem ScamHunter Threat Desk - install from this share copy (no download needed)
 set SCAMHUNTER_FROM=%~dp0
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
 pause
@@ -105,7 +105,7 @@ def page(msg="", ok=None):
     if msg:
         note = f"<div class='card {'ok' if ok else 'bad'}'>{e(msg)}</div>"
     priv = "".join(f"<li><code>{e(f)}</code>: {e(w)}</li>" for f, w in PRIVATE)
-    letter = (f"I'd like you to try ScamHunter Desk, a free tool for scam victims.\n\n"
+    letter = (f"I'd like you to try ScamHunter Threat Desk, a free tool for scam victims.\n\n"
               f"On a Windows computer, open PowerShell (Start menu, type PowerShell, press Enter), paste this line and press Enter:\n\n"
               f"{CMD}\n\n"
               f"It installs a fresh copy from {REPO} (about 2 minutes) and opens the Desk in your browser. "

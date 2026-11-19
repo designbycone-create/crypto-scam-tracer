@@ -1,4 +1,4 @@
-"""One-click updates for ScamHunter Desk.
+"""One-click updates for ScamHunter Threat Desk.
 
     check()   -> what's installed, what's newest on GitHub, and what changed (cached 6 h)
     apply()   -> download that exact commit, back up the code it replaces, install it, run the

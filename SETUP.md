@@ -1,4 +1,4 @@
-# Setting up ScamHunter Desk
+# Setting up ScamHunter Threat Desk
 
 A step-by-step guide for a new user on Windows. It takes about 10 minutes, plus a few optional
 free keys you can add later. ScamHunter is free, and it will never ask you for money or a wallet
@@ -18,7 +18,7 @@ recovery (seed) phrase.
    ```
 
 3. Wait about two minutes. It installs Python if needed, puts ScamHunter in
-   `C:\Users\<you>\ScamHunter`, adds a **ScamHunter Desk** shortcut to your Desktop and Start
+   `C:\Users\<you>\ScamHunter`, adds a **ScamHunter Threat Desk** shortcut to your Desktop and Start
    menu, and opens the Desk in your browser.
 
 **Option B: a share copy (a zip someone gave you).** Unzip it, open the `ScamHunter` folder, and
@@ -97,7 +97,7 @@ and rolled back automatically if anything fails.
 
 ## Uninstall
 
-Close the Desk, delete the `C:\Users\<you>\ScamHunter` folder, and delete the **ScamHunter Desk**
+Close the Desk, delete the `C:\Users\<you>\ScamHunter` folder, and delete the **ScamHunter Threat Desk**
 shortcuts from the Desktop, the Start menu and the Startup folder (`shell:startup` in the Run box).
 
 ## Getting help

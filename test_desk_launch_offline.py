@@ -13,7 +13,7 @@ r = []
 
 
 class H(BaseHTTPRequestHandler):
-    body = b"<title>ScamHunter Desk</title>"
+    body = b"<title>ScamHunter Threat Desk</title>"
     def do_GET(self):
         self.send_response(200); self.end_headers(); self.wfile.write(self.body)
     def log_message(self, *a):

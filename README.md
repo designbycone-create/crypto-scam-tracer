@@ -1,4 +1,4 @@
-# crypto-scam-tracer — ScamHunter Desk™
+# crypto-scam-tracer — ScamHunter Threat Desk™
 
 **A free, open-source toolkit that protects people from scams and helps victims
 after one.** Before a scam: check messages, addresses, websites, your AI agents
@@ -310,4 +310,4 @@ every contact route before sending anything, and work with law enforcement.
 
 ---
 
-© 2026 Matthew Cone / FPH LLC · Code under the MIT License · "ScamHunter Desk" is a trademark of FPH LLC — see [NOTICE.md](NOTICE.md).
+© 2026 Matthew Cone / FPH LLC · Code under the MIT License · "ScamHunter Threat Desk" is a trademark of FPH LLC — see [NOTICE.md](NOTICE.md).

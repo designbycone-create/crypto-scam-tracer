@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ScamHunter Guard",
   "version": "0.1.0",
-  "description": "Catches crypto address swapping, pages loading known attack code, and pastes of scammer addresses. Works with the ScamHunter Desk.",
+  "description": "Catches crypto address swapping, pages loading known attack code, and pastes of scammer addresses. Works with the ScamHunter Threat Desk.",
   "permissions": ["storage", "notifications", "alarms"],
   "host_permissions": ["http://127.0.0.1:8787/*"],
   "background": {"service_worker": "bg.js"},

@@ -233,7 +233,7 @@ def advice(level, types):
     if {"recovery_scam"} & set(types):
         out.append("Real help after a scam is free: report it at ic3.gov and reportfraud.ftc.gov. ScamHunter can trace crypto at no cost.")
     out.append("If you already sent money: contact your bank or the payment app right away, then report it at ic3.gov "
-               "(and reportfraud.ftc.gov). If it was crypto, start a case in the ScamHunter Desk.")
+               "(and reportfraud.ftc.gov). If it was crypto, start a case in the ScamHunter Threat Desk.")
     return out
 
 

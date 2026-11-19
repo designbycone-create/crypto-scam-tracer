@@ -6,9 +6,9 @@
   ".gitignore": "9601de4d278226c64b975c7ac50fe87b9b1de6f5e02400689c929203c4903c0b",
   "CHAIN_SOURCES.md": "329e5d8813567f5367b9aae11576f04f5f3fd8b55afeeeb70dc5afc5f78f7fce",
   "LICENSE": "4966660a3d1e286c89374cbf04584405653e894d6feda09c2ae9cd4c9f06ff66",
-  "NOTICE.md": "d064a289b91944447648ad33b605cc4761182e082e7baa38ff08bb6fbf03ed0c",
-  "README.md": "84f6c46179860fc76bd68d347b3cdadb00d003622ac421a5f5e64b73c948ced9",
-  "ROADMAP.md": "1b4a14b05bc8931902718838ea066e837cd40471026e77d9668bcc9c34273f74",
+  "NOTICE.md": "e948bb5a51b2d69297647eb27a172d1671df897bd4d12bd0cad4dd026764fb6c",
+  "README.md": "e06bc8c05662cc9d9a6fb00754c45360adcb188e295a05613043bd5504aa3d61",
+  "ROADMAP.md": "9dcbb45ca5dd31391d12bbac6d413824067f54f27d273be6f10a8973125f2619",
   "SECURITY.md": "4289403929bf46a774fbc6b94f651d2dbe44d4d9744cd2a93f30ab131e2e1df6",
   "SETUP.md": "44dc57240e1b8bc6bfe36e158fe28fb0692394ecce62dd4babd22698fbbf8a8a",
   "TRUST.md": "108b161c12f5cb1139909cfb17cd281adc40ea622ade2ffe4377d6a2e940d8fe",
@@ -205,6 +205,7 @@
   "test_secretscan_offline.py": "4422bc7f06fe5c42e7b611ac6d5277f9a9f10dff8ef4b39fc24b4020f9483f82",
   "test_securestore_offline.py": "714a5b08f8599954148929d10cdf52126e56d735e372b4ef4cb752999d5fa071",
   "test_share_privacy_offline.py": "f0eca42a84539dd89924100d7dbed3b409410cbad3a1380ec5bcf2c7875c318c",
+  "test_social_offline.py": "82679fa8cd0fcc41097c66b1ef050a8c93dcf8999983a3825c5ab17ccb40c776",
   "test_threat_update_offline.py": "7a38f85ecbe0f436b68e9ada8413900e97882d01e7e5801a79be4d500997173d",
   "test_threatmap_offline.py": "7c26981139a21298c3cfaf6812a43e0465197769d76cd324592d265441bb483a",
   "test_updater_offline.py": "002f51d1e700d9c6599379e98ff5e716cf2dddedf361e1fb1369ec4b2dbf16d6",
@@ -217,9 +218,10 @@
   "threatfeed/campaigns.json": "656f5002c101a91227d34e5f059621f6290427c7f936f529ee356ab9c6db593c",
   "threatmap/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "threatmap/country_names.json": "372575dc4722aa59dcca4ffcc32d570f13e813ee5e4a108f4cbba4cc85ed0911",
-  "threatmap/feeds.py": "1687f65974b58e62a0aa0cec6f66d30138e7ca67d1d5f84193007ea43004615f",
+  "threatmap/feeds.py": "d472151dc77cda24eb6990a41441dea13346f7d34d973a4148e70a74bf878efa",
   "threatmap/geo.py": "4ae9cc081b1e5fc5fda934bceeef18689aca434f97d5d44f0e8d01ad2ca1b3f4",
-  "threatmap/page.py": "9b0804a081966025bab8e2ddc95935c8fbe8b3020853a0c55ba0d670de409ff6",
+  "threatmap/page.py": "ef23294132d426dafab95a71194c2fc66e8b470e0d1ca50a4edce47e2ed09468",
+  "threatmap/social.py": "fa078551f2bf069c6c9cd7f74a5ae3bc35db75d33ed17a22c9a9df4f9208bfca",
   "threatmap/world.json": "f86075e68ca51aeba23daa0dcbd047c534ee6fddca7dec2fc86cc71f31c20ffd",
   "tools/export_mobile_rules.py": "0d461d2fafb4b7d2a08a7a50c7f01bbd57649da6d4d1c3090ab9c7e926a97b90",
   "tools/sign_release.ps1": "37ab8b824ea1cb07d2c299341776ba9e5359518046a2dc76b5f9bd1632893780",
@@ -228,7 +230,7 @@
   "xrpl_watcher.py": "3933eff15c7a74ec1d7f1f5c40ed1d69d821e34b1d05cbfdc372fa68acf462b6"
  },
  "meta": {
-  "signed_at": "2026-11-19T01:35:33Z",
-  "note": "Threat update Nov 2026: Binance heist addresses, FaceStealer, fake compensation, ClickFix, midterm scams"
+  "signed_at": "2026-11-19T02:10:36Z",
+  "note": "Threat Map: researcher posts from Bluesky and Mastodon"
  }
 }

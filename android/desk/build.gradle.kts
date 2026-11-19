@@ -10,11 +10,25 @@ android {
         applicationId = "org.scamhunter.desk"     // separate from ScamHunter Guard (org.scamhunter.guard)
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.1.3"
+        versionCode = 5
+        versionName = "0.1.4"
+    }
+    // Signed with the project's own permanent key when the build has it (GitHub Actions secrets), so each new
+    // version installs as an update and keeps the phone's pairing. Without it (forks, local builds) the build
+    // falls back to Android's throwaway debug key.
+    val ks = System.getenv("SHTD_KEYSTORE")
+    signingConfigs {
+        if (ks != null) create("scamhunter") {
+            storeFile = file(ks)
+            storeType = "pkcs12"
+            storePassword = System.getenv("SHTD_KEYSTORE_PASSWORD")?.trim()
+            keyAlias = "threatdesk"
+            keyPassword = System.getenv("SHTD_KEYSTORE_PASSWORD")?.trim()
+        }
     }
     buildTypes {
         release { isMinifyEnabled = false }
+        if (ks != null) getByName("debug") { signingConfig = signingConfigs.getByName("scamhunter") }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

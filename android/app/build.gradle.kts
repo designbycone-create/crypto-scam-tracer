@@ -10,8 +10,8 @@ android {
         applicationId = "org.scamhunter.guard"
         minSdk = 29            // Android 10: call screening role
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
     }
     // Signed with the project's permanent key when CI has it (GitHub secrets), so each new version installs
     // as an update over the last and keeps the person's settings. Without it (forks, local builds) the build

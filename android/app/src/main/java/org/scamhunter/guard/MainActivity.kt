@@ -8,6 +8,7 @@ import java.text.DateFormat
 import java.util.Date
 
 class MainActivity : Activity() {
+    private var triedList = false
 
     override fun onResume() {
         super.onResume()
@@ -26,7 +27,20 @@ class MainActivity : Activity() {
         } else {
             col.addView(Ui.banner(this, "Call warnings are ON",
                 if (count > 0) "Watching for $count reported numbers (FTC list up to ${meta.optString("to")})."
-                else "Download the list of reported numbers in Settings.", if (count > 0) "ok" else "caution"))
+                else "Getting the list of reported numbers (needs the internet)...", if (count > 0) "ok" else "caution"))
+            if (!RingWarning.canShow(this)) {
+                col.addView(Ui.banner(this, "One more step", "Allow \"Appear on top\" so a big warning shows over the call " +
+                    "while it rings. On the next screen, find ScamHunter Guard and turn it on.", "caution"))
+                col.addView(Ui.button(this, "Turn on \"Appear on top\"", Ui.AMBER) { startActivity(RingWarning.settingsIntent(this)) })
+            }
+        }
+        // a fresh install has no list yet: fetch it now instead of waiting for the daily Wi-Fi update
+        if (count == 0 && !triedList) {
+            triedList = true       // once per screen: no retry loop when there's no internet
+            Thread {
+                val got = try { NumberList.download(this) } catch (e: Exception) { 0 }
+                if (got > 0) runOnUiThread { if (!isFinishing) recreate() }
+            }.start()
         }
         col.addView(Ui.button(this, "Am I being scammed right now?", Ui.RED) { startActivity(Intent(this, HelpActivity::class.java)) })
         col.addView(Ui.button(this, "Report a call") { startActivity(Intent(this, ReportActivity::class.java)) })

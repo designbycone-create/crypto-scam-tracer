@@ -39,14 +39,28 @@ class SettingsActivity : Activity() {
 
         val silence = CheckBox(this).apply { text = "Ring silently for numbers reported many times"; textSize = 20f; isChecked = Prefs.silenceHighRisk(this@SettingsActivity) }
         val warnAll = CheckBox(this).apply { text = "Also warn me for numbers reported only once or twice"; textSize = 20f; isChecked = Prefs.warnUnknown(this@SettingsActivity) }
-        col.addView(silence); col.addView(warnAll)
+        val notContact = CheckBox(this).apply { text = "Remind me to be careful whenever a number that isn't in my contacts calls"; textSize = 20f; isChecked = Prefs.warnNotContact(this@SettingsActivity) }
+        col.addView(silence); col.addView(warnAll); col.addView(notContact)
 
         col.addView(Ui.button(this, "Save", Ui.GREEN) {
             Prefs.save(this, name.text.toString().trim(), num.text.toString().trim(),
                 if (spin.selectedItemPosition > 0) states[spin.selectedItemPosition] else "", code.text.toString().trim(),
                 silence.isChecked, warnAll.isChecked)
+            Prefs.setWarnNotContact(this, notContact.isChecked)
             Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
             finish()
+        })
+
+        col.addView(Ui.text(this, "Warning while the phone rings", 24f, bold = true))
+        col.addView(Ui.text(this, if (RingWarning.canShow(this)) "On: a large warning appears over the incoming call." else
+            "Off: turn on \"Appear on top\" so a large warning can show over the incoming call.", 17f))
+        if (!RingWarning.canShow(this)) col.addView(Ui.button(this, "Turn on \"Appear on top\"", Ui.AMBER) {
+            startActivity(RingWarning.settingsIntent(this))
+        })
+        col.addView(Ui.button(this, "Show me a test warning", small = true) {
+            val a = CallAdvice.Advice("stop", "TEST WARNING", "This is only a test. When a reported scam number calls, " +
+                "a warning like this appears while the phone rings. Tap Close.")
+            if (!RingWarning.show(this, "(test)", a)) ScreeningService.notify(this, "(test)", a)
         })
 
         col.addView(Ui.text(this, "Reported-numbers list", 24f, bold = true))

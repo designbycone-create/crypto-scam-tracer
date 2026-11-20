@@ -12,6 +12,9 @@ object Prefs {
     fun codeWord(c: Context) = p(c).getString("code_word", "") ?: ""
     fun silenceHighRisk(c: Context) = p(c).getBoolean("silence_high", false)
     fun warnUnknown(c: Context) = p(c).getBoolean("warn_unknown", false)
+    /** A calm "Unknown caller" card for every number not in contacts, even one nobody has reported. On unless turned off. */
+    fun warnNotContact(c: Context) = p(c).getBoolean("warn_not_contact", true)
+    fun setWarnNotContact(c: Context, on: Boolean) = p(c).edit().putBoolean("warn_not_contact", on).apply()
 
     fun save(c: Context, familyName: String, familyNumber: String, state: String, codeWord: String, silence: Boolean, warnUnknown: Boolean) =
         p(c).edit().putString("family_name", familyName).putString("family_number", familyNumber).putString("state", state)

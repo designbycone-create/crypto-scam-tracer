@@ -10,10 +10,12 @@ import android.telecom.Call
 import android.telecom.CallScreeningService
 
 /**
- * Android's official call-screening service. For each incoming call from a number that isn't in
- * your contacts, Android hands us the NUMBER only (never audio). We look it up in the FTC list on
- * the phone and warn you with a notification before you answer. The call always rings through:
- * a warning, not a block, so a real call is never lost. Optionally, high-risk calls ring silently.
+ * Android's official call-screening service. Android asks it only about incoming calls from numbers that
+ * aren't in your contacts, and hands over the NUMBER only (never audio). We look it up in the FTC list on the
+ * phone, then, while it rings, show a large warning card over the call screen (RingWarning; needs "Appear on
+ * top") and a notification. The call always rings through: a warning, not a block, so a real call is never
+ * lost. Optionally, high-risk calls ring silently. By default even an unreported unknown number gets a calm
+ * "Unknown caller" card, since scammers change numbers faster than any list.
  */
 class ScreeningService : CallScreeningService() {
 
@@ -27,8 +29,8 @@ class ScreeningService : CallScreeningService() {
                 val r = NumberList.rate(hit, meta.optInt("days", 30))
                 Prefs.lastCall(this, number ?: "", r.level, r.headline, r.subject ?: "")
                 if (r.level == "high" && Prefs.silenceHighRisk(this)) allow.setSilenceCall(true)
-                if (r.level == "high" || r.level == "medium" || (Prefs.warnUnknown(this) && r.level != "none")) {
-                    warn(this, number ?: "unknown number", r)
+                CallAdvice.advise(r, Prefs.warnUnknown(this), Prefs.warnNotContact(this))?.let { a ->
+                    alert(this, number ?: "Unknown number", a)
                 }
             }
         } catch (e: Exception) {
@@ -49,23 +51,30 @@ class ScreeningService : CallScreeningService() {
             }
         }
 
-        fun warn(ctx: Context, number: String, r: NumberList.Rating) {
+        const val CHANNEL_UNKNOWN = "unknown_calls"
+
+        /** Card over the ringing call when allowed; a notification for real warnings, or when the card can't show. */
+        fun alert(ctx: Context, number: String, a: CallAdvice.Advice) {
+            val card = RingWarning.show(ctx, number, a) { notify(ctx, number, a) }
+            if (a.level != "unknown" || !card) notify(ctx, number, a)
+        }
+
+        fun notify(ctx: Context, number: String, a: CallAdvice.Advice) {
             channel(ctx)
-            val title = if (r.level == "high") "LIKELY SCAM CALL" else "Possible scam call"
-            val body = buildString {
-                append(r.headline)
-                r.subject?.let { append(" as \"$it\"") }
-                append(". ")
-                if (r.robocall) append("Often a recorded message. ")
-                append("Don't give codes, card numbers or personal details. Never pay with gift cards, crypto or a wire. " +
-                    "If it says it's your bank or the government, hang up and call the number you know.")
+            val nm = ctx.getSystemService(NotificationManager::class.java)
+            if (nm.getNotificationChannel(CHANNEL_UNKNOWN) == null) {
+                nm.createNotificationChannel(NotificationChannel(CHANNEL_UNKNOWN, "Unknown caller notices", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                    description = "A reminder to be careful when a number that isn't in your contacts calls"
+                })
             }
+            val title = a.title
+            val body = a.body
             val open = PendingIntent.getActivity(ctx, 0, Intent(ctx, ReportActivity::class.java).putExtra("number", number),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            val n = Notification.Builder(ctx, CHANNEL)
+            val n = Notification.Builder(ctx, if (a.level == "unknown") CHANNEL_UNKNOWN else CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentTitle("$title: $number")
-                .setContentText(r.headline)
+                .setContentText(body.substringBefore(". ") + ".")
                 .setStyle(Notification.BigTextStyle().bigText(body))
                 .setCategory(Notification.CATEGORY_CALL)
                 .setContentIntent(open)

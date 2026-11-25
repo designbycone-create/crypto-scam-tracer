@@ -71,6 +71,9 @@ act on their own case.
 - [ ] X as an extra source: the user's own pay-per-use key, with a monthly spending cap the Desk enforces
 - [ ] ransomware.live and Cloudflare Radar layers (each with the user's own free token)
 
+## Add-ons
+- **PatchPulse** (separate paid product, patchpulsehq.com): "My website" page shows it as coming soon. The read-only connector is built and tested but off (`addons/patchpulse.py`, `RELEASED = False`). At launch: one signed Desk update sets `RELEASED = True`; owners then connect with a PatchPulse API key. Later: a ScamHunter Pro bundle.
+
 ## Bait & Trace (after a breach)
 The bank dye-pack idea for computers and wallets: plant decoys that look valuable, and when an
 intruder uses one, record what *their own action* sends back, for an IC3 report.

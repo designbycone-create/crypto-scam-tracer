@@ -604,6 +604,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/malware":
             from shield import malcheck
             return self._send(malcheck.page(), "text/html; charset=utf-8")
+        if path == "/website":
+            from addons import web as addonweb
+            return self._send(addonweb.page(), "text/html; charset=utf-8")
         if path == "/relay":
             from relay import web as relayweb
             return self._send(relayweb.page(), "text/html; charset=utf-8")
@@ -813,6 +816,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/malware":
                 from shield import malcheck
                 return self._send(malcheck.post(form), "text/html; charset=utf-8")
+            if path == "/website":
+                from addons import web as addonweb
+                return self._send(addonweb.post(form), "text/html; charset=utf-8")
             if path == "/lookup":
                 from osinttools import web as lookweb
                 return self._send(lookweb.post(form), "text/html; charset=utf-8")
@@ -992,6 +998,11 @@ def main():
         threading.Thread(target=supervise, args=(label, argv, logfile, stop_evt), daemon=True).start()
 
     threading.Thread(target=alert_flusher, args=(stop_evt,), daemon=True).start()
+    try:   # PatchPulse add-on: idle (no network) until PatchPulse launches and the owner connects it (addons/)
+        from addons import patchpulse
+        threading.Thread(target=patchpulse.run, args=(stop_evt,), daemon=True).start()
+    except Exception as ex:
+        print(f"(PatchPulse add-on not active: {ex})")
 
     port = _free_port(a.port)
     try:   # phone app relay: connects OUT to the user's own Worker while a phone is paired (relay/)

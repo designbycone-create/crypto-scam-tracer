@@ -47,6 +47,7 @@ SECTIONS = [
             ("/malware", "Malware & link check", "Windows Defender status, check a download before opening it or a link before clicking it."),
             ("/secretscan", "Secrets left in the open", "Find seed phrases, private keys and passwords saved in files on this computer."),
             ("/agentguard", "Agent firewall", "Stops AI agents from doing risky things without your OK."),
+            ("/website", "My website", "PatchPulse, coming soon: watches websites you own for flaws attackers are using."),
         ]),
     ]),
     ("settings", "Settings", "/settings", [

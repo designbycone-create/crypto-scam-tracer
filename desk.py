@@ -562,6 +562,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/threatmap":
             from threatmap import page as tmpage
             return self._send(tmpage.page(), "text/html; charset=utf-8")
+        if path in ("/cryptomap", "/cybermap"):
+            from threatmap import page as tmpage
+            return self._send(tmpage.page("crypto" if path == "/cryptomap" else "cyber"), "text/html; charset=utf-8")
         if path == "/threatmap.json":
             from threatmap import page as tmpage
             return self._send(tmpage.json_api(query), "application/json", {"Cache-Control": "no-store"})

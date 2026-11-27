@@ -30,6 +30,7 @@ SECTIONS = [
             ("/evidence", "Court evidence", "Signed, verifiable evidence bundles."),
         ]),
         ("Investigate", [
+            ("/cryptomap", "Crypto threat map", "Where malware that steals crypto wallets is being run from, and crypto theft news."),
             ("/graph", "Network graph", "Interactive map of the wallets and exchanges behind the scam."),
             ("/network", "Network table", "Every wallet in the network, as a table."),
             ("/radar", "Scam radar", "New scam wallets and patterns seen on-chain."),
@@ -45,6 +46,9 @@ SECTIONS = [
         ]),
     ]),
     ("defense", "Online Defense", "/defense", [
+        ("Watch", [
+            ("/cybermap", "Cyber threat map", "Where the servers behind today's cyber attacks are: botnets, malware sites, exploited flaws."),
+        ]),
         ("Protect", [
             ("/extension", "Browser extension", "Blocks address swaps, drainer pages and known attack scripts."),
             ("/sitewatch", "Sites I use", "Watches the websites you use for injected attack code."),
@@ -94,7 +98,7 @@ OWN = "/*nd-own*/"
 # full-screen tools: shown on a stage under the header, without the page menu
 STAGE = ("/graph",)
 # menu items that get a "New" badge
-NEW = {"/hwcheck", "/website"}
+NEW = {"/hwcheck", "/website", "/cryptomap", "/cybermap"}
 # bottom bar in the phone app: (label, icon, address, sections it covers)
 PHONE_TABS = [("Home", "home", "/", ("overview", "settings")), ("Map", "map", "/threatmap", ("threatmap",)),
               ("Crypto", "crypto", "/crypto", ("crypto",)), ("Phone", "phone", "/phone", ("phone",)),

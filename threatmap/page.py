@@ -47,7 +47,7 @@ CSS = """/*nd-own*/
 .rise,.rank{display:flex;align-items:center;gap:.75rem;min-height:var(--min-btn);padding:.6rem .8rem;margin:.4rem 0;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg-sunken);cursor:pointer}
 .rise b,.rank .nm{flex:1;min-width:0}
 .rank i{font-style:normal;font-family:var(--mono);color:var(--teal)}
-.rank .nm small,.rise .x small{display:block;color:var(--text-2);font-size:1.1rem}
+.rank .nm small,.rise .x small{display:block;color:var(--text-2);font-size:var(--nd-min)}
 .rise .x{text-align:right;white-space:nowrap;font-weight:700;color:var(--careful-ink)}
 .pct{font-family:var(--mono);font-weight:600}
 .badge{display:inline-flex;align-items:center;gap:.3rem;font-weight:700;color:var(--careful-ink);background:var(--careful-bg);border:1px solid #6E5420;border-radius:999px;padding:.05rem .6rem}
@@ -61,7 +61,7 @@ CSS = """/*nd-own*/
 .tick:hover .run{animation-play-state:paused}
 @keyframes run{to{transform:translateX(-50%)}}
 .tick .chip{flex-direction:column;align-items:flex-start;min-width:16rem;max-width:22rem;padding:.5rem .9rem;border-radius:var(--r-md);text-decoration:none;color:var(--text)}
-.tick .chip small{color:var(--text-2);font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tick .chip small{color:var(--text-2);font-size:var(--nd-min);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .dot.lv-stop{background:var(--stop)} .dot.lv-caution{background:var(--careful)} .dot.lv-info,.dot.lv-ok{background:var(--info)}
 .nd-page td .dot{display:inline-block;margin-right:.5rem;vertical-align:middle;box-shadow:none}
 table.feed tr{cursor:pointer}
@@ -144,14 +144,27 @@ $('#layers').addEventListener('change',()=>{ layers=new Set([...document.querySe
 $('#fq').addEventListener('input',ev=>{fq=ev.target.value; feed();});
 $('#more').onclick=()=>{shown+=30; feed();};
 $('#rows').addEventListener('click',ev=>{ const r=ev.target.closest('tr[data-u]'); if(r&&r.dataset.u) window.open(r.dataset.u,'_blank','noopener'); });
-async function refresh(){ try{ const r=await fetch(`/threatmap.json?hours=${hours}&layers=${[...layers].join(',')}`,{cache:'no-store'}); if(r.ok){T=await r.json(); draw();} }catch(_){} }
+async function refresh(){ try{ const r=await fetch(`/threatmap.json?hours=${hours}&scope=${window.__S||'all'}&layers=${[...layers].join(',')}`,{cache:'no-store'}); if(r.ok){T=await r.json(); draw();} }catch(_){} }
 const q0=new URLSearchParams(location.search).get('q'); if(q0){ fq=q0; $('#fq').value=q0; }
 setVB(); draw(); setInterval(refresh,60000);
 if(q0) setTimeout(()=>$('#rows').scrollIntoView({block:'center'}),300);
 """
 
 
-def page():
+SCOPE_TEXT = {
+    "all": ("Threat Map", "Threats reported around the world right now: security alerts and news, botnet servers, malware sites and newly "
+                          "exploited flaws."),
+    "cyber": ("Cyber threat map", "Where the servers behind today's cyber attacks are: botnet control servers, malware download sites "
+                                  "and newly exploited flaws. These are what the Desk's browser extension, malware check and exposure check "
+                                  "watch for."),
+    "crypto": ("Crypto threat map", "Malware that steals crypto wallets (stealers, clippers, drainer kits, the North Korean campaigns aimed "
+                                    "at crypto firms and developers), and news about crypto theft and scams."),
+}
+SCOPE_LAYERS = {"all": None, "cyber": ("botnet", "malware", "exploited"), "crypto": None}
+
+
+def page(scope="all"):
+    scope = scope if scope in SCOPE_TEXT else "all"
     with open(os.path.join(HERE, "world.json"), encoding="utf-8") as f:
         w = json.load(f)
     paths = "".join(f"<path class=c data-cc='{cc}' d='{c['d']}'/>" for cc, c in w["countries"].items())
@@ -161,14 +174,15 @@ def page():
     for cc, n in geo.NAMES.items():
         names.setdefault(cc, n[0])
     names.update(SHORT)
-    data = json.dumps(feeds.summary(24)).replace("</", "<\\/")
-    layer_chips = "".join(f"<label><input type=checkbox value={k} checked> {e(v)}</label>" for k, v in feeds.LAYERS.items())
+    layer_names = {k: v for k, v in feeds.LAYERS.items() if not SCOPE_LAYERS[scope] or k in SCOPE_LAYERS[scope]}
+    data = json.dumps(feeds.summary(24, list(layer_names), scope)).replace("</", "<\\/")
+    layer_chips = "".join(f"<label><input type=checkbox value={k} checked> {e(v)}</label>" for k, v in layer_names.items())
+    title, lead = SCOPE_TEXT[scope]
     body = (
-        "<div class=page-head><h1>Threat Map</h1><p class=lead>Threats reported around the world right now: security alerts and news, "
-        "botnet servers, malware sites and newly exploited flaws. Zoom with the mouse wheel or the + and &minus; buttons, drag to move, "
-        "click a country.</p></div>"
+        f"<div class=page-head><h1>{e(title)}</h1><p class=lead>{e(lead)} Zoom with the mouse wheel or the + and &minus; buttons, "
+        "drag to move, click a country.</p></div>"
         "<p class=tm-status><span><b><span id=total>0</span> threats</b> in <span id=ctry>0</span> countries</span>"
-        "<span><span id=risen>0</span> rising</span><span><span id=unloc>0</span> with no location</span>"
+        "<span><span id=risen>0</span> rising</span><span><span id=unloc>0</span> on websites or with no location</span>"
         "<span>Updated <span id=gen></span></span></p>"
         "<div class=tm-controls><span class=seg id=range role=group aria-label='Time window'><button class=on data-v=24>Past day</button>"
         "<button data-v=168>Past week</button><button data-v=720>Past month</button></span>"
@@ -198,8 +212,8 @@ def page():
         "where the people behind it are.</p></section>")
     head = CSS
     return (f"<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
-            f"<title>Threat Map - ScamHunter Threat Desk</title><style>{head}</style></head><body>{body}<div class=tip id=tip></div>"
-            f"<script>window.__W=1;window.__N={json.dumps(names)};window.__L={json.dumps(feeds.LAYERS)};window.__T={data};</script>"
+            f"<title>{e(title)} - ScamHunter Threat Desk</title><style>{head}</style></head><body>{body}<div class=tip id=tip></div>"
+            f"<script>window.__W=1;window.__S={json.dumps(scope)};window.__N={json.dumps(names)};window.__L={json.dumps(layer_names)};window.__T={data};</script>"
             f"<script>{JS}</script></body></html>")
 
 
@@ -211,4 +225,43 @@ def json_api(query):
     except ValueError:
         hours = 24
     layers = [x for x in ((q.get("layers") or [""])[0]).split(",") if x in feeds.LAYERS] or None
-    return json.dumps(feeds.summary(hours, layers))
+    scope = (q.get("scope") or ["all"])[0]
+    return json.dumps(feeds.summary(hours, layers, scope if scope in feeds.SCOPES else "all"))
+
+
+def preview(scope, href):
+    """A map card for a section's landing page (like the scam-call map on Phone & Messages): drawn on the
+    server from the last 7 days, no script needed. The full map is one click away."""
+    with open(os.path.join(HERE, "world.json"), encoding="utf-8") as f:
+        w = json.load(f)
+    s = feeds.summary(24 * 7, list(SCOPE_LAYERS.get(scope) or feeds.LAYERS), scope)
+    by = {cc: c["n"] for cc, c in s["countries"].items()}
+    mx = max([1] + list(by.values()))
+    names = {cc: c["n"] for cc, c in w["countries"].items()}
+    from threatmap import geo
+    for cc, n in geo.NAMES.items():
+        names.setdefault(cc, n[0])
+    names.update(SHORT)
+
+    def fill(v):
+        if not v:
+            return "#132033"
+        t = (v / mx) ** 0.5
+        return f"hsl({int(200 - 170 * t)},{int(55 + 30 * t)}%,{int(22 + 30 * t)}%)"
+    paths = "".join(f"<path d='{c['d']}' fill='{fill(by.get(cc, 0))}' stroke='#2C415C' stroke-width='.4'><title>{e(names.get(cc, cc))}: "
+                    f"{by.get(cc, 0):,}</title></path>" for cc, c in w["countries"].items())
+    top = sorted(by.items(), key=lambda kv: -kv[1])[:5]
+    rows = "".join(f"<tr><td>{e(names.get(cc, cc))}</td><td>{n:,}</td></tr>" for cc, n in top) or \
+        "<tr><td colspan=2>No reports with a location yet. The Desk collects them every few hours.</td></tr>"
+    fams = ", ".join(e(f) for f, _ in s["families"][:4])
+    title, lead = SCOPE_TEXT[scope]
+    located = s["total"] - s["unlocated"]
+    note = (f"<p class=note>{s['total']:,} reports in the last 7 days; {located:,} have a server location"
+            + (f", the rest are on websites with no fixed location" if s["unlocated"] else "") + ". "
+            "A location is where a server is registered, not where the people behind it are.</p>")
+    return (f"<section class=card style='margin-top:1.5rem'><h2>{e(title)}</h2><p>{e(lead)}</p>"
+            f"<div class=grid-12><div class=span-7><svg viewBox='{w['viewBox']}' role=img aria-label='{e(title)}' style='width:100%;height:auto'>"
+            f"<path d='{w['sphere']}' fill='#0A1624'/>{paths}</svg></div>"
+            f"<div class=span-5><table><thead><tr><th>Country</th><th>Reports</th></tr></thead><tbody>{rows}</tbody></table>"
+            + (f"<p class=note>Most active: {fams}</p>" if fams else "") + "</div></div>" + note
+            + f"<div class=actions><a class='btn btn-primary' href='{href}'>Open the full map</a></div></section>")

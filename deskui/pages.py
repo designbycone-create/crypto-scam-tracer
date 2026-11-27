@@ -148,6 +148,12 @@ def hub(key):
         links = "".join(f"<a class=nd-tile href='{p}'><b>{e(l)} {shell._new(p)}</b><span>{e(dsc)}</span></a>" for p, l, dsc in pages)
         cards.append(f"<section class=nd-hubgroup><h2>{e(g)}</h2><div class=nd-tiles>{links}</div></section>")
     extra = _usmap() if key == "phone" else ""
+    if key in ("crypto", "defense"):        # each tab's own threat map, like the scam-call map on Phone & Messages
+        try:
+            from threatmap import page as tmpage
+            extra = tmpage.preview("crypto", "/cryptomap") if key == "crypto" else tmpage.preview("cyber", "/cybermap")
+        except Exception as ex:
+            extra = f"<section class=card style='margin-top:1.5rem'><p>The threat map couldn't be drawn ({e(type(ex).__name__)}).</p></section>"
     if key == "phone":
         extra += ("<section class=card style='margin-top:1.5rem'><h2>ScamHunter Guard for your phone</h2>"
                   "<p>The free Android app warns about scam calls while the phone rings, checks messages, and helps report a scam call "

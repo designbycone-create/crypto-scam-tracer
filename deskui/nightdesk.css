@@ -737,3 +737,4 @@ html.nd-phone .nd-page *:has(> select + input) { display: flex; flex-wrap: wrap;
 :root { --nd-min: 1.25rem; }
 html.nd-phone { --nd-min: 1.125rem; }
 .nd-new { font-size: var(--nd-min); }
+.nd-page ul.watcher-list, .nd-page ul.feed, .nd-page ol.steps { padding-left: 0; }

@@ -221,7 +221,9 @@ const G = ForceGraph()(el)
   .nodeCanvasObject((n, ctx, scale) => drawNode(n, ctx, scale));
 G.d3Force('charge').strength(n => n.kind === 'exchange' ? -140 : -55);
 G.d3Force('link').distance(l => 26 + Math.min(70, Math.log10(1 + l.xrp) * 9));
-window.addEventListener('resize', () => G.width(innerWidth).height(innerHeight));
+// size to its own box: inside the Desk the graph sits on a stage under the Desk header
+const fit = () => G.width(el.clientWidth || innerWidth).height(el.clientHeight || innerHeight);
+fit(); window.addEventListener('resize', fit);
 
 function drawNode(n, ctx, scale) {
   const c = COL[n.kind] || '#999', r = n.r, t = performance.now() / 1000;

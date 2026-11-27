@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview — ScamHunter Threat Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@600;700&display=swap">
+<link rel="stylesheet" href="desk.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<header class="shell-head">
+  <div class="brandbar">
+    <a class="brand" href="overview.html">
+      <svg class="mark" width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 3.5 34 9v12.2c0 8.6-6 14.2-14 16.8C12 35.4 6 29.8 6 21.2V9L20 3.5z" fill="#10242A" stroke="#5EEAD4" stroke-width="2"/>
+        <circle cx="20" cy="20" r="4.5" fill="#5EEAD4"/>
+      </svg>
+      <span><span class="brand-name">ScamHunter</span><br><span class="brand-sub">Threat Desk</span></span>
+    </a>
+    <p class="pledge">Free. Never asks for money or a recovery phrase.</p>
+    <div class="desk-status"><span class="dot" aria-hidden="true"></span> Desk online</div>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="overview.html" aria-current="page">Overview</a>
+    <a href="layouts.html#map">Threat Map</a>
+    <a href="hardware-wallet.html">Crypto &amp; Wallets</a>
+    <a href="layouts.html#checker">Phone &amp; Messages</a>
+    <a href="my-website.html">Online Defense</a>
+    <a href="layouts.html#settings">Settings</a>
+  </nav>
+</header>
+<div class="workspace no-menu">
+  <main id="main">
+    <header class="page-head">
+      <h1>Overview</h1>
+      <p class="lead">Everything the Desk is watching. Pick a tab to work in one area.</p>
+    </header>
+    <div class="grid-12">
+      <section class="card span-12" aria-labelledby="watch-h">
+        <div class="spread">
+          <h2 id="watch-h">6 watchers running</h2>
+          <span class="chip ok"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg> OK</span>
+        </div>
+        <ul class="watcher-list">
+          <li><span class="dot" aria-hidden="true"></span> Multi-chain tracer <span class="note">Running</span></li>
+          <li><span class="dot" aria-hidden="true"></span> Responder <span class="note">Running</span></li>
+          <li><span class="dot" aria-hidden="true"></span> Copy-paste guard <span class="note">Running</span></li>
+          <li><span class="dot" aria-hidden="true"></span> Network watcher <span class="note">Running</span></li>
+          <li><span class="dot" aria-hidden="true"></span> Network mapper <span class="note">Running</span></li>
+          <li><span class="dot" aria-hidden="true"></span> Wallet watcher <span class="note">Running</span></li>
+        </ul>
+      </section>
+
+      <section class="card span-7" aria-labelledby="act-h">
+        <h2 id="act-h">Recent activity</h2>
+        <ul class="feed">
+          <li><span class="when">2 min ago</span><span><span class="chip stop"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg> STOP</span> A copied address did not match the one you copied.</span></li>
+          <li><span class="when">18 min ago</span><span><span class="chip careful"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 2 20h20L12 3zm1 6v5h-2V9h2zm0 7v2h-2v-2h2z"/></svg> Be careful</span> A new wallet asked you to open a site that is not on the maker’s list.</span></li>
+          <li><span class="when">1 hour ago</span><span><span class="chip ok"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg> OK</span> No red flags found on the address you checked before sending.</span></li>
+          <li><span class="when">Today</span><span><span class="chip info"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="11" y="10" width="2" height="6" fill="currentColor"/><rect x="11" y="7" width="2" height="2" fill="currentColor"/></svg> Info</span> The phone app last reached this Desk at 8:14.</span></li>
+        </ul>
+      </section>
+
+      <section class="card span-5" aria-labelledby="rise-h">
+        <h2 id="rise-h">Rising threats this week</h2>
+        <article class="card card-quiet">
+          <span class="chip stop"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg> STOP</span>
+          <h3>Fake wallet support</h3>
+          <p>People are told to type a recovery phrase into a “support” chat.</p>
+          <a class="btn btn-secondary" href="layouts.html#map">See this threat</a>
+        </article>
+        <article class="card card-quiet">
+          <span class="chip careful"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 2 20h20L12 3zm1 6v5h-2V9h2zm0 7v2h-2v-2h2z"/></svg> Be careful</span>
+          <h3>Recovery scam calls</h3>
+          <p>Callers claim they can get stolen crypto back for a fee.</p>
+          <a class="btn btn-secondary" href="layouts.html#checker">See this threat</a>
+        </article>
+      </section>
+
+      <section class="card span-12 one-action" aria-labelledby="quick-h">
+        <h2 id="quick-h">Quick check</h2>
+        <p>Paste one thing. The Desk opens the right check.</p>
+        <div class="field">
+          <label for="quick">Paste a wallet address, a phone number, or a message</label>
+          <textarea id="quick" class="paste" placeholder="Example: a wallet address, or the text of a message"></textarea>
+          <p class="hint">One check at a time.</p>
+        </div>
+        <div class="actions"><button class="btn btn-primary" type="button">Check this</button></div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

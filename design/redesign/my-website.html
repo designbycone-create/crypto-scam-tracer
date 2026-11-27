@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My website — ScamHunter Threat Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@600;700&display=swap">
+<link rel="stylesheet" href="desk.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<header class="shell-head">
+  <div class="brandbar">
+    <a class="brand" href="overview.html"><span class="brand-name">ScamHunter</span> <span class="brand-sub">Threat Desk</span></a>
+    <p class="pledge">Free. Never asks for money or a recovery phrase.</p>
+    <div class="desk-status"><span class="dot" aria-hidden="true"></span> Desk online</div>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="overview.html">Overview</a>
+    <a href="layouts.html#map">Threat Map</a>
+    <a href="hardware-wallet.html">Crypto &amp; Wallets</a>
+    <a href="layouts.html#checker">Phone &amp; Messages</a>
+    <a href="my-website.html" aria-current="page">Online Defense</a>
+    <a href="layouts.html#settings">Settings</a>
+  </nav>
+</header>
+<div class="workspace">
+  <nav class="group-menu" aria-label="Pages in Online Defense">
+    <div class="group-label">Protect</div>
+    <a href="layouts.html#settings">Browser extension</a>
+    <a href="layouts.html#settings">Sites I use</a>
+    <a href="layouts.html#checker">Exposure check</a>
+    <a href="layouts.html#checker">Malware &amp; link check</a>
+    <a href="layouts.html#checker">Secrets left in the open</a>
+    <a href="layouts.html#settings">Agent firewall</a>
+    <a href="#soon" aria-current="page">My website <span class="chip new">New</span></a>
+  </nav>
+  <main id="main">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="overview.html">Online Defense</a> / <span>Protect</span> / <span aria-current="page">My website</span></nav>
+    <header class="page-head">
+      <p class="kicker">State 1 · ship this</p>
+      <h1>My website</h1>
+      <p class="lead">A later check for a website you own.</p>
+    </header>
+    <article class="card" id="soon">
+      <span class="chip soon">Coming soon</span>
+      <h2>PatchPulse — Coming soon</h2>
+      <p>PatchPulse watches a website you own. It looks for unwanted changes, downtime, and known weak spots.</p>
+      <p><a href="https://patchpulsehq.com">patchpulsehq.com</a></p>
+      <p class="hint">Opens the PatchPulse site in your browser.</p>
+      <p><strong>PatchPulse is a separate paid product.</strong></p>
+      <p><a href="overview.html">Other Online Defense tools</a></p>
+    </article>
+
+    <header class="page-head" style="margin-top:3rem">
+      <p class="kicker">State 2 · later</p>
+      <h1>My website</h1>
+      <p class="lead">The coming-soon card is gone. Each site is one card.</p>
+    </header>
+    <div class="actions"><button class="btn btn-primary" type="button">Check again</button></div>
+    <div class="stack" style="margin-top:1rem">
+      <article class="card">
+        <p class="mono">example.com</p>
+        <p class="hint">Last check today at 8:10</p>
+        <span class="chip ok"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg> All clear</span>
+        <div class="actions"><button class="btn btn-secondary" type="button">See details</button></div>
+      </article>
+      <article class="card">
+        <p class="mono">shop.example.com</p>
+        <p class="hint">Last check today at 8:10</p>
+        <span class="chip careful"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3 2 20h20L12 3zm1 6v5h-2V9h2zm0 7v2h-2v-2h2z"/></svg> Needs attention</span>
+        <div class="actions"><button class="btn btn-secondary" type="button">See details</button></div>
+      </article>
+      <article class="card">
+        <p class="mono">pay.example.com</p>
+        <p class="hint">Last check today at 8:12</p>
+        <span class="chip stop"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg> Needs attention now</span>
+        <div class="actions"><button class="btn btn-secondary" type="button">See details</button></div>
+      </article>
+      <article class="result result-down">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="none" stroke="#E4F0FC" stroke-width="2" d="M8 12h8M10 8l-4 4 4 4M14 8l4 4-4 4"/></svg></div>
+        <div>
+          <p class="mono" style="margin:0">blog.example.com</p>
+          <p class="hint">Last check today at 8:12</p>
+          <h2>Website is down</h2>
+          <button class="btn btn-secondary" type="button">See details</button>
+        </div>
+      </article>
+    </div>
+  </main>
+</div>
+</body>
+</html>

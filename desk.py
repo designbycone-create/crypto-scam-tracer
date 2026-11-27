@@ -18,6 +18,7 @@ Standard-library only.
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -26,6 +27,7 @@ import time
 import webbrowser
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import quote
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATUS_FILE = "desk_status.json"
@@ -505,9 +507,9 @@ class Handler(BaseHTTPRequestHandler):
         if isinstance(body, str) and ctype.startswith("text/html"):
             try:
                 from deskui import shell
-                body = shell.wrap(body, self.path.partition("?")[0])
-            except Exception:
-                pass
+                body = shell.wrap(body, self.path.partition("?")[0], phone=self.headers.get("X-ScamHunter-Via") == "phone")
+            except Exception as ex:
+                print(f"(page shown without the Desk header: {type(ex).__name__}: {ex})")
         data = body if isinstance(body, bytes) else body.encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", ctype)
@@ -540,11 +542,18 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             web = None
         from freezekit import setup as _setup
+        if path.startswith("/static/fonts/"):
+            name = path.rsplit("/", 1)[1]
+            fdir = os.path.join(HERE, "deskui", "static", "fonts")
+            if re.fullmatch(r"[a-z0-9-]+\.woff2", name) and name in os.listdir(fdir):
+                with open(os.path.join(fdir, name), "rb") as f:
+                    return self._send(f.read(), "font/woff2", {"Cache-Control": "max-age=31536000, immutable"})
+            return self._send("Not found", "text/plain", code=404)
         if path in ("/", "/index.html"):
             if _setup.needed():
                 return self._redirect("/setup")
             from deskui import pages
-            return self._send(pages.overview(), "text/html; charset=utf-8")
+            return self._send(pages.overview(phone=self.headers.get("X-ScamHunter-Via") == "phone"), "text/html; charset=utf-8")
         if path == "/case":
             if _setup.needed():
                 return self._redirect("/setup")

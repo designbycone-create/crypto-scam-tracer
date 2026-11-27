@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page types — ScamHunter Threat Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@600;700&display=swap">
+<link rel="stylesheet" href="desk.css">
+</head>
+<body>
+<a class="skip" href="#checker">Skip to the page</a>
+<header class="shell-head">
+  <div class="brandbar">
+    <a class="brand" href="overview.html"><span class="brand-name">ScamHunter</span> <span class="brand-sub">Threat Desk</span></a>
+    <p class="pledge">Free. Never asks for money or a recovery phrase.</p>
+    <div class="desk-status"><span class="dot" aria-hidden="true"></span> Desk online</div>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="overview.html">Overview</a>
+    <a href="#map">Threat Map</a>
+    <a href="hardware-wallet.html">Crypto &amp; Wallets</a>
+    <a href="#checker" aria-current="page">Phone &amp; Messages</a>
+    <a href="my-website.html">Online Defense</a>
+    <a href="#settings">Settings</a>
+  </nav>
+</header>
+<div class="workspace">
+  <nav class="group-menu" aria-label="Pages in Phone and Messages">
+    <div class="group-label">Check</div>
+    <a href="#checker" aria-current="page">Check a phone number</a>
+    <a href="#checker">Is this message a scam?</a>
+  </nav>
+  <main>
+    <section id="checker">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="overview.html">Phone &amp; Messages</a> / <span aria-current="page">Check a phone number</span></nav>
+      <header class="page-head">
+        <p class="kicker">Checker with a result</p>
+        <h1>Check a phone number</h1>
+        <p class="lead">Has this number been reported as a scam or a robocall?</p>
+      </header>
+      <div class="card one-action">
+        <div class="field">
+          <label for="num">Phone number</label>
+          <input id="num" type="text" inputmode="tel" value="+1 202 555 0148">
+        </div>
+        <button class="btn btn-primary" type="button">Check this number</button>
+      </div>
+      <article class="result result-careful" style="margin-top:1.5rem">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="#FFE3A3" d="M12 3 2 20h20L12 3zm1 6v5h-2V9h2zm0 7v2h-2v-2h2z"/></svg></div>
+        <div>
+          <h2>Be careful</h2>
+          <p>This number has reports from people who were called about a fake bank problem.</p>
+          <ul class="why"><li>14 reports in the past month</li><li>The callers said they were from a bank</li></ul>
+          <div class="actions"><a class="btn btn-primary" href="#checker">What to do if they call</a></div>
+        </div>
+      </article>
+      <p class="caption">Same layout for: Check before you send, Wallet shield, Claim checker, Is this message a scam?, Malware &amp; link check, Look up a scammer, Exposure check, Secrets left in the open.</p>
+    </section>
+
+    <section id="table">
+      <header class="page-head" style="margin-top:3rem">
+        <p class="kicker">Data table</p>
+        <h1>Network table</h1>
+        <p class="lead">Every wallet in the network, in words. The graph shows the same rows as a picture.</p>
+      </header>
+      <div class="actions"><button class="btn btn-primary" type="button">Prepare a freeze request</button></div>
+      <div class="field" style="margin-top:1rem"><label for="filter">Filter this list</label><input id="filter" type="text" placeholder="A name or part of an address"></div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Role</th><th>Address</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>First hop</td><td class="addr">0x742d35Cc6634C0532925a3b844Bc454e4438f44e0000000000000000</td><td><span class="chip stop">STOP</span></td></tr>
+            <tr><td>Cash-out point</td><td class="addr">bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq</td><td><span class="chip careful">Be careful</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Same layout for: Freeze requests, Officer packets, Court evidence, Threat intel.</p>
+    </section>
+
+    <section id="map">
+      <header class="page-head" style="margin-top:3rem">
+        <p class="kicker">Map</p>
+        <h1>Threat Map</h1>
+        <p class="lead">Live reports the Desk has already collected.</p>
+      </header>
+      <div class="filters">
+        <button class="btn btn-primary" type="button">Past day</button>
+        <button class="btn btn-secondary" type="button">Past week</button>
+        <label><input type="checkbox" checked> Fake support</label>
+        <label><input type="checkbox" checked> Wallet drainer</label>
+        <label><input type="checkbox"> Recovery scam <span class="note">Hidden</span></label>
+      </div>
+      <div class="map-layout">
+        <div class="map-canvas" role="img" aria-label="Schematic map. Pin 1 is a STOP report. Pin 2 is Be careful. The list beside the map has the same reports in words.">
+          <span class="pin" style="left:22%;top:38%;color:#FFD0D6;background:#3A1218">1 STOP</span>
+          <span class="pin" style="left:58%;top:46%;color:#FFE3A3;background:#33260C">2 Be careful</span>
+        </div>
+        <aside class="card">
+          <h2>Threat families</h2>
+          <div class="family"><span>Fake support</span><span class="chip stop">STOP · 4 reports</span></div>
+          <div class="family"><span>Wallet drainer</span><span class="chip careful">Be careful · 2 reports</span></div>
+          <div class="family"><span>Recovery scam</span><span class="note">Hidden</span></div>
+        </aside>
+      </div>
+      <div class="state-panel" style="margin-top:1.5rem">
+        <h2>Still learning</h2>
+        <p>The Desk is gathering live threat reports. The map fills in as reports come in. You can still run a check.</p>
+        <a class="btn btn-primary" href="overview.html">Go to the quick check</a>
+      </div>
+    </section>
+
+    <section id="form">
+      <header class="page-head" style="margin-top:3rem">
+        <p class="kicker">Form</p>
+        <h1>Case setup</h1>
+        <p class="lead">Your case details stay on this computer.</p>
+      </header>
+      <form class="card">
+        <div class="field"><label for="case">Case name</label><p class="hint">Required</p><input id="case" type="text" value="March wallet case"></div>
+        <div class="field"><label for="chain">Where the funds were</label><input id="chain" type="text" value="A Bitcoin wallet"></div>
+        <button class="btn btn-primary" type="button">Save case</button>
+      </form>
+      <article class="result result-info" style="margin-top:1rem">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#D6E4FF" stroke-width="2"/><rect x="11" y="10" width="2" height="6" fill="#D6E4FF"/><rect x="11" y="7" width="2" height="2" fill="#D6E4FF"/></svg></div>
+        <div><h2>Info</h2><p>Saved on this computer at 8:40.</p></div>
+      </article>
+      <p class="caption">Same layout for: Alerts to your phone, Share ScamHunter, Watch this wallet, Custody record, Phone app pairing.</p>
+    </section>
+
+    <section id="settings">
+      <header class="page-head" style="margin-top:3rem">
+        <p class="kicker">Settings</p>
+        <h1>Settings</h1>
+        <p class="lead">Where alerts go, updates, and this Desk’s phone app.</p>
+      </header>
+      <div class="settings-list">
+        <div class="settings-row"><div><h2>Alerts to your phone</h2><p>Warnings can go to Telegram, ntfy, or email.</p></div><button class="btn btn-secondary" type="button">Edit alerts</button></div>
+        <div class="settings-row"><div><h2>Updates</h2><p>Installed version <span class="mono">2026.11</span>. <span class="chip info">Info · You have the current update</span></p></div><button class="btn btn-primary" type="button">Check for updates</button></div>
+        <div class="settings-row"><div><h2>Copy-paste guard</h2><p>Stops a copied address from being swapped.</p></div><button class="toggle on" type="button" aria-pressed="true">On</button></div>
+        <div class="settings-row"><div><h2>Phone app</h2><p><span class="chip ok">Desk online</span> Pair the phone through your own Worker.</p></div><button class="btn btn-secondary" type="button">Show pairing code</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

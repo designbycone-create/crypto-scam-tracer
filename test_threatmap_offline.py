@@ -229,12 +229,33 @@ try:
     h2 = page.page()
     check("script-breakout escaped", "</script><script>alert(1)" not in h2)
 
+    # ---------- per-tab maps: crypto (Crypto & Wallets) and cyber (Online Defense) ----------
+    mix = [{"id": f"m{k}", "src": "threatfox", "layer": lay, "title": t, "detail": "", "url": "", "time": iso(now), "cc": cc, "family": fam}
+           for k, (lay, t, cc, fam) in enumerate([("botnet", "Vidar: botnet C2", "DE", "Vidar"), ("malware", "Malware download site: SalatStealer", "FR", "SalatStealer"),
+                                                  ("botnet", "Mirai: botnet C2", "CN", "Mirai"), ("news", "Hackers drain $40M from a crypto exchange", None, None),
+                                                  ("exploited", "CVE-2026-0001 in a router", None, None), ("news", "New ransomware gang", None, None)])]
+    with open(feeds.ITEMS, "w") as f:
+        json.dump(mix, f)
+    os.utime(feeds.ITEMS, (now.timestamp() + 20, now.timestamp() + 20))
+    cs, cy = feeds.summary(24, None, "crypto"), feeds.summary(24, None, "cyber")
+    check("crypto map: wallet stealers and crypto news only", cs["total"] == 3 and set(cs["countries"]) == {"DE", "FR"})
+    check("cyber map: servers, malware and flaws only", cy["total"] == 4 and set(cy["countries"]) == {"DE", "FR", "CN"} and "news" not in cy["layers"])
+    check("unknown scope falls back to everything", feeds.summary(24, None, "bogus")["total"] == 6)
+    check("json api passes the scope", json.loads(page.json_api("hours=24&scope=crypto"))["total"] == 3)
+    pc, pv = page.page("crypto"), page.page("cyber")
+    check("crypto map page", "<h1>Crypto threat map</h1>" in pc and 'window.__S="crypto"' in pc)
+    check("cyber map page offers only its layers", "<h1>Cyber threat map</h1>" in pv and "News &amp; alerts" not in pv.split("id=layers")[1][:600])
+    pr = page.preview("crypto", "/cryptomap")
+    check("preview card: map, top countries, link, honest location note", "<svg" in pr and "Germany" in pr and "/cryptomap" in pr
+          and "not where the people behind it are" in pr)
+
     # ---------- shell tab + desk routes ----------
     from deskui import shell
     check("tab listed", any(s_[0] == "threatmap" for s_ in shell.SECTIONS))
     check("tab after overview", [s_[0] for s_ in shell.SECTIONS][:2] == ["overview", "threatmap"])
     src = open(os.path.join(ROOT, "desk.py"), encoding="utf-8").read()
-    check("routes present", '"/threatmap"' in src and '"/threatmap.json"' in src)
+    check("routes present", '"/threatmap"' in src and '"/threatmap.json"' in src and '"/cryptomap"' in src and '"/cybermap"' in src)
+    check("maps filed under their tabs", shell.section_for("/cryptomap")[0] == "crypto" and shell.section_for("/cybermap")[0] == "defense")
     dsrc = open(os.path.join(ROOT, "responder", "daemon.py"), encoding="utf-8").read()
     check("responder job scheduled", "job_threatmap" in dsrc and "(1800, job_threatmap" in dsrc)
     gi = open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read()

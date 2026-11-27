@@ -314,12 +314,34 @@ def refresh(force=False, log=print, data_dir="."):
 
 # ---------------------------------------------------------------- what the map shows ----
 
-def summary(window_hours=24, layers=None):
+# ---------------------------------------------------------------- map scopes ----
+# The Crypto & Wallets tab's map: servers and alerts for malware families documented to steal cryptocurrency
+# (wallet stealers, clippers, drainer kits, the North Korean campaigns aimed at crypto firms and developers;
+# families as described by Malpedia, Fraunhofer FKIE), plus news and posts about crypto theft and scams.
+# Server locations are where a server is registered, not where the people behind it are.
+CRYPTO_FAMILIES = {f.lower() for f in (
+    "SalatStealer", "Vidar", "Lumma", "LummaC2", "Lumma Stealer", "StealC", "Rhadamanthys", "RedLine", "RedLine Stealer", "Raccoon",
+    "Raccoon Stealer", "Atomic Stealer", "AMOS", "CryptBot", "MetaStealer", "RisePro", "Meduza Stealer", "Phemedrone", "Acreed",
+    "Laplas Clipper", "clipper", "drainer", "Inferno Drainer", "Angel Drainer", "TraderTraitor", "Lazarus", "DEVPOPPER", "BeaverTail",
+    "InvisibleFerret", "OtterCookie", "pig butchering", "FaceStealer")}
+CRYPTO_WORDS = re.compile(r"crypto|bitcoin|ethereum|\bxrp\b|stablecoin|\busdt\b|tether|wallet drain|drainer|clipper|seed phrase|recovery phrase|"
+                          r"pig.butcher|exchange hack|\bdefi\b|web3|binance|coinbase|kraken|bybit|tradertraitor|lazarus", re.I)
+
+
+def is_crypto(i):
+    return (i.get("family") or "").lower() in CRYPTO_FAMILIES or bool(CRYPTO_WORDS.search(f"{i.get('title', '')} {i.get('family') or ''}"))
+
+
+SCOPES = {"all": lambda i: True, "cyber": lambda i: i["layer"] in ("botnet", "malware", "exploited"), "crypto": is_crypto}
+
+
+def summary(window_hours=24, layers=None, scope="all"):
     items = load_items()
     now = _now()
     since = _iso(now - timedelta(hours=window_hours))
     layers = set(layers or LAYERS)
-    win = [i for i in items if i["time"] >= since and i["layer"] in layers]
+    keep = SCOPES.get(scope, SCOPES["all"])
+    win = [i for i in items if i["time"] >= since and i["layer"] in layers and keep(i)]
     by_cc, by_fam, by_layer = {}, {}, {}
     for i in win:
         for cc in (i.get("ccs") or ([i["cc"]] if i.get("cc") else [])):
@@ -329,9 +351,9 @@ def summary(window_hours=24, layers=None):
         if i.get("family"):
             by_fam[i["family"]] = by_fam.get(i["family"], 0) + 1
         by_layer[i["layer"]] = by_layer.get(i["layer"], 0) + 1
-    rising = _rising(items, now, layers)
+    rising = _rising(items, now, layers, keep)
     st = _state()
-    return {"generated": _iso(now), "window_hours": window_hours, "total": len(win), "unlocated": sum(1 for i in win if not i.get("cc")),
+    return {"generated": _iso(now), "window_hours": window_hours, "scope": scope if scope in SCOPES else "all", "total": len(win), "unlocated": sum(1 for i in win if not i.get("cc")),
             "countries": by_cc, "families": sorted(by_fam.items(), key=lambda kv: -kv[1])[:10], "layers": by_layer,
             "rising": rising, "items": win[:300], "learning_since": _learning(items, now),
             "sources": [{"id": s[0], "name": s[1], "license": s[4], "link": s[5], "status": (st.get(s[0]) or {}).get("status", "not fetched yet"),
@@ -354,14 +376,14 @@ def _learning(items, now):
     return min(young) if young else None
 
 
-def _rising(items, now, layers):
+def _rising(items, now, layers, keep=lambda i: True):
     """Countries and malware families clearly above their own normal: last 24h >= 3 and >= 2x the 7-day daily average."""
     d0 = _iso(now - timedelta(hours=24))
     d7 = _iso(now - timedelta(days=8))
     ready = {s for s, t in _first_seen(items).items() if t <= _iso(now - timedelta(days=7))}     # a source needs a week of history first
     cur, base = {}, {}
     for i in items:
-        if i["layer"] not in layers or i["layer"] == "exploited" or i["src"] not in ready:
+        if i["layer"] not in layers or i["layer"] == "exploited" or i["src"] not in ready or not keep(i):
             continue
         keys = [("country", c) for c in (i.get("ccs") or ([i["cc"]] if i.get("cc") else []))] + ([("family", i["family"])] if i.get("family") else [])
         bucket = cur if i["time"] >= d0 else base if i["time"] >= d7 else None

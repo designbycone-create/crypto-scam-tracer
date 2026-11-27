@@ -244,7 +244,8 @@ def services():
             st = {}
     svc = st.get("services", {})
     return {"alive": sum(1 for v in svc.values() if v.get("alive")), "total": len(svc),
-            "down": [k for k, v in svc.items() if not v.get("alive") and not v.get("skipped")]}
+            "down": [k for k, v in svc.items() if not v.get("alive") and not v.get("skipped")],
+            "list": [{"name": k, "alive": bool(v.get("alive")), "skipped": bool(v.get("skipped"))} for k, v in svc.items()]}
 
 
 def live(days=30):

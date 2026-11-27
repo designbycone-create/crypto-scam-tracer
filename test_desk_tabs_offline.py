@@ -22,16 +22,20 @@ r.append(ok(shell.section_for("/prescreen")[0] == "crypto" and shell.section_for
             "pages land in the right tab (crypto / phone / defense / settings)"))
 
 # --- header placement
-w = shell.wrap("<!doctype html><html><head><style>x</style></head><body class=a><h1>Hi</h1></body></html>", "/msgcheck")
-r.append(ok(w.index("id=sh-shell") > w.index("<body class=a>") and w.index("id=sh-shell") < w.index("<h1>"), "header goes right after <body>"))
-w2 = shell.wrap("<!doctype html><meta charset=utf-8><style>b</style><h2>Checking</h2>", "/prescreen")
-r.append(ok(w2.index("id=sh-shell") > w2.index("</style>") and w2.index("id=sh-shell") < w2.index("<h2>"), "pages without <body> still get the header"))
+w = shell.wrap("<!doctype html><html><head><style>x{}</style></head><body class=a onload=go()><h1>Hi</h1></body></html>", "/msgcheck")
+r.append(ok(w.index("class=shell-head") > w.index("<body") and w.index("class=shell-head") < w.index("<h1>Hi"), "header goes right after <body>"))
+r.append(ok("onload=go()" in w and "@layer legacy{x{}}" in w, "the page keeps its body handlers; its old styles sit in the lower layer"))
+w2 = shell.wrap("<!doctype html><meta charset=utf-8><style>b{}</style><h2>Checking</h2>", "/prescreen")
+r.append(ok(w2.index("class=shell-head") < w2.index("<h2>Checking"), "pages without <body> still get the header"))
 r.append(ok(shell.wrap("<html><body>packet</body></html>", "/kit/_case/officer_packet.html") == "<html><body>packet</body></html>",
             "printable officer packets stay clean (no header)"))
-r.append(ok(shell.wrap(w, "/msgcheck").count("id=sh-shell") == 1, "never added twice"))
-h = shell.header("/numbercheck")
-r.append(ok("sh-tab on' href='/phone'" in h and "sh-pill on' href='/numbercheck'" in h and "/msgcheck" in h and "/prescreen" not in h,
+r.append(ok(shell.wrap(w, "/msgcheck").count("class=shell-head") == 1, "never added twice"))
+h = shell.header("/numbercheck") + shell.menu("/numbercheck")
+r.append(ok("href='/phone' aria-current=page" in h and "href='/numbercheck' title=" in h and "/msgcheck" in h and "/prescreen" not in h,
             "Phone tab shows only its own pages, with the current one highlighted"))
+r.append(ok("aria-current=page><span>Check a phone number" in shell.menu("/numbercheck"), "the current page is marked in the menu"))
+ph = shell.wrap("<html><body><h1>Hi</h1></body></html>", "/numbercheck", phone=True)
+r.append(ok("class=tabbar" in ph and "class=shell-head" not in ph and "Back to Phone &amp; Messages" in ph, "phone layout: bottom bar and Back, no desktop header"))
 
 # --- data: noise filtered, duplicates collapsed, UTC converted, sensitive text never logged
 with open("mc_events.log", "w") as f:
@@ -58,7 +62,8 @@ s = data.services()
 r.append(ok(s["total"] == 2 and s["down"] == ["Wallet watcher"], "a status file with a second copy glued on is read correctly"))
 os.remove("desk_status.json")
 from deskui import pages
-r.append(ok("WATCHER STATUS UNKNOWN" in pages.JS and "s.total>0" in pages.JS, "no status file: the page says UNKNOWN, never 'all systems live'"))
+ov = pages.overview()
+r.append(ok("couldn't read its watcher status" in ov and "watchers running" not in ov, "no status file: the page says it can't tell, never 'all running'"))
 
 # --- the Desk status writer: reproduce the collision that corrupted the file on Matt's PC.
 # Writer 1 has opened the file and is about to write a SHORT status; meanwhile writer 2 writes a LONG one.
@@ -105,8 +110,8 @@ bad = []
 for p in ["/", "/case", "/crypto", "/phone", "/defense", "/settings", "/numbercheck", "/msgcheck", "/prescreen", "/shield",
           "/clipguard", "/exposure", "/agentguard", "/extension", "/sitewatch", "/evidence", "/requests", "/alerts", "/update"]:
     code, body = get(p)
-    if code != 200 or body.count("id=sh-shell") != 1:
-        bad.append((p, code, body.count("id=sh-shell")))
+    if code != 200 or body.count("class=shell-head") != 1:
+        bad.append((p, code, body.count("class=shell-head")))
 r.append(ok(not bad, f"every page loads with exactly one header {bad or ''}"))
 code, body = get("/live.json?days=7")
 d = json.loads(body) if code == 200 else {}
@@ -125,7 +130,8 @@ def post(p, host):
 r.append(ok(post("/msgcheck", "evil.example") == 403 and post("/api/agentguard/decide", "evil.example") == 403,
             "form posts and API calls under another host name are refused"))
 code, body = get("/")
-r.append(ok("window.__D=" in body and "<\\/" not in body.split("window.__D=")[1][:0] and "Live map" in body, "Overview has the map and its data built in"))
+r.append(ok("Quick check" in body and "Recent activity" in body and "Rising threats this week" in body, "Overview has the watchers, activity, rising threats and quick check"))
+r.append(ok("Scam-call reports by state" in get("/phone")[1], "Phone & Messages has the scam-call map by state"))
 code, body = get("/case")
 r.append(ok("<h1>My case</h1>" in body and "<div class=nav" not in body, "My case page keeps its content, old one-line menu removed"))
 srv.shutdown()

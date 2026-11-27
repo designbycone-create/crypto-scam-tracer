@@ -22,6 +22,7 @@ PRIVATE = [("config.json", "your settings and keys (keys are also encrypted to y
            ("submissions.json, freeze_kits/", "freeze requests and what you've sent to exchanges"),
            ("evidence_store/, evidence_bundles/", "your evidence"),
            ("prescreen_log.jsonl, desk_activity.jsonl", "what you've checked"),
+           ("hardware_wallets/, mywallets_state.json", "your hardware wallet custody records and the wallets you asked the Desk to watch"),
            ("*.log, network and map files", "watcher history about your case")]
 
 INSTALL_CMD = """@echo off

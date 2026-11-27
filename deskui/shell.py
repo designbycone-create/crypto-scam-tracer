@@ -5,6 +5,10 @@ defense, and settings each have their own tab, their own landing page and their 
 To add a page: add (path, label, one-line description) to its section's group below.
 """
 import html
+import os
+import re
+
+from deskui import icons
 
 # (key, tab label, landing page, [(group label, [(path, label, description), ...]), ...])
 SECTIONS = [
@@ -12,6 +16,7 @@ SECTIONS = [
     ("threatmap", "Threat Map", "/threatmap", []),
     ("crypto", "Crypto & Wallets", "/crypto", [
         ("Protect", [
+            ("/hwcheck", "New hardware wallet check", "Seven short questions about a new wallet, before you set it up."),
             ("/prescreen", "Check before you send", "Background check on any address before you send crypto to it."),
             ("/shield", "Wallet shield", "Find risky approvals in your wallet and see if it is being drained."),
             ("/clipguard", "Copy-paste guard", "Stops a copied address from being swapped for a scammer's."),
@@ -25,6 +30,7 @@ SECTIONS = [
             ("/evidence", "Court evidence", "Signed, verifiable evidence bundles."),
         ]),
         ("Investigate", [
+            ("/cryptomap", "Crypto threat map", "Where malware that steals crypto wallets is being run from, and crypto theft news."),
             ("/graph", "Network graph", "Interactive map of the wallets and exchanges behind the scam."),
             ("/network", "Network table", "Every wallet in the network, as a table."),
             ("/radar", "Scam radar", "New scam wallets and patterns seen on-chain."),
@@ -40,6 +46,9 @@ SECTIONS = [
         ]),
     ]),
     ("defense", "Online Defense", "/defense", [
+        ("Watch", [
+            ("/cybermap", "Cyber threat map", "Where the servers behind today's cyber attacks are: botnets, malware sites, exploited flaws."),
+        ]),
         ("Protect", [
             ("/extension", "Browser extension", "Blocks address swaps, drainer pages and known attack scripts."),
             ("/sitewatch", "Sites I use", "Watches the websites you use for injected attack code."),
@@ -47,6 +56,7 @@ SECTIONS = [
             ("/malware", "Malware & link check", "Windows Defender status, check a download before opening it or a link before clicking it."),
             ("/secretscan", "Secrets left in the open", "Find seed phrases, private keys and passwords saved in files on this computer."),
             ("/agentguard", "Agent firewall", "Stops AI agents from doing risky things without your OK."),
+            ("/website", "My website", "PatchPulse, coming soon: watches websites you own for flaws attackers are using."),
         ]),
     ]),
     ("settings", "Settings", "/settings", [
@@ -84,62 +94,149 @@ def section(key):
     return next(s for s in SECTIONS if s[0] == key)
 
 
-CSS = """
-#sh-shell{all:initial;display:block;box-sizing:border-box;width:100vw;margin:0 0 18px calc(50% - 50vw);
- background:#070b14;border-bottom:1px solid #1c2a40;font:16px/1.4 'Segoe UI',system-ui,Arial,sans-serif;color:#e8eef9;
- position:sticky;top:0;z-index:9999}
-#sh-shell *{box-sizing:border-box;font-family:inherit}
-#sh-shell .sh-top{display:flex;align-items:center;gap:6px;padding:8px 16px 0;overflow-x:auto;scrollbar-width:none}
-#sh-shell .sh-brand{font-weight:800;letter-spacing:.08em;color:#5fe1ff;margin-right:14px;white-space:nowrap;text-decoration:none;font-size:16px}
-#sh-shell .sh-tab{white-space:nowrap;color:#a9b8d0;text-decoration:none;padding:10px 16px;border-radius:10px 10px 0 0;font-size:17px;font-weight:600;
- border:1px solid transparent;border-bottom:none}
-#sh-shell .sh-tab:hover{color:#fff;background:#0f1a2c}
-#sh-shell .sh-tab.on{color:#fff;background:#0f1a2c;border-color:#1c2a40;box-shadow:inset 0 3px 0 #22d3ee}
-#sh-shell .sh-sub{display:flex;flex-wrap:wrap;gap:6px 6px;align-items:center;padding:10px 16px;background:#0f1a2c}
-#sh-shell .sh-grp{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#6b7f9e;margin:0 4px 0 10px}
-#sh-shell .sh-grp:first-child{margin-left:0}
-#sh-shell .sh-pill{white-space:nowrap;color:#cfe3ff;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid #23395a;font-size:15px}
-#sh-shell .sh-pill:hover{border-color:#22d3ee;color:#fff}
-#sh-shell .sh-pill.on{background:#22d3ee;border-color:#22d3ee;color:#04111c;font-weight:700}
-#sh-shell .sh-pledge{margin-left:auto;font-size:12px;color:#7ee2a8;white-space:nowrap;padding-left:12px}
-body{margin-top:0!important}
-@media(max-width:820px){#sh-shell .sh-top{flex-wrap:wrap;padding:8px 10px 0}#sh-shell .sh-brand{width:100%;margin:0 0 4px}
- #sh-shell .sh-tab{padding:9px 12px;font-size:16px;border-radius:10px 10px 0 0}#sh-shell .sh-pledge{display:none}
- #sh-shell .sh-sub{padding:8px 10px}#sh-shell .sh-grp{width:100%;margin:6px 0 0}}
-@media print{#sh-shell{display:none}}
-"""
+OWN = "/*nd-own*/"
+# full-screen tools: shown on a stage under the header, without the page menu
+STAGE = ("/graph",)
+# menu items that get a "New" badge
+NEW = {"/hwcheck", "/website", "/cryptomap", "/cybermap"}
+# bottom bar in the phone app: (label, icon, address, sections it covers)
+PHONE_TABS = [("Home", "home", "/", ("overview", "settings")), ("Map", "map", "/threatmap", ("threatmap",)),
+              ("Crypto", "crypto", "/crypto", ("crypto",)), ("Phone", "phone", "/phone", ("phone",)),
+              ("Defense", "defense", "/defense", ("defense",))]
+HERE = os.path.dirname(os.path.abspath(__file__))
+_CSS = None
+
+
+def css():
+    global _CSS
+    if _CSS is None:
+        with open(os.path.join(HERE, "nightdesk.css"), encoding="utf-8") as f:
+            _CSS = f.read()
+    return _CSS
+
+
+esc = lambda s: html.escape(str(s), quote=True)
+
+
+def _new(p):
+    return f"<span class=nd-new>{icons.svg('spark', 16)}New</span>" if p in NEW else ""
+
+
+def _label(path):
+    for _k, _t, _h, groups in SECTIONS:
+        for g, pages in groups:
+            for p, lbl, _d in pages:
+                if p == path:
+                    return g, lbl
+    return None, None
 
 
 def header(path):
+    key, _ = section_for(path)
+    tabs = "".join(f"<a href='{h}'" + (" aria-current=page" if k == key else "") + f">{esc(t)}</a>" for k, t, h, _ in SECTIONS)
+    return ("<header class=shell-head><div class=brandbar>"
+            f"<a class=brand href='/'><span class=mark>{icons.svg('shield', 40)}</span><span><span class=brand-name>ScamHunter</span>"
+            "<br><span class=brand-sub>Threat Desk</span></span></a>"
+            "<p class=pledge>Free. Never asks for money or a recovery phrase.</p>"
+            "<span class=desk-status><span class=dot></span>Desk online</span></div>"
+            f"<nav class=tabs aria-label='Sections'>{tabs}</nav></header>")
+
+
+def menu(path):
     key, current = section_for(path)
-    esc = lambda s: html.escape(s, quote=True)
-    tabs = "".join(f"<a class='sh-tab{' on' if k == key else ''}' href='{h}'>{esc(t)}</a>" for k, t, h, _ in SECTIONS)
-    sub = ""
-    if key and section(key)[3]:          # sections with sub-pages get the pill bar
-        _, tab, home, groups = section(key)
-        bits = [f"<a class='sh-pill{' on' if current is None else ''}' href='{home}'>All {esc(tab)}</a>"]
-        for g, pages in groups:
-            bits.append(f"<span class=sh-grp>{esc(g)}</span>")
-            bits += [f"<a class='sh-pill{' on' if p == current else ''}' href='{p}' title='{esc(d)}'>{esc(lbl)}</a>" for p, lbl, d in pages]
-        sub = "<div class=sh-sub>" + "".join(bits) + "</div>"
-    return (f"<style>{CSS}</style><div id=sh-shell><div class=sh-top><a class=sh-brand href='/'>&#128737;&#65039; SCAMHUNTER <span style='color:#8ea3c2;font-weight:600'>THREAT DESK</span></a>{tabs}"
-            f"<span class=sh-pledge>Free &middot; never asks for money or a seed phrase</span></div>{sub}</div>")
+    if not key or not section(key)[3]:
+        return ""
+    _, tab, home, groups = section(key)
+    out = [f"<nav class=group-menu aria-label='{esc(tab)} pages'>"]
+    for g, pages in groups:
+        out.append(f"<p class=group-label>{esc(g)}</p>")
+        out += [f"<a href='{p}' title='{esc(d)}'" + (" aria-current=page" if p == current else "") + f"><span>{esc(lbl)}</span>{_new(p)}</a>"
+                for p, lbl, d in pages]
+    return "".join(out) + "</nav>"
 
 
-def wrap(body, path):
-    """Put the Desk header at the top of an HTML page (no-op for printable/downloadable pages)."""
-    if any(path.startswith(b) for b in BARE) or "id=sh-shell" in body:
+def crumbs(path):
+    key, current = section_for(path)
+    if not key or not current:
+        return ""
+    _, tab, home, _g = section(key)
+    g, lbl = _label(current)
+    return (f"<nav class=nd-crumbs aria-label='You are here'><a href='{home}'>{esc(tab)}</a><span aria-hidden=true>/</span>"
+            f"<span>{esc(g)}</span><span aria-hidden=true>/</span><span aria-current=page>{esc(lbl)}</span></nav>")
+
+
+def phone_back(path):
+    key, current = section_for(path)
+    if not key or key == "overview":
+        return ""
+    _, tab, home, _g = section(key)
+    if current is None and key != "settings":
+        return ""
+    target, name = (home, tab) if current else ("/", "Home")
+    return f"<a class=nd-back href='{target}'>&larr;&nbsp;Back to {esc(name)}</a>"
+
+
+def tabbar(path):
+    key, _ = section_for(path)
+    items = "".join(f"<a href='{h}'" + (" aria-current=page" if key in keys else "") + f">{icons.svg(ic, 24, 'currentColor')}<span>{lbl}</span></a>"
+                    for lbl, ic, h, keys in PHONE_TABS)
+    return f"<nav class=tabbar aria-label='Sections'>{items}</nav>"
+
+
+_PHONE_JS = ("<script>document.querySelectorAll('.nd-page table').forEach(function(t){var h=[].map.call(t.querySelectorAll('thead th'),"
+             "function(x){return x.textContent.trim()});if(!h.length)return;t.querySelectorAll('tbody tr').forEach(function(r){"
+             "[].forEach.call(r.children,function(c,i){if(h[i]&&!c.hasAttribute('data-th'))c.setAttribute('data-th',h[i])})})});</script>")
+
+
+def _parts(body):
+    """Split a page into (title, its own CSS, head extras, body attributes, body content)."""
+    m = re.search(r"<title>(.*?)</title>", body, re.I | re.S)
+    title = m.group(1).strip() if m else "ScamHunter Threat Desk"
+    styles = re.findall(r"<style[^>]*>(.*?)</style>", body, re.I | re.S)
+    rest = re.sub(r"<style[^>]*>.*?</style>", "", body, flags=re.I | re.S)
+    head_extra = ""
+    hm = re.search(r"<head[^>]*>(.*?)</head>", rest, re.I | re.S)
+    if hm:
+        head_extra = "".join(re.findall(r"<script\b.*?</script>", hm.group(1), re.I | re.S))
+        rest = rest[:hm.start()] + rest[hm.end():]
+    bm = re.search(r"<body([^>]*)>", rest, re.I)
+    attrs = ""
+    if bm:
+        attrs = re.sub(r"\s(class|style)=('[^']*'|\"[^\"]*\"|\S+)", "", bm.group(1))
+        rest = rest[bm.end():]
+    rest = re.sub(r"</body>\s*</html>\s*$", "", rest.strip(), flags=re.I)
+    rest = re.sub(r"(?is)^\s*<!doctype[^>]*>|</?html[^>]*>|</body>", "", rest).strip()
+    return title, styles, head_extra, attrs, rest
+
+
+_SMALL = re.compile(r"(font(?:-size)?\s*:[^;}'\"]*?)\b(\d{1,2}(?:\.\d+)?)px", re.I)
+
+
+def _no_small(text):
+    """Older pages set labels at 11-17px; the Night Desk minimum is 20px on the computer and 18px on the phone
+    (var(--nd-min)). Raise only sizes below it, and only inside font / font-size declarations."""
+    return _SMALL.sub(lambda m: m.group(1) + ("var(--nd-min)" if float(m.group(2)) < 18 else m.group(2) + "px"), text)
+
+
+def wrap(body, path, phone=False):
+    """Put a page inside the Night Desk shell (no-op for printable/downloadable pages)."""
+    if any(path.startswith(b) for b in BARE) or "class=nd-main" in body:
         return body
-    h = header(path)
-    low = body[:4000].lower()
-    i = low.find("<body")
-    if i >= 0:
-        j = body.find(">", i)
-        return body[:j + 1] + h + body[j + 1:]
-    i = low.find("</style>")
-    if i >= 0:
-        return body[:i + 8] + h + body[i + 8:]
-    i = low.find("<h1")
-    if i >= 0:
-        return body[:i] + h + body[i:]
-    return h + body
+    title, styles, head_extra, attrs, content = _parts(body)
+    # styles written for the Night Desk start with OWN and sit above the shared look; older styles go in a lower layer
+    own = "".join(x for x in styles if x.lstrip().startswith(OWN))
+    legacy = _no_small("".join(x for x in styles if not x.lstrip().startswith(OWN)).replace("@charset", "/*charset*/"))
+    content = re.sub(r"style=(['\"])(.*?)\1", lambda m: "style=" + m.group(1) + _no_small(m.group(2)) + m.group(1), content, flags=re.S)
+    page = f"<div class=nd-page>{content}</div>"
+    head = (f"<!doctype html><html lang=en{' class=nd-phone' if phone else ''}><head><meta charset=utf-8>"
+            "<meta name=viewport content='width=device-width,initial-scale=1,viewport-fit=cover'>"
+            f"<title>{title}</title><style>@layer legacy{{{legacy}}}</style><style>{css()}</style>"
+            + (f"<style>{own}</style>" if own else "") + f"{head_extra}</head>")
+    if phone:
+        return (f"{head}<body{attrs}><main id=main class=nd-main>{phone_back(path)}{page}</main>{tabbar(path)}{_PHONE_JS}</body></html>")
+    if path in STAGE:
+        return (f"{head}<body{attrs}><a class=skip href='#main'>Skip to the page</a>{header(path)}"
+                f"<main id=main class='nd-main nd-stage'>{content}</main></body></html>")
+    m = menu(path)
+    return (f"{head}<body{attrs}><a class=skip href='#main'>Skip to the page</a>{header(path)}"
+            f"<div class='workspace{'' if m else ' no-menu'}'>{m}<main id=main class=nd-main>{crumbs(path)}{page}</main></div></body></html>")

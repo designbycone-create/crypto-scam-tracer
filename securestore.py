@@ -33,7 +33,8 @@ CFG = "config.json"
 SECRET_KEYS = {"ntfy_topic", "ftc_api_key", "etherscan_key", "blockscout_key", "routescan_key", "ankr_key",
                "aptos_indexer_key", "bithomp_token", "extension_token", "agentguard_token", "abusech_key"}
 NESTED = {"telegram": {"bot_token"}, "alert_email": {"app_password"},
-          "relay": {"admin_key", "desk_token", "phone_token", "key"}}        # phone app pairing (see relay/)
+          "relay": {"admin_key", "desk_token", "phone_token", "key"},        # phone app pairing (see relay/)
+          "patchpulse": {"token"}}                                             # PatchPulse add-on API key (see addons/)
 
 
 def _is_secret(key):

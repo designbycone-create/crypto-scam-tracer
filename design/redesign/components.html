@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shared parts — ScamHunter Threat Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@600;700&display=swap">
+<link rel="stylesheet" href="desk.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the page</a>
+<header class="shell-head">
+  <div class="brandbar">
+    <a class="brand" href="overview.html"><span class="brand-name">ScamHunter</span></a>
+    <p class="pledge">Component states. One of each, reused everywhere.</p>
+    <div class="desk-status is-offline"><span class="dot" aria-hidden="true"></span> Desk offline</div>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="overview.html">Overview</a>
+    <a href="layouts.html#map">Threat Map</a>
+    <a href="hardware-wallet.html">Crypto &amp; Wallets</a>
+    <a href="layouts.html#checker">Phone &amp; Messages</a>
+    <a href="my-website.html">Online Defense</a>
+    <a href="components.html" aria-current="page">Settings</a>
+  </nav>
+</header>
+<div class="workspace">
+  <nav class="group-menu" aria-label="Pages in Settings">
+    <div class="group-label">Desk</div>
+    <a href="layouts.html#settings">Alerts to your phone</a>
+    <a href="layouts.html#settings">Updates</a>
+    <a href="layouts.html#form">Case setup</a>
+    <a href="layouts.html#settings">Share ScamHunter</a>
+    <a href="components.html" aria-current="page">Shared parts <span class="chip new">New</span></a>
+  </nav>
+  <main id="main">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="overview.html">Overview</a> / <a href="layouts.html#settings">Settings</a> / <span aria-current="page">Shared parts</span></nav>
+    <header class="page-head">
+      <p class="kicker">Building blocks</p>
+      <h1>Shared parts</h1>
+      <p class="lead">Design each of these once. Every page uses the same ones.</p>
+    </header>
+
+    <h2>Result levels</h2>
+    <div class="stack">
+      <article class="result result-stop">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="#FFD0D6" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg></div>
+        <div><h2>STOP</h2><p>Do not send money. Do not type a recovery phrase into a site or a chat.</p><div class="actions"><button class="btn btn-stop" type="button">What to do next</button></div></div>
+      </article>
+      <article class="result result-careful">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="#FFE3A3" d="M12 3 2 20h20L12 3zm1 6v5h-2V9h2zm0 7v2h-2v-2h2z"/></svg></div>
+        <div><h2>Be careful</h2><p>Something here needs a closer look before you move money.</p><div class="actions"><button class="btn btn-primary" type="button">See what to check next</button></div></div>
+      </article>
+      <article class="result result-ok">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#C9F6EC" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#C9F6EC"/></svg></div>
+        <div><h2>No red flags found</h2><p>This check did not show a known trick. It cannot see everything.</p></div>
+      </article>
+      <article class="result result-info">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#D6E4FF" stroke-width="2"/><rect x="11" y="10" width="2" height="6" fill="#D6E4FF"/><rect x="11" y="7" width="2" height="2" fill="#D6E4FF"/></svg></div>
+        <div><h2>Info</h2><p>Saved on this computer at 8:40.</p></div>
+      </article>
+    </div>
+
+    <h2 class="screen-label">Buttons</h2>
+    <div class="card">
+      <div class="actions">
+        <button class="btn btn-primary" type="button">Primary action</button>
+        <button class="btn btn-secondary" type="button">Secondary</button>
+        <button class="btn btn-quiet" type="button">Quiet link button</button>
+        <button class="btn btn-stop" type="button">Stop and clear</button>
+        <button class="btn btn-primary" type="button" disabled>Disabled</button>
+      </div>
+      <p class="hint">One primary button on a card. Disabled text stays #C5D0E0 on #243044.</p>
+    </div>
+
+    <h2 class="screen-label">Fields, paste box, upload</h2>
+    <div class="card">
+      <div class="field">
+        <label for="addr">Wallet address</label>
+        <p class="hint">Paste the public address only.</p>
+        <input id="addr" type="text" value="rEXAMPLEwrapTestAddressNotReal00000">
+      </div>
+      <div class="field has-error">
+        <label for="bad">Wallet address</label>
+        <input id="bad" type="text" value="witch abandon ability about above">
+        <p class="field-error"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFD0D6" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg> Stop. Those look like recovery words. Never paste them here.</p>
+      </div>
+      <div class="field">
+        <label for="paste">Paste the message</label>
+        <textarea id="paste">Your bank locked your card. Open this link and confirm your password.</textarea>
+      </div>
+      <div class="upload">
+        <strong>Receipt</strong>
+        <p>Photo or PDF. Up to 10 MB.</p>
+        <button class="btn btn-secondary" type="button">Choose a file</button>
+        <div class="file-row"><span>receipt-box.jpg</span><button class="btn btn-quiet" type="button">Remove file</button></div>
+      </div>
+      <div class="upload" style="margin-top:1rem">
+        <p class="field-error"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFD0D6" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg> Use a photo or a PDF under 10 MB.</p>
+      </div>
+    </div>
+
+    <h2 class="screen-label">Table, long address wraps</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>What</th><th>Address</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Wallet you were told to pay</td>
+            <td class="addr">rEXAMPLEwrapTestAddressNotReal00000rEXAMPLEwrapTestAddressNotReal00000</td>
+            <td><span class="chip stop">STOP</span></td>
+          </tr>
+          <tr>
+            <td>Exchange deposit</td>
+            <td class="addr">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</td>
+            <td><span class="chip info">Info</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="screen-label">Steps, progress, badges</h2>
+    <div class="card">
+      <p><strong>Question 2 of 7</strong></p>
+      <div class="segs" aria-hidden="true"><i class="done"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <ol class="steps">
+        <li class="done"><span class="n">1</span> Unplug the wallet <span class="note">Done</span></li>
+        <li class="now"><span class="n">2</span> Plug it in and wait <span class="note">Current</span></li>
+        <li><span class="n">3</span> Read the device name</li>
+      </ol>
+      <p class="row" style="margin-top:1rem"><span class="chip soon">Coming soon</span> <span class="chip new">New</span></p>
+    </div>
+
+    <h2 class="screen-label">Waiting, empty, error</h2>
+    <div class="stack">
+      <div class="state-panel">
+        <h2>Checking this address</h2>
+        <p>This can take a minute. You can leave this page open.</p>
+        <div class="bar" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+        <div class="actions"><button class="btn btn-secondary" type="button">Stop waiting</button></div>
+      </div>
+      <div class="state-panel">
+        <h2>Nothing here yet</h2>
+        <p>When a check finishes, it will show up in this list.</p>
+        <button class="btn btn-primary" type="button">Run a check</button>
+      </div>
+      <div class="result result-stop">
+        <div class="badge-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24"><path fill="#FFD0D6" d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6zm3 6h2v5h-2V8zm0 6h2v2h-2v-2z"/></svg></div>
+        <div>
+          <h2>The check did not finish</h2>
+          <p>Your text is still in the box. Try again.</p>
+          <div class="actions"><button class="btn btn-primary" type="button">Try again</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

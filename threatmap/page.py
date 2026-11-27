@@ -8,7 +8,6 @@ import html
 import json
 import os
 
-from deskui import pages as deskpages
 from threatmap import feeds
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,28 +20,55 @@ SHORT = {"CN": "China", "TW": "Taiwan", "IR": "Iran", "RU": "Russia", "KR": "Sou
          "FM": "Micronesia", "VA": "Vatican City", "HK": "Hong Kong", "MO": "Macau", "AE": "UAE", "DO": "Dominican Republic",
          "CF": "Central African Rep.", "BA": "Bosnia and Herzegovina", "CI": "Ivory Coast", "TL": "East Timor", "SZ": "Eswatini"}
 
-CSS = """
-.mapwrap{position:relative;background:#050912;border:1px solid var(--line);border-radius:16px;overflow:hidden;touch-action:none}
-#world{width:100%;height:auto;display:block;cursor:grab}
+CSS = """/*nd-own*/
+/* Night Desk tokens come from the Desk shell (deskui/nightdesk.css); this is only the map's own layout */
+.tm-status{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.5rem;margin:0 0 1rem;color:var(--text-2)}
+.tm-status b{color:var(--text)}
+.tm-controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;margin:0 0 1rem}
+.seg{display:inline-flex;border:2px solid var(--line-strong);border-radius:var(--r-md);overflow:hidden}
+.nd-page .seg button{border:0;border-radius:0;min-height:var(--min-btn);background:transparent;color:var(--text-2);padding:.6rem 1.1rem}
+.nd-page .seg button.on{background:var(--teal);color:var(--teal-ink)}
+.tm-layers{display:flex;flex-wrap:wrap;gap:.6rem}
+.tm-layers label{display:inline-flex;align-items:center;gap:.55rem;min-height:var(--min-btn);padding:0 .9rem;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg-raised);cursor:pointer}
+.mapwrap{position:relative;background:#0A1624;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;touch-action:none}
+#world{width:100%;height:auto;display:block;cursor:grab;min-height:22rem}
 #world.drag{cursor:grabbing}
-#world .sea{fill:#071224;stroke:#16304f;stroke-width:.6}
-#world path.c{stroke:#20395c;stroke-width:.4;vector-effect:non-scaling-stroke;transition:fill .25s;cursor:pointer}
-#world path.c:hover{stroke:#fff;stroke-width:1.2}
-#world path.c.sel{stroke:#22d3ee;stroke-width:1.8}
-#world circle.pulse{fill:#ff5470;opacity:.85;pointer-events:none;animation:pz 2.4s ease-out infinite}
+#world .sea{fill:#0A1624;stroke:#1d3553;stroke-width:.6}
+#world path.c{stroke:#2C415C;stroke-width:.4;vector-effect:non-scaling-stroke;transition:fill .25s;cursor:pointer}
+#world path.c:hover{stroke:#F7F8FB;stroke-width:1.2}
+#world path.c.sel{stroke:var(--teal);stroke-width:2}
+#world circle.pulse{fill:#FF6B78;opacity:.85;pointer-events:none;animation:pz 2.4s ease-out infinite}
 @keyframes pz{0%{opacity:.9}100%{opacity:.15}}
-.mapctl{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
-.mapctl button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#0b1322;color:#fff;font-size:20px;cursor:pointer}
-.legend{position:absolute;left:12px;bottom:10px;font:12px ui-monospace,Consolas,monospace;color:var(--mut);display:flex;align-items:center;gap:6px}
-.legend i{display:inline-block;width:90px;height:8px;border-radius:4px;background:linear-gradient(90deg,#163150,#2f7fa3,#ffb020,#ff5470)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.chips label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:15px;cursor:pointer;background:var(--pan)}
-.chips input{width:18px;height:18px}
-.rise{display:flex;align-items:center;gap:10px;border:1px solid #5b1f2c;background:#1a0b12;border-radius:12px;padding:8px 10px;margin:6px 0;cursor:pointer}
-.rise b{flex:1;min-width:0} .rise .x{font:700 13px ui-monospace,Consolas,monospace;color:#ff8aa0;text-align:right;white-space:nowrap}
-.badge{font:700 11px ui-monospace,Consolas,monospace;background:#ff5470;color:#fff;border-radius:6px;padding:2px 6px;letter-spacing:.08em}
-.src{font-size:14px;color:var(--mut)} .src b{color:var(--fg)} .src .bad{color:#ff8aa0}
-#cpanel h2{margin:2px 0 6px}
+.mapctl{position:absolute;right:.75rem;top:.75rem;display:flex;flex-direction:column;gap:.5rem}
+.nd-page .mapctl button{width:3.5rem;height:3.5rem;padding:0;background:var(--bg-raised);font-size:1.5rem}
+.legend{position:absolute;left:1rem;bottom:.75rem;color:var(--text-2);display:flex;align-items:center;gap:.5rem;background:rgba(7,16,24,.85);padding:.2rem .6rem;border-radius:999px}
+.legend i{display:inline-block;width:6rem;height:.6rem;border-radius:99px;background:linear-gradient(90deg,#163150,#2f7fa3,#F6C453,#FF6B78)}
+.tm-side .card{margin:0 0 1rem}
+.rise,.rank{display:flex;align-items:center;gap:.75rem;min-height:var(--min-btn);padding:.6rem .8rem;margin:.4rem 0;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg-sunken);cursor:pointer}
+.rise b,.rank .nm{flex:1;min-width:0}
+.rank i{font-style:normal;font-family:var(--mono);color:var(--teal)}
+.rank .nm small,.rise .x small{display:block;color:var(--text-2);font-size:var(--nd-min)}
+.rise .x{text-align:right;white-space:nowrap;font-weight:700;color:var(--careful-ink)}
+.pct{font-family:var(--mono);font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:.3rem;font-weight:700;color:var(--careful-ink);background:var(--careful-bg);border:1px solid #6E5420;border-radius:999px;padding:.05rem .6rem}
+.bars .bar{display:grid;grid-template-columns:minmax(7rem,1.2fr) 2fr auto;gap:.6rem;align-items:center;min-height:2.75rem;cursor:pointer}
+.bars .bar div{height:.8rem;border-radius:99px;background:linear-gradient(90deg,#2f7fa3,#F6C453)}
+.bars .bar em{font-style:normal;font-family:var(--mono)}
+.tick{display:flex;align-items:center;gap:.75rem;overflow:hidden}
+.tick .lbl{flex:0 0 auto;font-family:var(--display);color:var(--teal);font-weight:600}
+.tick .rail{overflow:hidden;flex:1;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.tick .run{display:flex;gap:.75rem;width:max-content;animation:run 70s linear infinite}
+.tick:hover .run{animation-play-state:paused}
+@keyframes run{to{transform:translateX(-50%)}}
+.tick .chip{flex-direction:column;align-items:flex-start;min-width:16rem;max-width:22rem;padding:.5rem .9rem;border-radius:var(--r-md);text-decoration:none;color:var(--text)}
+.tick .chip small{color:var(--text-2);font-size:var(--nd-min);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dot.lv-stop{background:var(--stop)} .dot.lv-caution{background:var(--careful)} .dot.lv-info,.dot.lv-ok{background:var(--info)}
+.nd-page td .dot{display:inline-block;margin-right:.5rem;vertical-align:middle;box-shadow:none}
+table.feed tr{cursor:pointer}
+.empty{color:var(--text-2)}
+.src{color:var(--text-2);margin:.25rem 0} .src b{color:var(--text)} .src .bad{color:var(--stop-ink)}
+.tip{position:fixed;pointer-events:none;background:#071018;border:1px solid var(--teal);border-radius:var(--r-md);padding:.5rem .8rem;display:none;z-index:50}
+@media(prefers-reduced-motion:reduce){.tick .run{animation:none}}
 """
 
 JS = r"""
@@ -81,7 +107,7 @@ function draw(){
   $('#risen').textContent=T.rising.length; $('#gen').textContent=T.generated.slice(11,16)+' UTC';
   const top=Object.entries(C).sort((a,b)=>b[1].n-a[1].n).slice(0,6), tot=Math.max(1,top.reduce((s,x)=>s+x[1].n,0));
   $('#top').innerHTML=top.length?top.map(([cc,c],i)=>`<div class=rank data-cc="${cc}" style="cursor:pointer"><i>0${i+1}</i><div class=nm>${esc(NAMES[cc]||cc)}<small>${num(c.n)} threats</small></div><span class=pct>${Math.round(100*c.n/tot)}%</span></div>`).join(''):'<div class=empty>Nothing in this window yet.</div>';
-  $('#rising').innerHTML=T.rising.length?T.rising.map(r=>`<div class=rise data-cc="${r.kind==='country'?esc(r.key):''}" data-q="${r.kind==='family'?esc(r.key):''}"><span class=badge>RISING</span><b>${esc(r.kind==='country'?(NAMES[r.key]||r.key):r.key)}</b><span class=x title="${num(r.now)} in the last 24 hours; usually ${r.usual} a day">x${r.x}<br><span style="font-weight:400;color:var(--mut)">${num(r.now)} today</span></span></div>`).join('')
+  $('#rising').innerHTML=T.rising.length?T.rising.map(r=>`<div class=rise data-cc="${r.kind==='country'?esc(r.key):''}" data-q="${r.kind==='family'?esc(r.key):''}"><span class=badge>Rising</span><b>${esc(r.kind==='country'?(NAMES[r.key]||r.key):r.key)}</b><span class=x title="${num(r.now)} in the last 24 hours; usually ${r.usual} a day">x${r.x}<br><span style="font-weight:400;color:var(--mut)">${num(r.now)} today</span></span></div>`).join('')
      :(T.learning_since
        ? `<div class=empty>Still learning what's normal. A source is only compared after a week of history (collecting since ${esc(T.learning_since.slice(0,10))}).</div>`
        : '<div class=empty>Nothing is clearly above its usual level right now.</div>');
@@ -91,12 +117,12 @@ function draw(){
 function ticker(){ const it=T.items.slice(0,24); if(!it.length){$('#tick').innerHTML='<span class=empty>Waiting for the first feeds...</span>';return;}
   const one=it.map(x=>`<a class="chip ${(x.layer==='news'||x.layer==='social')?'info':x.layer==='exploited'?'caution':'stop'}" href="${esc(x.url||'#')}" target=_blank rel=noopener><b>${esc(x.title)}</b><small>${esc(x.time.slice(0,16).replace('T',' '))} &middot; ${esc(LNAME[x.layer])}${x.cc?' &middot; '+esc(NAMES[x.cc]||x.cc):''}</small></a>`).join('');
   $('#tick').innerHTML=`<div class=run>${one}${one}</div>`; }
-function panel(){ const el=$('#cpanel'); if(!sel){ el.innerHTML='<span class=lbl>Country</span><h2>Click a country</h2><div class="small mut">See what\'s been reported there in this time window.</div>'; return; }
+function panel(){ const el=$('#cpanel'); if(!sel){ el.innerHTML='<h2>Pick a country</h2><p class=note>Click a country on the map to see what\'s been reported there in this time window.</p>'; return; }
   const c=T.countries[sel]||{n:0,layers:{}}, its=T.items.filter(x=>(x.ccs||[x.cc]).includes(sel)).slice(0,12);
-  el.innerHTML=`<span class=lbl>Country</span><h2>${esc(NAMES[sel]||sel)}</h2><div class=small>${num(c.n)} in the last ${hours<48?hours+' hours':hours/24+' days'}: `
+  el.innerHTML=`<h2>${esc(NAMES[sel]||sel)}</h2><div class=small>${num(c.n)} in the last ${hours<48?hours+' hours':hours/24+' days'}: `
    +Object.entries(c.layers).map(([l,n])=>`${esc(LNAME[l])} ${num(n)}`).join(' &middot; ')+`</div>`
    +(its.length?'<ul class=small style="padding-left:18px">'+its.map(x=>`<li><a href="${esc(x.url||'#')}" target=_blank rel=noopener style="color:#cfe3ff">${esc(x.title)}</a> <span class=mut>${esc(x.time.slice(0,10))}</span></li>`).join('')+'</ul>':'')
-   +'<button class=btn style="border:0;cursor:pointer" id=clearsel>Show all countries</button>';
+   +'<div class=actions><button class="btn btn-secondary" id=clearsel>Show all countries</button></div>';
   $('#clearsel').onclick=()=>{sel=null; draw();}; }
 let shown=30;
 function feed(){ const q=fq.toLowerCase();
@@ -118,12 +144,27 @@ $('#layers').addEventListener('change',()=>{ layers=new Set([...document.querySe
 $('#fq').addEventListener('input',ev=>{fq=ev.target.value; feed();});
 $('#more').onclick=()=>{shown+=30; feed();};
 $('#rows').addEventListener('click',ev=>{ const r=ev.target.closest('tr[data-u]'); if(r&&r.dataset.u) window.open(r.dataset.u,'_blank','noopener'); });
-async function refresh(){ try{ const r=await fetch(`/threatmap.json?hours=${hours}&layers=${[...layers].join(',')}`,{cache:'no-store'}); if(r.ok){T=await r.json(); draw();} }catch(_){} }
+async function refresh(){ try{ const r=await fetch(`/threatmap.json?hours=${hours}&scope=${window.__S||'all'}&layers=${[...layers].join(',')}`,{cache:'no-store'}); if(r.ok){T=await r.json(); draw();} }catch(_){} }
+const q0=new URLSearchParams(location.search).get('q'); if(q0){ fq=q0; $('#fq').value=q0; }
 setVB(); draw(); setInterval(refresh,60000);
+if(q0) setTimeout(()=>$('#rows').scrollIntoView({block:'center'}),300);
 """
 
 
-def page():
+SCOPE_TEXT = {
+    "all": ("Threat Map", "Threats reported around the world right now: security alerts and news, botnet servers, malware sites and newly "
+                          "exploited flaws."),
+    "cyber": ("Cyber threat map", "Where the servers behind today's cyber attacks are: botnet control servers, malware download sites "
+                                  "and newly exploited flaws. These are what the Desk's browser extension, malware check and exposure check "
+                                  "watch for."),
+    "crypto": ("Crypto threat map", "Malware that steals crypto wallets (stealers, clippers, drainer kits, the North Korean campaigns aimed "
+                                    "at crypto firms and developers), and news about crypto theft and scams."),
+}
+SCOPE_LAYERS = {"all": None, "cyber": ("botnet", "malware", "exploited"), "crypto": None}
+
+
+def page(scope="all"):
+    scope = scope if scope in SCOPE_TEXT else "all"
     with open(os.path.join(HERE, "world.json"), encoding="utf-8") as f:
         w = json.load(f)
     paths = "".join(f"<path class=c data-cc='{cc}' d='{c['d']}'/>" for cc, c in w["countries"].items())
@@ -133,44 +174,46 @@ def page():
     for cc, n in geo.NAMES.items():
         names.setdefault(cc, n[0])
     names.update(SHORT)
-    data = json.dumps(feeds.summary(24)).replace("</", "<\\/")
-    layer_chips = "".join(f"<label><input type=checkbox value={k} checked> {e(v)}</label>" for k, v in feeds.LAYERS.items())
+    layer_names = {k: v for k, v in feeds.LAYERS.items() if not SCOPE_LAYERS[scope] or k in SCOPE_LAYERS[scope]}
+    data = json.dumps(feeds.summary(24, list(layer_names), scope)).replace("</", "<\\/")
+    layer_chips = "".join(f"<label><input type=checkbox value={k} checked> {e(v)}</label>" for k, v in layer_names.items())
+    title, lead = SCOPE_TEXT[scope]
     body = (
-        "<h1>Threat Map</h1><p class=lead>Threats being reported around the world right now: security alerts and news, botnet servers, "
-        "malware sites and newly exploited flaws. Zoom with the mouse wheel, drag to move, click a country.</p>"
-        "<div class=status><span class=pulse></span><b><span id=total>0</span> threats</b><span class=mut>in <span id=ctry>0</span> countries</span>"
-        "<span class=mut><span id=risen>0</span> rising</span><span class=mut><span id=unloc>0</span> with no location</span>"
-        "<span class=mut>updated <span id=gen></span></span></div>"
-        "<div class=pan style='padding:4px 14px'><div class=tick><span class=lbl>&#9670; Latest reports</span><div class=rail id=tick></div></div></div>"
-        "<div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px'>"
-        f"<div class=chips id=layers>{layer_chips}</div>"
-        "<span class=seg id=range><button class=on data-v=24>24 hours</button><button data-v=168>7 days</button><button data-v=720>30 days</button></span></div>"
-        "<div class='grid gmain' style='margin-top:6px'>"
-        "<div><div class=pan><span class=lbl style='color:#ff8aa0'>Rising threats</span><h2>Above their usual level</h2><div id=rising></div>"
-        "<div class='small mut'>Last 24 hours compared with the average day of the week before.</div></div>"
-        "<div class=pan style='margin-top:14px'><span class=lbl>Top countries</span><div id=top></div></div></div>"
-        f"<div><div class=mapwrap><svg id=world viewBox='{w['viewBox']}' role=img aria-label='World map of reported threats'>"
+        f"<div class=page-head><h1>{e(title)}</h1><p class=lead>{e(lead)} Zoom with the mouse wheel or the + and &minus; buttons, "
+        "drag to move, click a country.</p></div>"
+        "<p class=tm-status><span><b><span id=total>0</span> threats</b> in <span id=ctry>0</span> countries</span>"
+        "<span><span id=risen>0</span> rising</span><span><span id=unloc>0</span> on websites or with no location</span>"
+        "<span>Updated <span id=gen></span></span></p>"
+        "<div class=tm-controls><span class=seg id=range role=group aria-label='Time window'><button class=on data-v=24>Past day</button>"
+        "<button data-v=168>Past week</button><button data-v=720>Past month</button></span>"
+        f"<div class=tm-layers id=layers role=group aria-label='Kinds of threat'>{layer_chips}</div></div>"
+        "<div class=map-layout><div>"
+        f"<div class=mapwrap><svg id=world viewBox='{w['viewBox']}' role=img aria-label='World map of reported threats'>"
         f"<g class=view><path class=sea d='{w['sphere']}'/>{paths}{pulses}</g></svg>"
-        "<div class=mapctl><button id=zin title='Zoom in'>+</button><button id=zout title='Zoom out'>&minus;</button><button id=zreset title='Whole world'>&#8635;</button></div>"
-        "<div class=legend>fewer <i></i> more</div></div>"
-        "<div class=pan id=cpanel style='margin-top:14px'></div></div>"
-        "<div><div class=pan><span class=lbl>Malware &amp; scam families</span><h2>Most active</h2><div class=bars id=fams></div>"
-        "<div class='small mut'>Click one to see its reports.</div></div></div></div>"
-        "<div class=pan style='margin-top:14px'><span class=lbl>Live feed</span><h2>Every report</h2><div class=filters>"
-        "<input type=search id=fq placeholder='Search (e.g. ClickFix, ransomware, Russia)'></div>"
-        "<table class=feed><thead><tr><th>What</th><th>When (UTC)</th><th>Where</th><th>Type</th></tr></thead><tbody id=rows></tbody></table>"
-        "<button class=btn id=more style='border:0;cursor:pointer;display:none'></button></div>"
-        "<div class=pan style='margin-top:14px'><span class=lbl>Sources</span><div id=srcs></div>"
-        "<div class=src style='margin-top:8px'>Server locations: <a href='https://db-ip.com' target=_blank rel=noopener style='color:#8ec5ff'>IP Geolocation by DB-IP</a> "
-        "(CC BY 4.0). Map: <a href='https://www.naturalearthdata.com' target=_blank rel=noopener style='color:#8ec5ff'>Natural Earth</a> (public domain) "
-        "via world-atlas (ISC). Country names: i18n-iso-countries (MIT).</div>"
-        "<div class='small mut' style='margin-top:6px'>Headlines are shown with their link only, never the article. Some abuse.ch data is free only for "
+        "<div class=mapctl><button id=zin aria-label='Zoom in'>+</button><button id=zout aria-label='Zoom out'>&minus;</button>"
+        "<button id=zreset aria-label='Whole world'>&#8635;</button></div><div class=legend>fewer <i></i> more</div></div>"
+        "<section class=card id=cpanel style='margin-top:1.5rem'></section></div>"
+        "<div class=tm-side><section class=card><h2>Rising threats</h2><div id=rising></div>"
+        "<p class=note>Last 24 hours compared with the average day of the week before.</p></section>"
+        "<section class=card><h2>Top countries</h2><div id=top></div></section>"
+        "<section class=card><h2>Most active families</h2><div class=bars id=fams></div><p class=note>Pick one to see its reports.</p></section>"
+        "</div></div>"
+        "<section class=card style='margin-top:1.5rem'><div class=tick><span class=lbl>Latest reports</span><div class=rail id=tick></div></div></section>"
+        "<section class=card style='margin-top:1.5rem'><h2>Every report</h2><div class=field><label for=fq>Search the reports</label>"
+        "<input type=search id=fq placeholder='Example: ClickFix, ransomware, Russia'></div>"
+        "<div class=table-wrap><table class=feed><thead><tr><th>What</th><th>When (UTC)</th><th>Where</th><th>Kind</th></tr></thead><tbody id=rows></tbody></table></div>"
+        "<div class=actions><button class='btn btn-secondary' id=more style='display:none'></button></div></section>"
+        "<section class=card style='margin-top:1.5rem'><h2>Sources</h2><div id=srcs></div>"
+        "<p class=src style='margin-top:.75rem'>Server locations: <a href='https://db-ip.com' target=_blank rel=noopener>IP Geolocation by DB-IP</a> "
+        "(CC BY 4.0). Map: <a href='https://www.naturalearthdata.com' target=_blank rel=noopener>Natural Earth</a> (public domain) "
+        "via world-atlas (ISC). Country names: i18n-iso-countries (MIT).</p>"
+        "<p class=note>Headlines are shown with their link only, never the article. Some abuse.ch data is free only for "
         "not-for-profit use under abuse.ch's terms; it uses your own key. Locations are where a server or address is registered, not necessarily "
-        "where the people behind it are.</div></div>")
-    head = deskpages.CSS + CSS
+        "where the people behind it are.</p></section>")
+    head = CSS
     return (f"<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
-            f"<title>Threat Map - ScamHunter Threat Desk</title><style>{head}</style></head><body><main>{body}</main><div class=tip id=tip></div>"
-            f"<script>window.__W=1;window.__N={json.dumps(names)};window.__L={json.dumps(feeds.LAYERS)};window.__T={data};</script>"
+            f"<title>{e(title)} - ScamHunter Threat Desk</title><style>{head}</style></head><body>{body}<div class=tip id=tip></div>"
+            f"<script>window.__W=1;window.__S={json.dumps(scope)};window.__N={json.dumps(names)};window.__L={json.dumps(layer_names)};window.__T={data};</script>"
             f"<script>{JS}</script></body></html>")
 
 
@@ -182,4 +225,43 @@ def json_api(query):
     except ValueError:
         hours = 24
     layers = [x for x in ((q.get("layers") or [""])[0]).split(",") if x in feeds.LAYERS] or None
-    return json.dumps(feeds.summary(hours, layers))
+    scope = (q.get("scope") or ["all"])[0]
+    return json.dumps(feeds.summary(hours, layers, scope if scope in feeds.SCOPES else "all"))
+
+
+def preview(scope, href):
+    """A map card for a section's landing page (like the scam-call map on Phone & Messages): drawn on the
+    server from the last 7 days, no script needed. The full map is one click away."""
+    with open(os.path.join(HERE, "world.json"), encoding="utf-8") as f:
+        w = json.load(f)
+    s = feeds.summary(24 * 7, list(SCOPE_LAYERS.get(scope) or feeds.LAYERS), scope)
+    by = {cc: c["n"] for cc, c in s["countries"].items()}
+    mx = max([1] + list(by.values()))
+    names = {cc: c["n"] for cc, c in w["countries"].items()}
+    from threatmap import geo
+    for cc, n in geo.NAMES.items():
+        names.setdefault(cc, n[0])
+    names.update(SHORT)
+
+    def fill(v):
+        if not v:
+            return "#132033"
+        t = (v / mx) ** 0.5
+        return f"hsl({int(200 - 170 * t)},{int(55 + 30 * t)}%,{int(22 + 30 * t)}%)"
+    paths = "".join(f"<path d='{c['d']}' fill='{fill(by.get(cc, 0))}' stroke='#2C415C' stroke-width='.4'><title>{e(names.get(cc, cc))}: "
+                    f"{by.get(cc, 0):,}</title></path>" for cc, c in w["countries"].items())
+    top = sorted(by.items(), key=lambda kv: -kv[1])[:5]
+    rows = "".join(f"<tr><td>{e(names.get(cc, cc))}</td><td>{n:,}</td></tr>" for cc, n in top) or \
+        "<tr><td colspan=2>No reports with a location yet. The Desk collects them every few hours.</td></tr>"
+    fams = ", ".join(e(f) for f, _ in s["families"][:4])
+    title, lead = SCOPE_TEXT[scope]
+    located = s["total"] - s["unlocated"]
+    note = (f"<p class=note>{s['total']:,} reports in the last 7 days; {located:,} have a server location"
+            + (f", the rest are on websites with no fixed location" if s["unlocated"] else "") + ". "
+            "A location is where a server is registered, not where the people behind it are.</p>")
+    return (f"<section class=card style='margin-top:1.5rem'><h2>{e(title)}</h2><p>{e(lead)}</p>"
+            f"<div class=grid-12><div class=span-7><svg viewBox='{w['viewBox']}' role=img aria-label='{e(title)}' style='width:100%;height:auto'>"
+            f"<path d='{w['sphere']}' fill='#0A1624'/>{paths}</svg></div>"
+            f"<div class=span-5><table><thead><tr><th>Country</th><th>Reports</th></tr></thead><tbody>{rows}</tbody></table>"
+            + (f"<p class=note>Most active: {fams}</p>" if fams else "") + "</div></div>" + note
+            + f"<div class=actions><a class='btn btn-primary' href='{href}'>Open the full map</a></div></section>")

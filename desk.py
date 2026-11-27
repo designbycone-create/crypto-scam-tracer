@@ -18,6 +18,7 @@ Standard-library only.
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -26,6 +27,7 @@ import time
 import webbrowser
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import quote
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATUS_FILE = "desk_status.json"
@@ -353,7 +355,8 @@ def render():
         if label == "Network mapper" and alive:
             extra += f" · mapped {_fmt_ago(mapper_age)}"
         cards += (f"<div class=card><span class=dot style='background:{dot}'></span>"
-                  f"<b>{e(label)}</b><br><small class=mut>{txt} · {e(extra)}</small></div>")
+                  f"<b>{e(label)}</b><br><small class=mut>{txt} · "
+                  + ("<a href='/clipguard'>turn on</a>" if extra == "<a href='/clipguard'>turn on</a>" else e(extra)) + "</small></div>")
 
     # --- your funds ---
     if my_targets:
@@ -505,9 +508,9 @@ class Handler(BaseHTTPRequestHandler):
         if isinstance(body, str) and ctype.startswith("text/html"):
             try:
                 from deskui import shell
-                body = shell.wrap(body, self.path.partition("?")[0])
-            except Exception:
-                pass
+                body = shell.wrap(body, self.path.partition("?")[0], phone=self.headers.get("X-ScamHunter-Via") == "phone")
+            except Exception as ex:
+                print(f"(page shown without the Desk header: {type(ex).__name__}: {ex})")
         data = body if isinstance(body, bytes) else body.encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", ctype)
@@ -540,11 +543,18 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             web = None
         from freezekit import setup as _setup
+        if path.startswith("/static/fonts/"):
+            name = path.rsplit("/", 1)[1]
+            fdir = os.path.join(HERE, "deskui", "static", "fonts")
+            if re.fullmatch(r"[a-z0-9-]+\.woff2", name) and name in os.listdir(fdir):
+                with open(os.path.join(fdir, name), "rb") as f:
+                    return self._send(f.read(), "font/woff2", {"Cache-Control": "max-age=31536000, immutable"})
+            return self._send("Not found", "text/plain", code=404)
         if path in ("/", "/index.html"):
             if _setup.needed():
                 return self._redirect("/setup")
             from deskui import pages
-            return self._send(pages.overview(), "text/html; charset=utf-8")
+            return self._send(pages.overview(phone=self.headers.get("X-ScamHunter-Via") == "phone"), "text/html; charset=utf-8")
         if path == "/case":
             if _setup.needed():
                 return self._redirect("/setup")
@@ -552,6 +562,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/threatmap":
             from threatmap import page as tmpage
             return self._send(tmpage.page(), "text/html; charset=utf-8")
+        if path in ("/cryptomap", "/cybermap"):
+            from threatmap import page as tmpage
+            return self._send(tmpage.page("crypto" if path == "/cryptomap" else "cyber"), "text/html; charset=utf-8")
         if path == "/threatmap.json":
             from threatmap import page as tmpage
             return self._send(tmpage.json_api(query), "application/json", {"Cache-Control": "no-store"})
@@ -604,6 +617,16 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/malware":
             from shield import malcheck
             return self._send(malcheck.page(), "text/html; charset=utf-8")
+        if path == "/website":
+            from addons import web as addonweb
+            return self._send(addonweb.page(), "text/html; charset=utf-8")
+        if path == "/hwcheck":
+            from shield import hwcheck
+            return self._send(hwcheck.page(query, phone=self.headers.get("X-ScamHunter-Via") == "phone"), "text/html; charset=utf-8")
+        if path == "/hwcheck/usb.json":
+            from shield import hwcheck
+            from urllib.parse import parse_qs
+            return self._send(json.dumps(hwcheck.usb_status((parse_qs(query).get("t") or [""])[0])), "application/json", {"Cache-Control": "no-store"})
         if path == "/relay":
             from relay import web as relayweb
             return self._send(relayweb.page(), "text/html; charset=utf-8")
@@ -740,6 +763,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._api("POST", path, query, body if isinstance(body, dict) else {})
         if not self._local_origin():
             return self._send("Forbidden", "text/plain", code=403)
+        ctype = self.headers.get("Content-Type", "")
+        if self.path.partition("?")[0] == "/hwcheck" and ctype.lower().startswith("multipart/form-data"):
+            # custody record with a receipt and photos (up to 5 files of 10 MB); refused from the phone by relay/policy.py
+            n = int(self.headers.get("Content-Length") or 0)
+            if n > 52_000_000:
+                return self._send("That upload is too large. Use photos or a PDF under 10 MB each.", "text/plain", code=413)
+            from shield import hwcheck
+            form, files = hwcheck.parse_multipart(ctype, self.rfile.read(n))
+            return self._send(hwcheck.post(form, files), "text/html; charset=utf-8")
         n = min(int(self.headers.get("Content-Length") or 0), 2_000_000)
         multi = parse_qs(self.rfile.read(n).decode("utf-8", "replace"))
         form = {k: v[0] for k, v in multi.items()}
@@ -813,6 +845,23 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/malware":
                 from shield import malcheck
                 return self._send(malcheck.post(form), "text/html; charset=utf-8")
+            if path == "/website":
+                from addons import web as addonweb
+                return self._send(addonweb.post(form), "text/html; charset=utf-8")
+            if path == "/hwcheck":
+                from shield import hwcheck
+                return self._send(hwcheck.post(form, phone=self.headers.get("X-ScamHunter-Via") == "phone"), "text/html; charset=utf-8")
+            if path == "/quick":      # Overview's one box: open the right check for what was pasted
+                from deskui import quick
+                kind, value = quick.route(form.get("q", ""))
+                if kind == "address":
+                    return self._redirect("/prescreen?address=" + quote(value, safe=""))
+                if kind == "number":
+                    return self._redirect("/numbercheck?number=" + quote(value, safe=""))
+                if kind == "message":
+                    from shield import msgcheck
+                    return self._send(msgcheck.post({"text": value}), "text/html; charset=utf-8")
+                return self._send(quick.page(kind), "text/html; charset=utf-8")
             if path == "/lookup":
                 from osinttools import web as lookweb
                 return self._send(lookweb.post(form), "text/html; charset=utf-8")
@@ -992,6 +1041,16 @@ def main():
         threading.Thread(target=supervise, args=(label, argv, logfile, stop_evt), daemon=True).start()
 
     threading.Thread(target=alert_flusher, args=(stop_evt,), daemon=True).start()
+    try:   # My wallets: alerts the moment money leaves a wallet you asked the Desk to watch (shield/mywallets.py)
+        from shield import mywallets
+        threading.Thread(target=mywallets.run, args=(stop_evt,), daemon=True).start()
+    except Exception as ex:
+        print(f"(My wallets watcher not active: {ex})")
+    try:   # PatchPulse add-on: idle (no network) until PatchPulse launches and the owner connects it (addons/)
+        from addons import patchpulse
+        threading.Thread(target=patchpulse.run, args=(stop_evt,), daemon=True).start()
+    except Exception as ex:
+        print(f"(PatchPulse add-on not active: {ex})")
 
     port = _free_port(a.port)
     try:   # phone app relay: connects OUT to the user's own Worker while a phone is paired (relay/)

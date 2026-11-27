@@ -56,9 +56,12 @@ if((this.getAttribute('method')||'').toLowerCase()==='post'){go(this,null);}else
         return ("<!doctype html><meta charset=utf-8><script>location.replace(\"$target\")</script>").toByteArray()
     }
 
-    private const val STYLE = "body{background:#0b1220;color:#e8eef8;font:21px/1.5 system-ui,sans-serif;padding:24px}" +
-        "h1{font-size:28px}a.b{display:block;text-align:center;background:#22d3ee;color:#04111c;padding:16px;border-radius:14px;" +
-        "font-weight:700;text-decoration:none;margin-top:18px}.s{color:#9fb0c8;font-size:17px}"
+    // Night Desk colors (design/redesign/DESK_REDESIGN.md); fonts come from the app's own assets
+    private const val STYLE = "@font-face{font-family:A;src:url(/static/fonts/atkinson-hyperlegible-latin-400-normal.woff2)}" +
+        "@font-face{font-family:A;font-weight:700;src:url(/static/fonts/atkinson-hyperlegible-latin-700-normal.woff2)}" +
+        "body{background:#071018;color:#F7F8FB;font:18px/1.5 A,system-ui,sans-serif;padding:16px}" +
+        "h1{font-size:28px;line-height:1.25}a.b{display:flex;align-items:center;justify-content:center;min-height:56px;background:#5EEAD4;" +
+        "color:#062821;border-radius:12px;font-weight:700;text-decoration:none;margin-top:18px}.s{color:#D5DDEA;font-size:18px}"
 
     /** A friendly full page for when the Desk can't be reached. */
     fun problem(kind: String, detail: String): ByteArray {

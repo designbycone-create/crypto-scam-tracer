@@ -10,8 +10,8 @@ android {
         applicationId = "org.scamhunter.desk"     // separate from ScamHunter Guard (org.scamhunter.guard)
         minSdk = 29
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.1.4"
+        versionCode = 6
+        versionName = "0.2.0"
     }
     // Signed with the project's own permanent key when the build has it (GitHub Actions secrets), so each new
     // version installs as an update and keeps the phone's pairing. Without it (forks, local builds) the build

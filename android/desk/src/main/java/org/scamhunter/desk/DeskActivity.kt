@@ -15,7 +15,6 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import java.io.ByteArrayInputStream
@@ -26,15 +25,17 @@ import java.io.ByteArrayInputStream
  */
 class DeskActivity : Activity() {
     private lateinit var web: WebView
+    private lateinit var status: TextView
     private var client: RelayClient? = null
 
     private fun dp(v: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
 
-    private fun barButton(label: String, onClick: () -> Unit) = Button(this).apply {
-        text = label; textSize = 18f; isAllCaps = false; setTextColor(Color.WHITE); setBackgroundColor(0xFF1B2A44.toInt())
-        minWidth = dp(52); minimumWidth = dp(52)
-        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(48)).apply { leftMargin = dp(6) }
-        setOnClickListener { onClick() }
+    /** "Desk online" / "Desk offline" in the app bar: a dot AND the words, never color alone. */
+    private fun setOnline(on: Boolean) = runOnUiThread {
+        if (!::status.isInitialized) return@runOnUiThread
+        status.text = if (on) "● Desk online" else "● Desk offline"
+        status.setTextColor(if (on) 0xFF5EEAD4.toInt() else 0xFFF6C453.toInt())
+        status.contentDescription = if (on) "Desk online" else "Desk offline"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -48,22 +49,31 @@ class DeskActivity : Activity() {
         }
         client = RelayClient(p)
 
+        // Night Desk app bar: one row, at least 64dp: the name, and whether the Desk is reachable. Settings is a row on Home.
         val bar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), dp(8), dp(8), dp(8)); setBackgroundColor(0xFF070D18.toInt())
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; minimumHeight = dp(64)
+            setPadding(dp(16), dp(8), dp(12), dp(8)); setBackgroundColor(0xFF071018.toInt())
         }
         bar.addView(TextView(this).apply {
-            text = "THREAT DESK"; textSize = 17f; typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFF22D3EE.toInt())
+            text = "ScamHunter"; textSize = 21f; typeface = Typeface.DEFAULT_BOLD; setTextColor(0xFFF7F8FB.toInt())
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL
             setOnClickListener { web.loadUrl(Html.BASE + "/") }
+            contentDescription = "ScamHunter, go to Home"
         })
-        bar.addView(barButton("A−") { zoom(-15) })
-        bar.addView(barButton("A+") { zoom(15) })
-        bar.addView(barButton("↻") { web.reload() })
-        bar.addView(barButton("⚙") { settings() })
+        status = TextView(this).apply {
+            textSize = 18f; typeface = Typeface.DEFAULT_BOLD; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), 0, dp(14), 0)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0xFF0E1724.toInt()); cornerRadius = dp(24).toFloat(); setStroke(dp(1), 0xFF3D5678.toInt())
+            }
+        }
+        bar.addView(status)
+        setOnline(true)
+        val line = android.view.View(this).apply { setBackgroundColor(0xFF2C415C.toInt()) }
 
         web = WebView(this)
-        web.setBackgroundColor(0xFF0B1220.toInt())
+        web.setBackgroundColor(0xFF071018.toInt())
         web.settings.apply {
             javaScriptEnabled = true            // the Desk's own pages (maps, live feed) need it
             domStorageEnabled = true
@@ -77,14 +87,22 @@ class DeskActivity : Activity() {
             override fun shouldInterceptRequest(view: WebView, req: WebResourceRequest): WebResourceResponse {
                 val u = req.url
                 if (u.host != Html.HOST) return empty()            // nothing on a Desk page may load from anywhere else
+                val fp = u.encodedPath ?: ""
+                if (fp.startsWith("/static/fonts/")) {               // the Desk's fonts ship inside the app: no trip over the relay
+                    val name = fp.substringAfterLast('/')
+                    return if (Regex("[a-z0-9-]+\\.woff2").matches(name)) try {
+                        WebResourceResponse("font/woff2", null, 200, "OK", mapOf("Cache-Control" to "max-age=31536000"), assets.open("fonts/$name"))
+                    } catch (e: Exception) { empty() } else empty()
+                }
                 if (req.method != "GET") return page(Html.problem("error", "unsupported request"))
                 val full = (u.encodedPath ?: "/") + (u.encodedQuery?.let { "?$it" } ?: "")
                 val (path, body) = Html.splitPost(full)
                 val out = client!!.call(if (body != null) "POST" else "GET", path, body ?: ByteArray(0),
                     if (body != null) "application/x-www-form-urlencoded" else "")
                 return when (out) {
-                    is RelayClient.Outcome.Fail -> page(Html.problem(out.kind, out.detail))
+                    is RelayClient.Outcome.Fail -> { setOnline(false); page(Html.problem(out.kind, out.detail)) }
                     is RelayClient.Outcome.Ok -> {
+                        setOnline(true)
                         val r = out.r
                         if (r.status in 300..399) page(Html.redirect(r.location))
                         else {
@@ -100,6 +118,10 @@ class DeskActivity : Activity() {
             override fun shouldOverrideUrlLoading(view: WebView, req: WebResourceRequest): Boolean {
                 val u = req.url
                 if (u.host == Html.HOST && u.scheme == "https") return false
+                if (u.scheme == "shapp") {                                   // "Phone app settings" on the Desk's Home page
+                    settings()
+                    return true
+                }
                 if (u.scheme == "shtd") {
                     Store.forget(this@DeskActivity)
                     startActivity(Intent(this@DeskActivity, PairActivity::class.java))
@@ -115,8 +137,9 @@ class DeskActivity : Activity() {
 
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(0xFF0B1220.toInt()) }
         root.addView(bar)
+        root.addView(line, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)))
         root.addView(web, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.setBackgroundColor(0xFF070D18.toInt())        // the strip behind the status bar matches the app's top bar
+        root.setBackgroundColor(0xFF071018.toInt())        // the strip behind the status bar matches the app's top bar
         Insets.fit(root)
         setContentView(root)
         if (savedInstanceState != null) web.restoreState(savedInstanceState) else web.loadUrl(Html.BASE + "/")
@@ -142,9 +165,22 @@ class DeskActivity : Activity() {
     }
 
     private fun settings() {
-        AlertDialog.Builder(this).setTitle("Threat Desk")
-            .setMessage("This phone is paired with your Desk. Text size: ${Store.zoom(this)}%.\n\n" +
-                "If you stop using this phone, unpair it here and on the computer (Settings → Phone app → Unpair).")
+        val items = arrayOf("Larger text (now ${Store.zoom(this)}%)", "Smaller text", "Reload this page", "Unpair this phone")
+        AlertDialog.Builder(this).setTitle("Phone app settings")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> zoom(15)
+                    1 -> zoom(-15)
+                    2 -> web.reload()
+                    3 -> unpair()
+                }
+            }
+            .setPositiveButton("Close", null).show()
+    }
+
+    private fun unpair() {
+        AlertDialog.Builder(this).setTitle("Unpair this phone?")
+            .setMessage("If you stop using this phone, unpair it here and on the computer (Settings, then Phone app, then Unpair).")
             .setPositiveButton("Close", null)
             .setNegativeButton("Unpair this phone") { _, _ ->
                 AlertDialog.Builder(this).setMessage("Forget your Desk on this phone? You'll need a new code from the computer to pair again.")

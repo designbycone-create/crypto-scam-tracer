@@ -93,3 +93,7 @@ threatmap_items.json
 threatmap_state.json
 dbip-country-lite.csv.gz
 lookups/
+
+# hardware wallet check: private custody records and the My wallets watcher's state
+hardware_wallets/
+mywallets_state.json

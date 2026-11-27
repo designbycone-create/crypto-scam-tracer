@@ -616,6 +616,13 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/website":
             from addons import web as addonweb
             return self._send(addonweb.page(), "text/html; charset=utf-8")
+        if path == "/hwcheck":
+            from shield import hwcheck
+            return self._send(hwcheck.page(query, phone=self.headers.get("X-ScamHunter-Via") == "phone"), "text/html; charset=utf-8")
+        if path == "/hwcheck/usb.json":
+            from shield import hwcheck
+            from urllib.parse import parse_qs
+            return self._send(json.dumps(hwcheck.usb_status((parse_qs(query).get("t") or [""])[0])), "application/json", {"Cache-Control": "no-store"})
         if path == "/relay":
             from relay import web as relayweb
             return self._send(relayweb.page(), "text/html; charset=utf-8")
@@ -752,6 +759,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._api("POST", path, query, body if isinstance(body, dict) else {})
         if not self._local_origin():
             return self._send("Forbidden", "text/plain", code=403)
+        ctype = self.headers.get("Content-Type", "")
+        if self.path.partition("?")[0] == "/hwcheck" and ctype.lower().startswith("multipart/form-data"):
+            # custody record with a receipt and photos (up to 5 files of 10 MB); refused from the phone by relay/policy.py
+            n = int(self.headers.get("Content-Length") or 0)
+            if n > 52_000_000:
+                return self._send("That upload is too large. Use photos or a PDF under 10 MB each.", "text/plain", code=413)
+            from shield import hwcheck
+            form, files = hwcheck.parse_multipart(ctype, self.rfile.read(n))
+            return self._send(hwcheck.post(form, files), "text/html; charset=utf-8")
         n = min(int(self.headers.get("Content-Length") or 0), 2_000_000)
         multi = parse_qs(self.rfile.read(n).decode("utf-8", "replace"))
         form = {k: v[0] for k, v in multi.items()}
@@ -828,6 +844,20 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/website":
                 from addons import web as addonweb
                 return self._send(addonweb.post(form), "text/html; charset=utf-8")
+            if path == "/hwcheck":
+                from shield import hwcheck
+                return self._send(hwcheck.post(form, phone=self.headers.get("X-ScamHunter-Via") == "phone"), "text/html; charset=utf-8")
+            if path == "/quick":      # Overview's one box: open the right check for what was pasted
+                from deskui import quick
+                kind, value = quick.route(form.get("q", ""))
+                if kind == "address":
+                    return self._redirect("/prescreen?address=" + quote(value, safe=""))
+                if kind == "number":
+                    return self._redirect("/numbercheck?number=" + quote(value, safe=""))
+                if kind == "message":
+                    from shield import msgcheck
+                    return self._send(msgcheck.post({"text": value}), "text/html; charset=utf-8")
+                return self._send(quick.page(kind), "text/html; charset=utf-8")
             if path == "/lookup":
                 from osinttools import web as lookweb
                 return self._send(lookweb.post(form), "text/html; charset=utf-8")
@@ -1007,6 +1037,11 @@ def main():
         threading.Thread(target=supervise, args=(label, argv, logfile, stop_evt), daemon=True).start()
 
     threading.Thread(target=alert_flusher, args=(stop_evt,), daemon=True).start()
+    try:   # My wallets: alerts the moment money leaves a wallet you asked the Desk to watch (shield/mywallets.py)
+        from shield import mywallets
+        threading.Thread(target=mywallets.run, args=(stop_evt,), daemon=True).start()
+    except Exception as ex:
+        print(f"(My wallets watcher not active: {ex})")
     try:   # PatchPulse add-on: idle (no network) until PatchPulse launches and the owner connects it (addons/)
         from addons import patchpulse
         threading.Thread(target=patchpulse.run, args=(stop_evt,), daemon=True).start()

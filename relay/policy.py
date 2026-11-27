@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 
 BLOCKED = ("/relay", "/setup", "/update", "/share", "/alerts", "/secretscan", "/extension", "/agentguard")
 POST_OK = {"/msgcheck", "/numbercheck", "/prescreen", "/check", "/lookup", "/malware", "/clipguard", "/compromised",
-           "/incident", "/sitewatch", "/submit/status", "/exposure", "/threatmap"}
+           "/incident", "/sitewatch", "/submit/status", "/exposure", "/threatmap", "/quick", "/hwcheck"}
 SECRET_FIELDS = re.compile(r"(^|_)(key|token|password|secret|pin|seed|phrase)($|_)", re.I)
 SECRET_ACTIONS = {"key", "token", "save_key", "setkey"}
 

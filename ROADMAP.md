@@ -40,6 +40,7 @@ act on their own case.
 - [ ] Case workspaces (`cases/<id>/`) as the foundation for the institutional edition
 
 ## Protection (before the scam)
+- Hardware wallet check (`/hwcheck`) with USB name check, "My wallets" watch (alerts when money leaves) and private custody records. Next: Bait & Trace.
 - [x] Message checker: any scam text, email, DM or call script, local only
 - [x] Copy-paste guard with a private address book
 - [x] Browser extension (Chrome / Edge): address swaps, attack code, scam addresses
@@ -70,6 +71,10 @@ act on their own case.
 - [x] Posts from trusted security researchers on Bluesky and Mastodon (free, named accounts only)
 - [ ] X as an extra source: the user's own pay-per-use key, with a monthly spending cap the Desk enforces
 - [ ] ransomware.live and Cloudflare Radar layers (each with the user's own free token)
+
+## Look
+- **Night Desk** redesign shipped from the design owner's spec (`design/redesign/`): shared shell, Overview, section pages, Threat Map, every older page restyled through the shell, phone app bar and bottom bar.
+- Later: rebuild older pages one by one in the new components (they're restyled, not yet redrawn); bigger type inside the network graph.
 
 ## Add-ons
 - **PatchPulse** (separate paid product, patchpulsehq.com): "My website" page shows it as coming soon. The read-only connector is built and tested but off (`addons/patchpulse.py`, `RELEASED = False`). At launch: one signed Desk update sets `RELEASED = True`; owners then connect with a PatchPulse API key. Later: a ScamHunter Pro bundle.

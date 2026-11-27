@@ -355,7 +355,8 @@ def render():
         if label == "Network mapper" and alive:
             extra += f" · mapped {_fmt_ago(mapper_age)}"
         cards += (f"<div class=card><span class=dot style='background:{dot}'></span>"
-                  f"<b>{e(label)}</b><br><small class=mut>{txt} · {e(extra)}</small></div>")
+                  f"<b>{e(label)}</b><br><small class=mut>{txt} · "
+                  + ("<a href='/clipguard'>turn on</a>" if extra == "<a href='/clipguard'>turn on</a>" else e(extra)) + "</small></div>")
 
     # --- your funds ---
     if my_targets:

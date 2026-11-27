@@ -734,3 +734,6 @@ html.nd-phone .nd-page input:not([type=checkbox]):not([type=radio]):not([type=hi
 html.nd-phone .nd-page textarea { width: 100% !important; max-width: 100% !important; flex: 1 1 100% !important; }
 html.nd-phone .nd-page *:has(> input:not([type=checkbox]):not([type=radio]):not([type=hidden]) + input),
 html.nd-phone .nd-page *:has(> select + input) { display: flex; flex-wrap: wrap; gap: .75rem; }
+:root { --nd-min: 1.25rem; }
+html.nd-phone { --nd-min: 1.125rem; }
+.nd-new { font-size: var(--nd-min); }

@@ -205,6 +205,15 @@ def _parts(body):
     return title, styles, head_extra, attrs, rest
 
 
+_SMALL = re.compile(r"(font(?:-size)?\s*:[^;}'\"]*?)\b(\d{1,2}(?:\.\d+)?)px", re.I)
+
+
+def _no_small(text):
+    """Older pages set labels at 11-17px; the Night Desk minimum is 20px on the computer and 18px on the phone
+    (var(--nd-min)). Raise only sizes below it, and only inside font / font-size declarations."""
+    return _SMALL.sub(lambda m: m.group(1) + ("var(--nd-min)" if float(m.group(2)) < 18 else m.group(2) + "px"), text)
+
+
 def wrap(body, path, phone=False):
     """Put a page inside the Night Desk shell (no-op for printable/downloadable pages)."""
     if any(path.startswith(b) for b in BARE) or "class=nd-main" in body:
@@ -212,7 +221,8 @@ def wrap(body, path, phone=False):
     title, styles, head_extra, attrs, content = _parts(body)
     # styles written for the Night Desk start with OWN and sit above the shared look; older styles go in a lower layer
     own = "".join(x for x in styles if x.lstrip().startswith(OWN))
-    legacy = "".join(x for x in styles if not x.lstrip().startswith(OWN)).replace("@charset", "/*charset*/")
+    legacy = _no_small("".join(x for x in styles if not x.lstrip().startswith(OWN)).replace("@charset", "/*charset*/"))
+    content = re.sub(r"style=(['\"])(.*?)\1", lambda m: "style=" + m.group(1) + _no_small(m.group(2)) + m.group(1), content, flags=re.S)
     page = f"<div class=nd-page>{content}</div>"
     head = (f"<!doctype html><html lang=en{' class=nd-phone' if phone else ''}><head><meta charset=utf-8>"
             "<meta name=viewport content='width=device-width,initial-scale=1,viewport-fit=cover'>"
